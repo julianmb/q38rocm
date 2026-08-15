@@ -9,7 +9,21 @@ set -eo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/setup_env.sh"
 
-MODEL_PATH="${1:-/home/user/source/strix-halo-rocmfpx-hub/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf}"
+# Resolve model path
+if [ -n "$1" ]; then
+    MODEL_PATH="$1"
+elif [ -n "${MODEL_PATH:-}" ]; then
+    MODEL_PATH="${MODEL_PATH}"
+elif [ -f "${SCRIPT_DIR}/Qwen3.8-27B-ROCmFP4-FAST.gguf" ]; then
+    MODEL_PATH="${SCRIPT_DIR}/Qwen3.8-27B-ROCmFP4-FAST.gguf"
+elif [ -f "${SCRIPT_DIR}/models/Qwen3.8-27B-ROCmFP4-FAST.gguf" ]; then
+    MODEL_PATH="${SCRIPT_DIR}/models/Qwen3.8-27B-ROCmFP4-FAST.gguf"
+elif [ -f "/home/user/source/strix-halo-rocmfpx-hub/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf" ]; then
+    MODEL_PATH="/home/user/source/strix-halo-rocmfpx-hub/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf"
+else
+    MODEL_PATH="${SCRIPT_DIR}/Qwen3.8-27B-ROCmFP4-FAST.gguf"
+fi
+
 PORT="${PORT:-8000}"
 HOST="${HOST:-0.0.0.0}"
 CTX="${CTX:-32768}"
@@ -18,11 +32,18 @@ DRAFT_P="${DRAFT_P:-0.60}"
 
 if [ ! -f "$MODEL_PATH" ]; then
     echo "⚠️  Model file not found at: $MODEL_PATH"
-    echo "Please provide a valid path as first argument or download Qwen3.8-27B-ROCmFP4-FAST.gguf."
+    echo "Please download the weights using:"
+    echo "  ./download_model.sh"
+    echo "or specify the path as first argument: ./run_server.sh /path/to/Qwen3.8-27B-ROCmFP4-FAST.gguf"
     exit 1
 fi
 
-LLAMA_SERVER_BIN="$(which llama-server 2>/dev/null || echo "/home/user/source/strix-halo-rocmfpx-hub/engine/bin/llama-server")"
+LLAMA_SERVER_BIN="$(which llama-server 2>/dev/null || true)"
+if [ -z "$LLAMA_SERVER_BIN" ] && [ -x "${SCRIPT_DIR}/engine/bin/llama-server" ]; then
+    LLAMA_SERVER_BIN="${SCRIPT_DIR}/engine/bin/llama-server"
+elif [ -z "$LLAMA_SERVER_BIN" ] && [ -x "/home/user/source/strix-halo-rocmfpx-hub/engine/bin/llama-server" ]; then
+    LLAMA_SERVER_BIN="/home/user/source/strix-halo-rocmfpx-hub/engine/bin/llama-server"
+fi
 
 if [ ! -x "$LLAMA_SERVER_BIN" ]; then
     echo "❌ llama-server executable not found!"

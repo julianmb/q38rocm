@@ -1,7 +1,11 @@
-# Ollama Modelfile for Qwen 3.8 27B ROCmFP4_FAST
+# ==============================================================================
+# Ollama Modelfile for Qwen 3.8 27B ROCmFP4_FAST (Experimental)
+# NOTE: Requires an Ollama build linked against the ROCmFPX llama.cpp fork.
+# Stock upstream Ollama will fail to decode ROCmFP4 block-quantized weights.
+# ==============================================================================
+
 FROM ./Qwen3.8-27B-ROCmFP4-FAST.gguf
 
-# Parameters optimized for AMD Strix Halo / Radeon 8060S
 PARAMETER num_ctx 32768
 PARAMETER num_gpu 99
 PARAMETER num_thread 16
@@ -10,7 +14,6 @@ PARAMETER top_p 0.8
 PARAMETER top_k 20
 PARAMETER presence_penalty 1.5
 
-# Template
 TEMPLATE """{{ if .System }}<|im_start|>system
 {{ .System }}<|im_end|>
 {{ end }}{{ if .Prompt }}<|im_start|>user
@@ -19,5 +22,4 @@ TEMPLATE """{{ if .System }}<|im_start|>system
 {{ if .Response }}<think>
 {{ .Response }}<|im_end|>{{ end }}"""
 
-# System Prompt
 SYSTEM """Reasoning effort is set to xhigh. Please think carefully through the task, validate key assumptions, consider plausible alternatives, and prioritize correctness, consistency, and clarity in the final answer."""

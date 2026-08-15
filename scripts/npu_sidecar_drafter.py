@@ -7,6 +7,7 @@ import os
 import sys
 import time
 import json
+import shutil
 import argparse
 import subprocess
 from pathlib import Path
@@ -97,17 +98,50 @@ def simulate_speculative_efficiency(target_name="Qwen 3.8 27B", target_tps=14.02
 
     print("-" * 80)
 
+def find_llama_server():
+    server = shutil.which("llama-server")
+    if server:
+        return Path(server)
+    candidates = [
+        ROOT_DIR / "engine" / "bin" / "llama-server",
+        ROOT_DIR.parent / "strix-halo-rocmfpx-hub" / "engine" / "bin" / "llama-server",
+        Path("/home/user/source/strix-halo-rocmfpx-hub/engine/bin/llama-server"),
+        Path("/usr/local/bin/llama-server")
+    ]
+    for c in candidates:
+        if c.exists() and os.access(c, os.X_OK):
+            return c
+    return None
+
 def launch_heterogeneous_server(args):
-    bin_dir = ROOT_DIR / "engine" / "bin"
-    llama_server = bin_dir / "llama-server"
+    llama_server = find_llama_server()
     
-    if not llama_server.exists():
-        print(red(f"Error: llama-server not found at {llama_server}"))
+    if not llama_server:
+        print(red("Error: llama-server executable not found in PATH or engine/bin!"))
+        print("Please build or install the ROCmFPX engine using ./build_engine.sh or set PATH.")
         sys.exit(1)
 
-    target_path = ROOT_DIR / "models" / "qwen38-27b" / "Qwen3.8-27B-ROCmFP4-FAST.gguf"
+    target_path = None
     if args.model and Path(args.model).exists():
         target_path = Path(args.model)
+    else:
+        model_candidates = [
+            ROOT_DIR / "Qwen3.8-27B-ROCmFP4-FAST.gguf",
+            ROOT_DIR / "models" / "Qwen3.8-27B-ROCmFP4-FAST.gguf",
+            ROOT_DIR / "models" / "qwen38-27b" / "Qwen3.8-27B-ROCmFP4-FAST.gguf",
+            Path("/home/user/source/strix-halo-rocmfpx-hub/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf")
+        ]
+        for mc in model_candidates:
+            if mc.exists():
+                target_path = mc
+                break
+
+    if not target_path or not target_path.exists():
+        print(red("Error: Target model Qwen3.8-27B-ROCmFP4-FAST.gguf not found!"))
+        print("Run ./download_model.sh or specify --model /path/to/model.gguf")
+        sys.exit(1)
+
+    bin_dir = llama_server.parent
 
     env = os.environ.copy()
     env["AMD_VULKAN_ICD"] = "RADV"

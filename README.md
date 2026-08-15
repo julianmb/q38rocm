@@ -121,25 +121,40 @@ AMD Strix Halo integrates a **50 TOPS XDNA 2 NPU** at `/dev/accel/accel0` (`amdx
 
 ## 🚀 Quick Start
 
-### 1. Environment Setup & Dependencies
+### ⚡ 1-Command Quickstart (Recommended)
+Run the automated launcher which downloads weights if missing, boots the background server with health check polling, and opens the streaming terminal chat:
 ```bash
-# Clone the repository
 git clone https://github.com/julianmb/q38rocm.git
 cd q38rocm
-
-# Install Python requirements (requests for TUI & benchmarks)
 pip install -r requirements.txt
 
-# Source Strix Halo runtime environment variables
+./quickstart.sh
+```
+
+---
+
+### Manual Step-by-Step Setup
+
+#### 1. Setup Environment
+```bash
 source ./setup_env.sh
 ```
 
-### 2. Download Pre-Quantized Weights
+#### 2. Download Pre-Quantized Weights
 ```bash
 ./download_model.sh
 ```
 
-### 3. Launch OpenAI-Compatible API Server
+#### 3. Setup ROCmFPX Engine (Pre-Built or Compile)
+```bash
+# Option A: Download pre-compiled Strix Halo binaries (fastest)
+./build_engine.sh --prebuilt
+
+# Option B: Compile from source using CMake & ROCm/Vulkan
+./build_engine.sh
+```
+
+#### 4. Launch OpenAI-Compatible API Server
 ```bash
 ./run_server.sh
 ```
@@ -149,16 +164,30 @@ Server endpoints available:
 - **Health Check:** `GET http://localhost:8000/health`
 - **Model Info:** `GET http://localhost:8000/v1/models`
 
-### 4. Interactive Terminal Chat (TUI)
+#### 5. Interactive Terminal Chat (TUI)
 Launch interactive streaming chat with real-time token speedometers:
 ```bash
 python3 scripts/chat_tui.py --port 8000
 ```
 
-### 5. Automated Benchmark Suite
+#### 6. Automated Benchmark Suite & Report Exporter
 ```bash
 python3 scripts/benchmark.py --port 8000
 ```
+*Generates formatted Markdown and JSON reports in `benchmarks/`.*
+
+---
+
+## 🔌 Client & IDE Integration
+
+Connect your local developer tools and IDEs directly to the OpenAI-compatible API endpoint (`http://localhost:8000/v1`):
+
+- **Open WebUI:** Direct web chat interface with model switching.
+- **Continue.dev:** VS Code & JetBrains inline AI code completion and chat assistant.
+- **Cursor IDE:** Custom OpenAI base URL configuration.
+- **LiteLLM / Python SDK:** Multi-agent pipelines and unified proxying.
+
+👉 **See the complete [Client Integration Guide (docs/CLIENT_INTEGRATION.md)](docs/CLIENT_INTEGRATION.md)** for step-by-step setup guides and configuration snippets.
 
 ---
 

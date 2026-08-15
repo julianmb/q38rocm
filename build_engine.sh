@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# build_engine.sh — Build ROCmFPX Engine (llama.cpp fork) for AMD Strix Halo (gfx1151)
+# build_engine.sh — Build or Download ROCmFPX Engine for AMD Strix Halo (gfx1151)
 # ==============================================================================
 
 set -euo pipefail
@@ -9,22 +9,60 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENGINE_DIR="${SCRIPT_DIR}/engine"
 REPO_URL="https://github.com/charlie12345/ROCmFPX.git"
 PINNED_COMMIT="e87d53e"
+RELEASE_TARBALL_URL="https://github.com/julianmb/q38rocm/releases/download/v1.0.0/strix-halo-rocmfpx-engine-v1.0.0-linux-x86_64.tar.gz"
+EXPECTED_TARBALL_SHA="bbc7845db0c012b97f1c9b8a2733a7083c6f9a749a453866fbe1994151d3364f"
+
+download_prebuilt() {
+    echo "================================================================================"
+    echo " 📥 Downloading Pre-Compiled ROCmFPX Engine (v1.0.0) for AMD Strix Halo"
+    echo " Source: ${RELEASE_TARBALL_URL}"
+    echo "================================================================================"
+    mkdir -p "${ENGINE_DIR}"
+    TAR_PATH="/tmp/strix-halo-engine-v1.0.0.tar.gz"
+    
+    curl -L "${RELEASE_TARBALL_URL}" -o "${TAR_PATH}" --progress-bar
+    
+    if command -v sha256sum >/dev/null 2>&1; then
+        echo "${EXPECTED_TARBALL_SHA}  ${TAR_PATH}" | sha256sum -c -
+        echo "✅ Checksum verified!"
+    fi
+    
+    echo "Extracting binaries into ${ENGINE_DIR}..."
+    tar -xzf "${TAR_PATH}" -C /tmp/
+    cp -a /tmp/strix-halo-rocmfpx-engine/* "${ENGINE_DIR}/"
+    rm -rf /tmp/strix-halo-rocmfpx-engine "${TAR_PATH}"
+    
+    echo "✅ Pre-built engine ready in: ${ENGINE_DIR}/bin"
+    echo "Run: source ./setup_env.sh"
+    exit 0
+}
+
+# Check for --prebuilt flag
+if [[ "${1:-}" == "--prebuilt" ]] || [[ "${1:-}" == "--download" ]]; then
+    download_prebuilt
+fi
 
 echo "================================================================================"
-echo " ⚙️ Building ROCmFPX llama.cpp Engine for AMD Strix Halo"
+echo " ⚙️ ROCmFPX llama.cpp Engine Setup for AMD Strix Halo"
 echo " Target Architecture: gfx1151 (Radeon 8060S / RDNA 3.5)"
-echo " Required Drivers: Mesa RADV (Vulkan) + ROCm / HIP 7.x"
+echo " Options: Run './build_engine.sh --prebuilt' to download pre-compiled binaries"
 echo "================================================================================"
 
-# 1. Dependency Checks
+# Check compiler dependencies
+MISSING_TOOLS=0
 for tool in cmake git; do
     if ! command -v "$tool" >/dev/null 2>&1; then
-        echo "❌ Error: '$tool' is required but not installed."
-        exit 1
+        echo "⚠️  Tool '$tool' is not installed."
+        MISSING_TOOLS=1
     fi
 done
 
-# 2. Clone or Update ROCmFPX Repository
+if [ "$MISSING_TOOLS" -eq 1 ]; then
+    echo "Build tools are missing. Falling back to pre-compiled release download..."
+    download_prebuilt
+fi
+
+# Clone or Update ROCmFPX Repository
 if [ ! -d "${ENGINE_DIR}/src/.git" ]; then
     echo "Cloning ROCmFPX toolchain into ${ENGINE_DIR}/src..."
     mkdir -p "${ENGINE_DIR}"
@@ -36,7 +74,7 @@ echo "Checking out pinned commit: ${PINNED_COMMIT}..."
 git fetch origin
 git checkout "${PINNED_COMMIT}" || true
 
-# 3. Configure CMake with Dual ROCm + Vulkan Acceleration
+# Configure CMake with Dual ROCm + Vulkan Acceleration
 BUILD_DIR="${ENGINE_DIR}/src/build"
 mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
@@ -61,7 +99,7 @@ JOBS="${JOBS:-$(nproc 2>/dev/null || echo 8)}"
 echo "Compiling binaries with ${JOBS} parallel threads..."
 cmake --build . --config Release -j "${JOBS}" --target llama-server llama-cli llama-bench llama-quantize
 
-# 4. Link/Install Executables to engine/bin
+# Link/Install Executables to engine/bin
 mkdir -p "${ENGINE_DIR}/bin"
 cp -f bin/llama-server bin/llama-cli bin/llama-bench bin/llama-quantize "${ENGINE_DIR}/bin/"
 if [ -d bin ]; then

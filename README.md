@@ -1,5 +1,6 @@
 # Qwen 3.8 27B ROCmFP4_FAST on AMD Strix Halo (Ryzen AI Max+ 395)
 
+[![Hugging Face](https://img.shields.io/badge/🤗%20Hugging%20Face-julianmb%2FQwen--3.8--27B--ROCmFP4--FAST--GGUF-ffd21e.svg)](https://huggingface.co/julianmb/Qwen-3.8-27B-ROCmFP4-FAST-GGUF)
 [![Hardware](https://img.shields.io/badge/Hardware-AMD_Strix_Halo_(gfx1151)-ED1C24?logo=amd)](https://www.amd.com)
 [![Vulkan](https://img.shields.io/badge/Driver-Mesa_RADV_Wave64-FF5722?logo=vulkan)](https://mesa3d.org)
 [![Quantization](https://img.shields.io/badge/Quant-ROCmFP4_FAST_(4.26_bpw)-009688)]()
@@ -7,6 +8,10 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 High-performance, memory-optimized quantization and speculative decoding deployment of **Qwen 3.8 27B** engineered specifically for the **AMD Strix Halo (Ryzen AI Max+ 395 / Radeon 8060S)** platform.
+
+> 📦 **Hugging Face Model Weights:** [julianmb/Qwen-3.8-27B-ROCmFP4-FAST-GGUF](https://huggingface.co/julianmb/Qwen-3.8-27B-ROCmFP4-FAST-GGUF)  
+> ⚡ **File:** `Qwen3.8-27B-ROCmFP4-FAST.gguf` (13.55 GiB | 4.26 bpw)  
+> 🔒 **SHA256:** `fb89c78d2be91cdb68eaaaa45b1270710bf34aa721dc1f0b9e3aa7b98d2e1da9`
 
 By combining **ROCmFP4 block quantization (4.26 bpw)**, **MTP (Multi-Token Prediction) Speculative Decoding**, **Asymmetric TurboQuant KV Cache**, and the **RADV Wave64 Cooperative Matrix** engine, this package delivers **30.56 – 36.04 tokens/second** generation throughput on a single 128 GB unified memory APU — breaking past the traditional 27B memory-bandwidth ceiling.
 

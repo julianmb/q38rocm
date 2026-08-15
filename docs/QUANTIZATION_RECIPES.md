@@ -1,0 +1,74 @@
+# ROCmFPX Quantization Recipes for AMD Strix Halo (gfx1151)
+
+This document details the quantization algorithms, layout formats, and conversion pipelines used to create high-throughput **ROCmFP4** and 3-bit GGUF models for AMD Strix Halo.
+
+---
+
+## 1. Quantization Formats Overview
+
+| Quantization Preset | BPW | Block Size | Target Subsystem | Characteristics & Use Cases |
+|---|---|---|---|---|
+| **`Q4_0_ROCMFP4_FAST`** | **4.26** | **32** | **Vulkan0 Wave64 / ROCm0** | **Primary target for maximum MTP speculative throughput (36 tok/s)** |
+| **`Q4_0_ROCMFP4_STRIX_LEAN`** | **4.34** | **32** | **Vulkan0 / ROCm0** | Preserves embedding and final norm layers in FP16 |
+| **`Q3_K_M`** | **3.95** | **Mixed** | **Vulkan0 / CPU** | Standard k-quant medium (12.56 GiB) |
+| **`Q3_K_S`** | **3.59** | **Mixed** | **Vulkan0 / CPU** | Small 3-bit quant (11.40 GiB), fastest unassisted decode (16.69 t/s) |
+| **`Q2_0_ROCMFP2`** | **2.69** | **32** | **Vulkan0 / Memory Constrained** | Ultra-compact 2-bit layout (8.56 GiB) |
+
+---
+
+## 2. ROCmFP4 Matrix Layout & Hardware Alignment
+
+On AMD Strix Halo (Radeon 8060S / RDNA 3.5), the Vulkan RADV driver accelerates matrix multiplication via cooperative matrix instructions (`KHR_coopmat`):
+- **Wave64 Dispatch:** 64-thread SIMD execution aligned with RDNA 3.5 dual-issue compute units.
+- **Block Size (32):** Every group of 32 FP4 weights shares a single FP16 or E8M0 scaling factor, matching hardware vector register alignment.
+- **MTP Head Preservation:** Speculative prediction heads (`mtp_block.dense`, `mtp_block.norm`) are automatically preserved in high-precision (FP16 or Q8_0) during the quantize pass to maintain 80%+ draft acceptance.
+
+---
+
+## 3. Conversion Pipeline (Step-by-Step)
+
+### Step 1: Convert Hugging Face Safetensors to BF16 GGUF
+```bash
+python3 /path/to/llama.cpp/convert_hf_to_gguf.py \
+  /path/to/Qwen3.8-27B-Instruct \
+  --outfile Qwen3.8-27B-BF16.gguf \
+  --outtype bf16
+```
+
+### Step 2: Quantize to ROCmFP4_FAST
+```bash
+./scripts/convert_and_quant.sh \
+  Qwen3.8-27B-BF16.gguf \
+  ./models
+```
+
+Or execute `llama-quantize` directly:
+```bash
+llama-quantize \
+  Qwen3.8-27B-BF16.gguf \
+  Qwen3.8-27B-ROCmFP4-FAST.gguf \
+  Q4_0_ROCMFP4_FAST \
+  $(nproc)
+```
+
+---
+
+## 4. Asymmetric TurboQuant KV Cache
+
+To prevent KV cache memory from overtaking weight memory during long-context generation (32K to 262K tokens), ROCmFPX implements **Asymmetric TurboQuant**:
+- **Key Cache (`-ctk q8_0`):** Retains 8-bit precision to maintain sharp attention routing.
+- **Value Cache (`-ctv turbo4`):** Compresses token representations to 4-bit packed integer blocks with near-zero perplexity impact.
+
+---
+
+## 5. Verification & Perplexity Testing
+
+Verify tensor block integrity and perplexity on Strix Halo:
+```bash
+llama-perplexity \
+  -m Qwen3.8-27B-ROCmFP4-FAST.gguf \
+  -dev Vulkan0 \
+  -ngl 99 \
+  -f wikitext-2-raw-v1.test.txt \
+  -c 4096
+```

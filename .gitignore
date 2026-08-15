@@ -1,6 +1,6 @@
-*.gguf
-*.bin
-*.pt
-*.safetensors
-ROCmFPX/
-output_quantized/
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+*.tmp
+.DS_Store

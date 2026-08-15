@@ -1,55 +1,58 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# convert_and_quant.sh — Pipeline Template: BF16/FP8 -> GGUF -> ROCmFPX
+# convert_and_quant.sh — ROCmFP4 Quantization Pipeline for AMD Strix Halo
 # ==============================================================================
-# Usage: ./scripts/convert_and_quant.sh /path/to/hf_model_dir ./output_dir
+# Converts BF16 GGUF weights into ROCmFP4_FAST (4.26 bpw) with MTP head preservation.
+#
+# Usage:
+#   ./scripts/convert_and_quant.sh /path/to/model-BF16.gguf [output_dir]
+# ==============================================================================
+
 set -euo pipefail
 
-INPUT_DIR="${1:-}"
-OUTPUT_DIR="${2:-./output_quantized}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-if [ -z "$INPUT_DIR" ] || [ ! -d "$INPUT_DIR" ]; then
-    echo "Error: Please specify a valid Hugging Face model input directory."
-    echo "Usage: $0 /path/to/hf_model_dir [output_dir]"
+# Strix Halo ROCm Environment
+export HSA_OVERRIDE_GFX_VERSION="${HSA_OVERRIDE_GFX_VERSION:-11.5.1}"
+export HIP_VISIBLE_DEVICES="0"
+export ROCM_FLUSH_ACCEPT="1"
+export RADV_PERFTEST="gpl,sam,nggc"
+
+INPUT_PATH="${1:-}"
+OUTPUT_DIR="${2:-$ROOT_DIR/models}"
+PRESET="${PRESET:-Q4_0_ROCMFP4_FAST}"
+
+if [ -z "$INPUT_PATH" ]; then
+    echo "Usage: $0 /path/to/model-BF16.gguf [output_dir]"
+    exit 1
+fi
+
+# Find llama-quantize
+QUANT_BIN="$(which llama-quantize 2>/dev/null || echo "$ROOT_DIR/engine/bin/llama-quantize")"
+
+if [ ! -x "$QUANT_BIN" ]; then
+    echo "❌ Error: llama-quantize binary not found at $QUANT_BIN"
+    echo "Please build the engine first using ./build_engine.sh"
     exit 1
 fi
 
 mkdir -p "$OUTPUT_DIR"
+BASENAME="$(basename "$INPUT_PATH" .gguf)"
+OUTPUT_FILE="${OUTPUT_DIR}/${BASENAME}-${PRESET}.gguf"
 
-QUANT_BIN="ROCmFPX/build-strix-rocmfp4/bin/llama-quantize"
-if [ ! -f "$QUANT_BIN" ]; then
-    echo "Error: llama-quantize binary not found. Run ./scripts/build_rocmfpx.sh first."
-    exit 1
-fi
+echo "================================================================================"
+echo " 🔧 Quantizing Model to ROCmFP4 on AMD Strix Halo"
+echo " Input:   $INPUT_PATH"
+echo " Output:  $OUTPUT_FILE"
+echo " Preset:  $PRESET (Block Size: 32, FP4 Dequant Scale, MTP Preserved)"
+echo " Threads: $(nproc)"
+echo "================================================================================"
 
-INTERMEDIATE_F16="$OUTPUT_DIR/model-f16.gguf"
-SPEED_OUTPUT="$OUTPUT_DIR/model-ROCmFPX-Speed.gguf"
-QUALITY_OUTPUT="$OUTPUT_DIR/model-ROCmFPX-Quality.gguf"
+"$QUANT_BIN" \
+    "$INPUT_PATH" \
+    "$OUTPUT_FILE" \
+    "$PRESET" \
+    "$(nproc)"
 
-echo "=========================================================="
-echo " Step 1: Converting Hugging Face model to F16 GGUF...      "
-echo "=========================================================="
-python3 ROCmFPX/convert_hf_to_gguf.py "$INPUT_DIR" \
-    --outfile "$INTERMEDIATE_F16" \
-    --outtype f16
-
-echo "=========================================================="
-echo " Step 2A: Quantizing Speed Variant (Q4_0_ROCMFP4_COHERENT) "
-echo "=========================================================="
-"$QUANT_BIN" "$INTERMEDIATE_F16" "$SPEED_OUTPUT" Q4_0_ROCMFP4_COHERENT
-
-echo "=========================================================="
-echo " Step 2B: Quantizing Quality Variant (Q6_0_ROCMFPX_AGENT)  "
-echo "=========================================================="
-"$QUANT_BIN" "$INTERMEDIATE_F16" "$QUALITY_OUTPUT" Q6_0_ROCMFPX_AGENT
-
-echo "=========================================================="
-echo " Step 3: Generating Checksums                              "
-echo "=========================================================="
-cd "$OUTPUT_DIR"
-sha256sum "$(basename "$SPEED_OUTPUT")" "$(basename "$QUALITY_OUTPUT")" > SHA256SUMS
-
-echo "=========================================================="
-echo " Conversion & Quantization Complete!"
-echo " Outputs saved in: $OUTPUT_DIR"
-echo "=========================================================="
+echo "✅ Quantization complete: $OUTPUT_FILE"

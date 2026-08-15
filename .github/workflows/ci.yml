@@ -1,0 +1,33 @@
+name: CI & Integrity Check
+
+on:
+  push:
+    branches: [ main, release/* ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Python syntax and compile validation
+        run: |
+          python3 -m py_compile scripts/*.py
+
+      - name: Shell script syntax check
+        run: |
+          bash -n *.sh
+          bash -n scripts/*.sh
+
+      - name: Check SHA256SUMS file format
+        run: |
+          test -f SHA256SUMS
+          grep -E "^[a-f0-9]{64}  " SHA256SUMS

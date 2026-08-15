@@ -1,0 +1,2 @@
+# Python dependencies for Strix Halo benchmarks & TUI
+requests>=2.31.0

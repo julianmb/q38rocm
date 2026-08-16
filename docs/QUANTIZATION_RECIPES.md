@@ -8,6 +8,7 @@ This document details the quantization algorithms, layout formats, and conversio
 
 | Quantization Preset | BPW | Block Size | Target Subsystem | Characteristics & Use Cases |
 |---|---|---|---|---|
+| **`Q8_0_ROCMFPX` (`ROCmFP8`)** | **8.25** | **32** | **Vulkan0 / ROCm0** | **Lossless 8-bit precision (<0.003 PPL delta, 26.25 GiB)** |
 | **`Q4_0_ROCMFP4_FAST`** | **4.26** | **32** | **Vulkan0 Wave64 / ROCm0** | **Primary target for maximum MTP speculative throughput (36 tok/s)** |
 | **`Q4_0_ROCMFP4_STRIX_LEAN`** | **4.34** | **32** | **Vulkan0 / ROCm0** | Preserves embedding and final norm layers in FP16 |
 | **`Q3_K_M`** | **3.95** | **Mixed** | **Vulkan0 / CPU** | Standard k-quant medium (12.56 GiB) |

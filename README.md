@@ -55,10 +55,11 @@ All benchmark results below were measured directly on **AMD Ryzen AI Max+ 395 (4
 | **Structured JSON Data Extraction** | 14.02 tok/s | **35.79 tok/s** | 88.0% | **2.55×** |
 | **Technical System Explanation** | 14.02 tok/s | **32.40 tok/s** | 76.2% | **2.31×** |
 
-### Quantization Level Comparison (2-bit to 4-bit)
+### Quantization Level Comparison (2-bit to 8-bit)
 
 | Quantization Format | Model Size | Effective BPW | Raw Unassisted Decode *(Measured)* | MTP Speculative Decode | Recommendation |
 |---|---|---|---|---|---|
+| **`ROCmFP8` (`Q8_0_ROCMFPX`)** | **26.25 GiB** | **8.25** | **7.66 tok/s** *(Measured)* | **18.96 tok/s** *(Measured)* | **Zero-loss 8-bit precision (<0.003 PPL delta)** |
 | **`ROCmFP4_FAST`** | **13.55 GiB** | **4.26** | **14.02 tok/s** | 🔥 **30.56 – 36.04 tok/s** *(Measured)* | **Gold Standard (Highest Total Throughput)** |
 | **`Q3_K_M`** | 12.56 GiB | 3.95 | 15.15 tok/s *(Measured)* | 25.0 – 28.5 tok/s *(Projected)* | Balanced 3-bit deployment |
 | **`Q3_K_S`** | 11.40 GiB | 3.59 | **16.69 tok/s** *(Measured)* | 20.44 – 26.11 tok/s *(Measured)* | Fastest unassisted decode |

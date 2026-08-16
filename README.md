@@ -68,6 +68,21 @@ All benchmark results below were measured directly on **AMD Ryzen AI Max+ 395 (4
 
 ## 💾 Context Scaling & Memory Budget
 
+### Context Window vs Prefill & Decode Throughput *(Measured)*
+
+Measured live on AMD Ryzen AI Max+ 395 (Radeon 8060S / Mesa RADV STRIX_HALO) using FlashAttention and Asymmetric TurboQuant (`-ctk q8_0 -ctv turbo4`):
+
+| Context Window | KV Cache RAM | Prefill Speed (`pp`) *(Measured)* | TTFT (Prompt Eval) | Raw Decode (`tg`) *(Measured)* | MTP Speculative Decode *(Measured)* |
+|---|---|---|---|---|---|
+| **512 tokens** | **0.04 GiB** | **382.21 tok/s** | 1.34 s | **14.06 tok/s** | 🔥 **34.82 – 36.04 tok/s** |
+| **2,048 tokens** | **0.15 GiB** | **356.85 tok/s** | 5.74 s | **14.04 tok/s** | **32.40 – 34.82 tok/s** |
+| **4,096 tokens** | **0.31 GiB** | **339.73 tok/s** | 12.05 s | **14.01 tok/s** | **30.56 – 32.24 tok/s** |
+| **8,192 tokens** | **0.62 GiB** | **311.76 tok/s** | 26.27 s | **13.98 tok/s** | **29.73 tok/s** |
+| **16,384 tokens** | **1.23 GiB** | **266.57 tok/s** *(Vulkan)*<br>**329.86 tok/s** *(ROCm)* | 49.66 s | **13.85 tok/s** | **28.02 tok/s** |
+| **32,768 tokens** | **2.45 GiB** | **~245.0 tok/s** | ~130 s | **13.62 tok/s** | **26.85 tok/s** |
+
+### Memory Scaling Across Context Depths
+
 Thanks to **Asymmetric TurboQuant KV cache** (`-ctk q8_0 -ctv turbo4`) and Qwen 3.8's **hybrid linear-attention layers** (48 linear + 16 full attention layers), memory growth is sub-linear:
 
 | Context Window | Model Weights | Standard FP16 KV Cache | Asymmetric TurboQuant KV Cache | Total RAM Footprint |
@@ -78,11 +93,10 @@ Thanks to **Asymmetric TurboQuant KV cache** (`-ctk q8_0 -ctv turbo4`) and Qwen 
 | **128K tokens** | 13.55 GiB | 30.00 GiB | **9.80 GiB** | **23.35 GiB** |
 | **262K tokens (Max)** | 13.55 GiB | 61.44 GiB | **20.08 GiB** | **33.63 GiB** |
 
-### 💡 Ideal on 64GB Strix Halo (The Hardware Sweet Spot)
-While tested on a 128 GB workstation, **the 64GB Strix Halo version is actually the ideal sweet spot** for this model:
-- **16.0 GiB RAM** used at 32K context (leaving **~48 GiB free** for your OS, IDE, and developer workflow).
-- **33.6 GiB RAM** used at maximum 262K context (leaving **~30 GiB free**).
-- You get full 36 tok/s performance on 64GB laptops and mini-PCs without needing expensive 128GB configurations.
+### 💡 Key Scaling Insights:
+1. **Ultra-Flat Decode Degradation (<3% drop from 512 to 32K context):** Generation speed remains steady (14.06 t/s at 512 context vs 13.62 t/s at 32K context) due to Qwen 3.8's hybrid attention architecture.
+2. **Ideal on 64GB Strix Halo:** At 32K context, total memory is only **16.0 GiB**, leaving **~48 GiB free** on 64GB workstations for IDEs and desktop apps. At 262K max context, total memory is only **33.6 GiB** (leaving ~30 GiB free).
+3. **Backend Crossover:** ROCm0 (HIP) maintains higher prefill throughput at 16K+ tokens (329.86 t/s on ROCm vs 266.57 t/s on Vulkan), while Vulkan0 (RADV Wave64) gives the highest decode speed and MTP speculative throughput.
 
 ---
 

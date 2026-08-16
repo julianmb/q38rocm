@@ -78,7 +78,11 @@ Thanks to **Asymmetric TurboQuant KV cache** (`-ctk q8_0 -ctv turbo4`) and Qwen 
 | **128K tokens** | 13.55 GiB | 30.00 GiB | **9.80 GiB** | **23.35 GiB** |
 | **262K tokens (Max)** | 13.55 GiB | 61.44 GiB | **20.08 GiB** | **33.63 GiB** |
 
-*On a 128 GB Strix Halo workstation, full 262K context consumes under 27% of available system memory.*
+### 💡 Ideal on 64GB Strix Halo (The Hardware Sweet Spot)
+While tested on a 128 GB workstation, **the 64GB Strix Halo version is actually the ideal sweet spot** for this model:
+- **16.0 GiB RAM** used at 32K context (leaving **~48 GiB free** for your OS, IDE, and developer workflow).
+- **33.6 GiB RAM** used at maximum 262K context (leaving **~30 GiB free**).
+- You get full 36 tok/s performance on 64GB laptops and mini-PCs without needing expensive 128GB configurations.
 
 ---
 

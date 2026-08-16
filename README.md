@@ -221,11 +221,20 @@ Ensure THP is enabled to avoid memory allocation latency during KV expansion:
 echo "madvise" | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
 ```
 
-### 3. TTM / GTT Memory Allocation
-Ensure the Linux kernel permits the iGPU to allocate sufficient unified RAM:
-```bash
-echo 31457280 | sudo tee /sys/module/ttm/parameters/pages_limit  # 120 GiB allocation
-```
+### 3. TTM / GTT Memory Allocation Limit
+By default, the Linux AMDGPU driver caps GPU memory allocations to 50% of system RAM. 
+
+- **On 64GB Strix Halo:** Default 50% provides 32 GiB, which is **already plenty** for 32K context (16.0 GiB RAM) with zero configuration! To unlock 262K context (33.6 GiB RAM), expand the limit to ~56 GiB:
+  ```bash
+  # For 64GB RAM (expands GPU ceiling to ~56 GiB):
+  echo 14680064 | sudo tee /sys/module/ttm/parameters/pages_limit
+  ```
+- **On 128GB Strix Halo:** Expand GPU ceiling up to 120 GiB for massive concurrency:
+  ```bash
+  # For 128GB RAM (expands GPU ceiling to ~120 GiB):
+  echo 31457280 | sudo tee /sys/module/ttm/parameters/pages_limit
+  ```
+*(Or simply run `./apply_hardware_tweaks.sh`, which automatically detects your RAM and applies the correct limit).*
 
 ---
 

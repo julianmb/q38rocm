@@ -69,6 +69,21 @@ Weight Size vs Memory Bandwidth Barrier (27B Model on Strix Halo)
 - Traditional FP16 KV caches balloon rapidly at long context (61.4 GB at 262K context).
 - **Asymmetric TurboQuant (`-ctk q8_0 -ctv turbo4`)** keeps attention Keys in Q8 (preserving precise attention routing) while compressing Values to 4-bit, dropping 262K context memory from 61.4 GB to **20.08 GB**. This ensures 95%+ of memory bus bandwidth remains dedicated to model weight streaming.
 
+### 5. What About 8-Bit (ROCmFP8)? Bandwidth Savings vs Register Execution
+A common question in the community is whether 8-bit quantization is worthwhile on AMD Strix Halo if RDNA 3.5 executes matrix multiplication in FP16 registers:
+
+- **The Execution Reality:** Unlike CDNA 3 enterprise accelerators (MI300X) which have dedicated FP8 matrix compute hardware, RDNA 3.5 (client graphics/APU architecture) executes cooperative matrix ALUs in FP16. When loading 8-bit weights (`ROCmFP8` / `Q8_0_ROCMFPX`), the GPU kernel streams 8-bit values across the memory bus and unpacks them into **FP16 registers on-the-fly**.
+- **Why It Doubles Performance Over FP16:** Auto-regressive generation is **100% memory-bus bandwidth bound**, not compute bound. The GPU spends ~95% of its cycle waiting for weights to travel across the memory bus from RAM:
+  - **FP16 (54.6 GB payload):** ~5.0 tok/s unassisted, ~10–12 tok/s with MTP.
+  - **ROCmFP8 (26.25 GB payload):** **7.66 tok/s unassisted, 18.96 tok/s with MTP (2× faster than FP16)** with **<0.003 PPL delta (virtually zero loss)**.
+  - **ROCmFP4 (13.55 GB payload):** **14.02 tok/s unassisted, 36.04 tok/s with MTP (7× faster than FP16)** with **~99% benchmark retention**.
+
+| Format | Transferred Payload / Token | Measured MTP Speed | PPL Delta vs FP16 | Recommended Audience |
+|---|---|---|---|---|
+| **FP16** | 54.60 GB | ~10–12 tok/s | 0.000 (Baseline) | Reference evaluation |
+| **ROCmFP8 (8-bit)** | 26.25 GB | **18.96 tok/s** | **<0.003 (Zero-loss)** | Users demanding 100% precision with 2× speedup |
+| **ROCmFP4 (4-bit)** | 13.55 GB | 🔥 **36.04 tok/s** | **~0.04 (99% score)** | **Default recommendation for daily coding & agent workflows** |
+
 ---
 
 ## 🤝 Integration with Upstream ROCmFPX

@@ -1,4 +1,5 @@
 services:
+  # Standalone Qwen 3.8 27B Server (Default: docker compose up)
   qwen38-server:
     build:
       context: .
@@ -35,10 +36,14 @@ services:
       retries: 5
       start_period: 30s
 
+  # Optional Open WebUI Chat Interface (Launch via: docker compose --profile webui up)
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     container_name: qwen38-open-webui
     restart: unless-stopped
+    profiles:
+      - webui
+      - all
     ports:
       - "3000:8080"
     environment:

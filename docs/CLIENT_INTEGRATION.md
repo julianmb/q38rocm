@@ -1,33 +1,97 @@
-# Client Integration Guide: Qwen 3.8 27B ROCmFP4 on AMD Strix Halo
+# Client & UI Integration Guide for Qwen 3.8 27B ROCmFP4
 
-This guide demonstrates how to connect third-party developer tools and Web UIs to the high-performance `llama-server` running on AMD Strix Halo.
-
-The server provides a standard OpenAI-compatible API endpoint at:
+`q38rocm` runs an OpenAI-compatible HTTP API on:
 ```
 http://localhost:8000/v1
 ```
 
+By default, the server runs **headless/standalone** to maximize available unified RAM for 27B LLM inference (consuming zero extra RAM for web servers). You can optionally connect any desktop client, IDE extension, or browser-based Web UI.
+
 ---
 
-## 1. Open WebUI
+## 📑 Supported Frontends & Tools
+- [1. Open WebUI (Optional Browser Chat GUI)](#1-open-webui-browser-chat-gui)
+- [2. LibreChat](#2-librechat)
+- [3. Desktop Web Clients (Chatbox, NextChat, TypingMind)](#3-desktop-clients-chatbox-nextchat-typingmind)
+- [4. Continue.dev (VS Code & JetBrains)](#4-continuedev-vs-code--jetbrains)
+- [5. Cursor IDE](#5-cursor-ide)
+- [6. LiteLLM Proxy](#6-litellm-proxy)
+- [7. Python Agent Frameworks (LangChain, LlamaIndex, AutoGen)](#7-python-agent-frameworks)
 
-[Open WebUI](https://github.com/open-webui/open-webui) is a full-featured web interface for local and remote LLMs.
+---
 
-### Setup Steps:
+## 1. Open WebUI (Browser Chat GUI)
+
+Open WebUI provides a ChatGPT-like browser interface with multi-model switching, document upload (RAG), and user accounts.
+
+### Option A: Via Docker Compose Profile (Recommended)
+Run the server with the optional `webui` profile:
+```bash
+# Starts both qwen38-server (port 8000) and Open WebUI (port 3000)
+docker compose --profile webui up -d
+```
+Open **http://localhost:3000** in your browser.
+
+### Option B: Standalone Open WebUI Docker Container
+If `q38rocm` is already running on your host:
+```bash
+docker run -d -p 3000:8080 \
+  --add-host=host.docker.internal:host-gateway \
+  -e OPENAI_API_BASE_URL=http://host.docker.internal:8000/v1 \
+  -e OPENAI_API_KEY=sk-no-key \
+  -v open-webui-data:/app/backend/data \
+  --name open-webui \
+  --restart unless-stopped \
+  ghcr.io/open-webui/open-webui:main
+```
+
+### Option C: Connect an Existing Open WebUI Instance
 1. In Open WebUI, navigate to **Settings** > **Admin Settings** > **Connections**.
 2. Under **OpenAI API**, set:
-   - **API Base URL:** `http://localhost:8000/v1` (or `http://host.docker.internal:8000/v1` if running Open WebUI in Docker)
+   - **API Base URL:** `http://localhost:8000/v1` (or `http://host.docker.internal:8000/v1` if in Docker)
    - **API Key:** `sk-no-key`
 3. Click **Verify Connection**.
-4. In the model dropdown on the main chat page, select `qwen38-27b` (or `Qwen3.8-27B-ROCmFP4-FAST`).
+4. Select `qwen38-27b` from the model selector dropdown.
 
 ---
 
-## 2. Continue.dev (VS Code / JetBrains Code Assistant)
+## 2. LibreChat
 
-[Continue](https://continue.dev) is an open-source AI code assistant that integrates directly into VS Code and JetBrains IDEs.
+[LibreChat](https://github.com/danny-avila/LibreChat) is an open-source AI chat platform.
 
-Add the following to your `~/.continue/config.json`:
+Add the following to your `librechat.yaml`:
+
+```yaml
+endpoints:
+  custom:
+    - name: "Qwen 3.8 27B ROCmFP4"
+      apiKey: "sk-no-key"
+      baseURL: "http://localhost:8000/v1"
+      models:
+        default: ["qwen38-27b"]
+        fetch: true
+      titleConvo: true
+      modelDisplayLabel: "Qwen 3.8 27B"
+```
+
+---
+
+## 3. Desktop Clients (Chatbox, NextChat, TypingMind)
+
+For native desktop apps like **Chatbox**, **NextChat**, **Msty**, or **TypingMind**:
+
+1. Open **Settings** > **Model Provider** > **OpenAI API**.
+2. **API Host / Base URL:** `http://localhost:8000` (or `http://localhost:8000/v1`)
+3. **API Key:** `sk-no-key`
+4. **Model Name:** `qwen38-27b`.
+
+---
+
+## 4. Continue.dev (VS Code & JetBrains)
+
+[Continue.dev](https://continue.dev) connects inline coding assistants to local models.
+
+Add the following to `~/.continue/config.json`:
 
 ```json
 {
@@ -54,50 +118,23 @@ Add the following to your `~/.continue/config.json`:
 
 ---
 
-## 3. Cursor IDE
+## 5. Cursor IDE
 
 In Cursor Settings:
 1. Open **Cursor Settings** > **Models**.
 2. Under **OpenAI API Key**, enter `sk-no-key`.
-3. Enable **Override OpenAI Base URL** and enter:
+3. Enable **Override OpenAI Base URL** and set:
    ```
    http://localhost:8000/v1
    ```
-4. Add model name: `qwen38-27b`.
+4. Add model: `qwen38-27b`.
 
 ---
 
-## 4. Python OpenAI SDK
-
-```python
-from openai import OpenAI
-
-client = OpenAI(
-    base_url="http://localhost:8000/v1",
-    api_key="sk-no-key"
-)
-
-response = client.chat.completions.create(
-    model="qwen38-27b",
-    messages=[
-        {"role": "system", "content": "You are an expert systems programmer."},
-        {"role": "user", "content": "Write an asynchronous token queue in Rust using tokio channels."}
-    ],
-    temperature=0.7,
-    max_tokens=500
-)
-
-print(response.choices[0].message.content)
-```
-
----
-
-## 5. LiteLLM Proxy
-
-To proxy multiple local and remote models with unified rate limiting and logging:
+## 6. LiteLLM Proxy (Multi-Model Routing)
 
 ```yaml
-# config.yaml
+# litellm_config.yaml
 model_list:
   - model_name: qwen38-strix
     litellm_params:
@@ -106,7 +143,7 @@ model_list:
       api_key: sk-no-key
 ```
 
-Run proxy:
+Run LiteLLM proxy:
 ```bash
-litellm --config config.yaml --port 4000
+litellm --config litellm_config.yaml --port 4000
 ```

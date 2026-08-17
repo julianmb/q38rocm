@@ -20,6 +20,8 @@ By combining **ROCmFP4 block quantization (4.26 bpw)**, **MTP (Multi-Token Predi
 ---
 
 ## 📑 Table of Contents
+- [Why ROCmFP4 Improves Performance](#-why-rocmfp4-improves-performance)
+- [Integration with Upstream ROCmFPX](#-integration-with-upstream-rocmfpx)
 - [Performance Matrix & Benchmarks](#-performance-matrix--benchmarks)
 - [Context Scaling & Memory Budget](#-context-scaling--memory-budget)
 - [Heterogeneous Architecture: iGPU + NPU](#-heterogeneous-architecture-igpu--xdna-2-npu-sidecar)
@@ -29,6 +31,71 @@ By combining **ROCmFP4 block quantization (4.26 bpw)**, **MTP (Multi-Token Predi
 - [Troubleshooting & Hardware Tweaks](#-troubleshooting--hardware-tweaks)
 - [Repository Structure](#-repository-structure)
 - [License & Attribution](#-license--attribution)
+
+---
+
+## 🔬 Why ROCmFP4 Improves Performance
+
+Understanding why **ROCmFP4 delivers 30–36 tok/s** on a 27B model while stock implementations run at 12 tok/s comes down to three architectural breakthroughs:
+
+### 1. Eliminating the Memory Bandwidth Bottleneck
+In auto-regressive LLM decoding, every generated token requires loading **100% of the active model weights** from RAM into GPU registers. On AMD Strix Halo's 256-bit unified memory bus (~190–200 GB/s sustained read bandwidth):
+
+$$\text{Theoretical Decode Throughput} = \frac{\text{Memory Bandwidth (GB/s)}}{\text{Model Weight Size (GB)}}$$
+
+- **FP16 (54.6 GB):** $200 / 54.6 \approx \mathbf{3.6\text{--}5.0 \text{ tok/s}}$
+- **Stock Q4_K_M (15.92 GB):** Complex multi-scale dequantization math adds compute overhead $\to \mathbf{12.27 \text{ tok/s}}$
+- **ROCmFP4_FAST (13.55 GB):** Slashes the memory transfer payload by **75.2% vs FP16** and **14.9% vs Q4_K_M**, raising raw streaming throughput to **14.02 tok/s**.
+
+```
+Weight Size vs Memory Bandwidth Barrier (27B Model on Strix Halo)
+┌────────────────────────────────────────────────────────────────────────┐
+│ FP16 (54.6 GB)       ████████████████████████████████████ (5.0 tok/s)  │
+│ Q4_K_M (15.9 GB)     ███████████ (12.27 tok/s)                        │
+│ ROCmFP4 (13.5 GB)    █████████ (14.02 tok/s unassisted)               │
+│ ROCmFP4 + MTP Spec   █████████ 🚀 🚀 🚀 (36.04 tok/s with speculation)│
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### 2. Hardware-Aligned Block Quantization (Block Size 32 + Wave64)
+- **Zero Dequantization Stalls:** Standard k-quants use complex hierarchical scales that require multiple arithmetic operations to unpack. `ROCmFP4` groups exactly **32 weights per shared FP16 scale factor**, matching RDNA 3.5 hardware vector register strides (32 elements per half-wave).
+- **Mesa RADV Cooperative Matrices (`KHR_coopmat`):** The Vulkan backend compiles dequantization and matrix multiply directly into Wave64 dual-issue SIMD instructions, executing memory fetch and dequantization in a single hardware pass.
+
+### 3. MTP Speculative Multiplication (14.0 $\to$ 36.0 tok/s)
+- **Sharp Logit Distributions:** Because `ROCmFP4` preserves attention projection precision and keeps the internal MTP draft heads in high precision (FP16 / Q8), draft candidate quality remains high (**75%–88% acceptance rate**).
+- **Multiple Tokens Per Memory Pass:** Instead of loading 13.55 GB to produce 1 token, the engine verifies 4 to 6 candidate tokens in parallel during a single memory sweep. This multiplies generation speed by **2.5× to 2.94×**, breaking past the physical 14 tok/s memory bus ceiling to reach **30.56 – 36.04 tok/s**.
+
+### 4. Asymmetric TurboQuant KV Cache
+- Traditional FP16 KV caches balloon rapidly at long context (61.4 GB at 262K context).
+- **Asymmetric TurboQuant (`-ctk q8_0 -ctv turbo4`)** keeps attention Keys in Q8 (preserving precise attention routing) while compressing Values to 4-bit, dropping 262K context memory from 61.4 GB to **20.08 GB**. This ensures 95%+ of memory bus bandwidth remains dedicated to model weight streaming.
+
+---
+
+## 🤝 Integration with Upstream ROCmFPX
+
+This repository (`julianmb/q38rocm`) builds on top of the open-source **[charlie12345/ROCmFPX](https://github.com/charlie12345/ROCmFPX)** toolchain:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                   UPSTREAM ENGINE: charlie12345/ROCmFPX                │
+│       (ROCm/Vulkan llama.cpp fork, RDNA 3.5 coopmat kernels)           │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ Built & Linked via build_engine.sh
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│               DEPLOYMENT STACK: julianmb/q38rocm                       │
+│  • Qwen 3.8 27B Quantized Weights Release (ROCmFP4 & ROCmFP8)          │
+│  • 1-Click Quickstart & Auto-Detecting Production OpenAI Server        │
+│  • Pre-Compiled Strix Halo Engine Binaries (v1.0.0 Release)            │
+│  • Streaming Terminal TUI Speedometer & Telemetry Dashboard            │
+│  • Multi-Prompt Benchmark & Context Scaling Verification Suite         │
+│  • Docker & Docker Compose Stack with Open WebUI Integration           │
+│  • Hardware Governor & Dynamic TTM Memory Auto-Configurator            │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+- **Engine Core:** Our build scripts (`./build_engine.sh`) fetch and build against pinned upstream commits (build `e87d53e (213)`) or download pre-compiled Strix Halo binaries from our release assets.
+- **Upstream Contributions:** Benchmark evidence, bug fixes, and calibration profiles are continuously contributed back to upstream ROCmFPX and the wider Strix Halo community.
 
 ---
 

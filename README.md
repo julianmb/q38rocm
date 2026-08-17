@@ -139,6 +139,15 @@ All benchmark results below were measured directly on **AMD Ryzen AI Max+ 395 (4
 | **Structured JSON Data Extraction** | 14.02 tok/s | **35.79 tok/s** | 88.0% | **2.55×** |
 | **Technical System Explanation** | 14.02 tok/s | **32.40 tok/s** | 76.2% | **2.31×** |
 
+### 🎯 Workload-Specific MTP Tuning Profiles
+
+| Workload Type | Optimal Profile | Recommended Launch Flags | Measured Single-Slot TPS | Measured Aggregate TPS |
+|---|---|---|---|---|
+| **Single-User Interactive Chat** | `n5 / p0.50` | `./run_server.sh --draft-n 5 --draft-p 0.50` | 🔥 **28.59 – 36.04 tok/s** | **28.59 – 36.04 tok/s** |
+| **Parallel Multi-Agent Slots (4-Way)** | `n6 / p0.60` | `./run_server.sh --slots 4 --draft-n 6 --draft-p 0.60` | **12.4 – 16.7 tok/s / slot** | 🔥 **23.15 (sustained) – 40.50 (burst) tok/s** |
+
+*Community Validation: 4 concurrent 131K slots run continuously under thermal soak at 71.88°C with zero GPU resets or OOM events (credit: MrWidmoreHK & kujetic).*
+
 ### Quantization Level Comparison (2-bit to 8-bit)
 
 | Quantization Format | Model Size | Effective BPW | Raw Unassisted Decode *(Measured)* | MTP Speculative Decode | Recommendation |

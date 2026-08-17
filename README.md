@@ -34,7 +34,9 @@ By combining **ROCmFP4 block quantization (4.26 bpw)**, **MTP (Multi-Token Predi
 
 ## ⚡ Performance Matrix & Benchmarks
 
-All benchmark results below were measured directly on **AMD Ryzen AI Max+ 395 (40 CU Radeon 8060S @ 2.9 GHz, 128 GB LPDDR5X-8000 @ 273 GB/s, Linux 7.0, Mesa 26.0 RADV)**:
+All benchmark results below were measured directly on **AMD Ryzen AI Max+ 395 (40 CU Radeon 8060S @ 2.9 GHz, 128 GB 256-bit LPDDR5X, Linux 7.0, Mesa 26.0 RADV)**. 
+
+*(Hardware Note: Strix Halo's 256-bit memory controller achieves a peak theoretical bandwidth of **273.06 GB/s** at LPDDR5X-8533 and **256.0 GB/s** at LPDDR5X-8000. Sustained unassisted decode bandwidth reaches **~190–200 GB/s**).*
 
 ### Optimization Stages (Qwen 3.8 27B)
 
@@ -44,7 +46,7 @@ All benchmark results below were measured directly on **AMD Ryzen AI Max+ 395 (4
 | **`ROCmFP4_FAST`** | 32K / TurboQuant KV | 14.02 tok/s | N/A | 1.14× | 468.3 ms |
 | **`ROCmFP4_FAST` + Strict Greedy MTP** | 32K / TurboQuant KV | 14.02 tok/s | **34.82 tok/s** | **2.84×** | 442.8 ms |
 | **`ROCmFP4_FAST` + MTP (`n6/p0.60`)** | 32K / TurboQuant KV | 14.02 tok/s | **30.56 – 34.82 tok/s** | **2.50× – 2.84×** | 439.4 ms |
-| **`ROCmFP4_FAST` + Deep Spec (`n7/p0.35`)** | 32K / TurboQuant KV | 14.02 tok/s | 🔥 **36.04 tok/s** | 🔥 **2.94×** | 445.8 ms |
+| **`ROCmFP4_FAST` + Deep Spec (`n7/p0.35`)** | 32K / TurboQuant KV | 14.02 tok/s | 🔥 **36.04 tok/s** *(JSON/Code)* | 🔥 **2.94×** | 445.8 ms |
 
 ### Task-Specific Speculative Speedup
 
@@ -249,7 +251,31 @@ By default, the Linux AMDGPU driver caps GPU memory allocations to 50% of system
   # For 128GB RAM (expands GPU ceiling to ~120 GiB):
   echo 31457280 | sudo tee /sys/module/ttm/parameters/pages_limit
   ```
-*(Or simply run `./apply_hardware_tweaks.sh`, which automatically detects your RAM and applies the correct limit).*
+### 4. Resolving "invalid device: Vulkan0"
+If your engine was compiled without `glslc` (Vulkan shader compiler), CMake silently disables the Vulkan backend and defaults to `ROCm0`.
+- To unlock full **36 tok/s Vulkan0 Wave64** speed, download the pre-compiled binary:
+  ```bash
+  ./build_engine.sh --prebuilt
+  ```
+- Or install the shader compiler and recompile:
+  ```bash
+  sudo apt install glslc libvulkan-dev mesa-vulkan-drivers
+  export GGML_VULKAN=ON
+  ./build_engine.sh
+  ```
+
+### 5. Controlling Reasoning / Thinking Budget (Preventing Runaway Thinking)
+Qwen 3.8 defaults to high reasoning depth. If an open-ended query produces thousands of thinking tokens:
+- **Cap the thinking budget** (e.g. 1024 tokens):
+  ```bash
+  ./run_server.sh --reasoning-budget 1024
+  ```
+- **Turn thinking off entirely** (instant responses):
+  ```bash
+  ./run_server.sh --reasoning off
+  ```
+- **Or via system prompt**:
+  `"Reasoning effort: low. Answer concisely without chain-of-thought."`
 
 ---
 

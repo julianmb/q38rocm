@@ -33,6 +33,8 @@ download_prebuilt() {
     rm -rf /tmp/strix-halo-rocmfpx-engine "${TAR_PATH}"
     
     echo "✅ Pre-built engine ready in: ${ENGINE_DIR}/bin"
+    echo "Verifying available hardware acceleration backends..."
+    "${ENGINE_DIR}/bin/llama-server" --list-devices 2>/dev/null || true
     echo "Run: source ./setup_env.sh"
     exit 0
 }
@@ -56,6 +58,18 @@ for tool in cmake git; do
         MISSING_TOOLS=1
     fi
 done
+
+# Check Vulkan shader compiler (glslc)
+if ! command -v glslc >/dev/null 2>&1; then
+    echo "⚠️  'glslc' (Vulkan shader compiler) not found."
+    echo "   Without glslc, CMake will produce a ROCm-only binary without Vulkan0 Wave64 support."
+    echo "   To compile with Vulkan, install: sudo apt install glslc libvulkan-dev mesa-vulkan-drivers"
+    read -p "Would you like to download the pre-compiled Strix Halo binaries instead? [Y/n] " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+        download_prebuilt
+    fi
+fi
 
 if [ "$MISSING_TOOLS" -eq 1 ]; then
     echo "Build tools are missing. Falling back to pre-compiled release download..."
@@ -109,5 +123,7 @@ fi
 echo "================================================================================"
 echo " ✅ Build Complete!"
 echo " Binaries installed to: ${ENGINE_DIR}/bin"
+echo " Detected backends on host:"
+"${ENGINE_DIR}/bin/llama-server" --list-devices 2>/dev/null || true
 echo " Export environment:    source ./setup_env.sh"
 echo "================================================================================"

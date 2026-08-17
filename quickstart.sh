@@ -9,11 +9,12 @@ set -eo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${SCRIPT_DIR}"
 
-# 1. Environment Setup
 source "${SCRIPT_DIR}/setup_env.sh"
 
 PORT="${PORT:-8000}"
 HOST="127.0.0.1"
+REASONING="${REASONING:-auto}"
+REASONING_BUDGET="${REASONING_BUDGET:-4096}"
 MODEL_FILE="${SCRIPT_DIR}/Qwen3.8-27B-ROCmFP4-FAST.gguf"
 FALLBACK_MODEL="/home/user/source/strix-halo-rocmfpx-hub/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf"
 
@@ -21,7 +22,7 @@ echo "==========================================================================
 echo " 🚀 Qwen 3.8 27B ROCmFP4_FAST — Strix Halo 1-Command Quickstart"
 echo "================================================================================"
 
-# 2. Check Model Weights
+# 1. Check Model Weights
 if [ ! -f "$MODEL_FILE" ] && [ -f "$FALLBACK_MODEL" ]; then
     MODEL_FILE="$FALLBACK_MODEL"
 fi
@@ -37,7 +38,7 @@ if [ ! -f "$MODEL_FILE" ]; then
     ./download_model.sh
 fi
 
-# 3. Locate llama-server
+# 2. Locate llama-server
 LLAMA_SERVER_BIN="$(which llama-server 2>/dev/null || true)"
 if [ -z "$LLAMA_SERVER_BIN" ] && [ -x "${SCRIPT_DIR}/engine/bin/llama-server" ]; then
     LLAMA_SERVER_BIN="${SCRIPT_DIR}/engine/bin/llama-server"
@@ -47,8 +48,20 @@ fi
 
 if [ -z "$LLAMA_SERVER_BIN" ]; then
     echo "❌ Error: llama-server executable not found!"
-    echo "Please build the engine with ./build_engine.sh or download pre-built binaries."
-    exit 1
+    echo "Downloading pre-compiled Strix Halo binaries..."
+    ./build_engine.sh --prebuilt
+    LLAMA_SERVER_BIN="${SCRIPT_DIR}/engine/bin/llama-server"
+fi
+
+# 3. Device Detection
+AVAILABLE_DEVICES="$("${LLAMA_SERVER_BIN}" --list-devices 2>/dev/null || true)"
+if echo "$AVAILABLE_DEVICES" | grep -q "Vulkan0"; then
+    DEVICE="Vulkan0"
+elif echo "$AVAILABLE_DEVICES" | grep -q "ROCm0"; then
+    DEVICE="ROCm0"
+    echo "⚠️  [NOTICE] Vulkan0 not present in current binary. Using ROCm0 (~28 tok/s)."
+else
+    DEVICE="CPU"
 fi
 
 # 4. Check If Port is Already Active
@@ -62,33 +75,43 @@ fi
 # 5. Start Background Server
 SERVER_LOG="${SCRIPT_DIR}/server.log"
 echo "Starting ROCmFPX llama-server in background..."
-echo "  • Backend:       Vulkan0 (Mesa RADV STRIX_HALO Wave64 KHR_coopmat)"
+echo "  • Backend:       ${DEVICE}"
 echo "  • Model:         $(basename "$MODEL_FILE")"
 echo "  • Speculation:   MTP Speculative Decoding (n_max=6, p_min=0.60)"
-echo "  • KV Cache:      Asymmetric TurboQuant (K=q8_0, V=turbo4)"
+echo "  • Reasoning:     ${REASONING} (Budget cap: ${REASONING_BUDGET} tokens)"
 echo "  • Logs:          ${SERVER_LOG}"
 echo "--------------------------------------------------------------------------------"
 
-"${LLAMA_SERVER_BIN}" \
-    -m "${MODEL_FILE}" \
-    -dev Vulkan0 \
-    -ngl 99 \
-    -fa on \
-    -np 1 \
-    -ctxcp 0 \
-    -cram 16384 \
-    -c 32768 \
-    -b 2048 \
-    -ub 1024 \
-    -t 16 \
-    --poll 100 \
-    -ctk q8_0 \
-    -ctv turbo4 \
-    --port "${PORT}" \
-    --host "${HOST}" \
-    --spec-type draft-mtp \
-    --spec-draft-n-max 6 \
-    --spec-draft-p-min 0.60 > "${SERVER_LOG}" 2>&1 &
+CMD=(
+    "${LLAMA_SERVER_BIN}"
+    "-m" "${MODEL_FILE}"
+    "-dev" "${DEVICE}"
+    "-ngl" "99"
+    "-fa" "on"
+    "-np" "1"
+    "-ctxcp" "0"
+    "-cram" "16384"
+    "-c" "32768"
+    "-b" "2048"
+    "-ub" "1024"
+    "-t" "16"
+    "--poll" "100"
+    "-ctk" "q8_0"
+    "-ctv" "turbo4"
+    "--port" "${PORT}"
+    "--host" "${HOST}"
+    "--spec-type" "draft-mtp"
+    "--spec-draft-n-max" "6"
+    "--spec-draft-p-min" "0.60"
+)
+
+if [ "$REASONING" == "off" ]; then
+    CMD+=("--reasoning" "off")
+elif [ -n "$REASONING_BUDGET" ]; then
+    CMD+=("--reasoning-budget" "${REASONING_BUDGET}")
+fi
+
+"${CMD[@]}" > "${SERVER_LOG}" 2>&1 &
 SERVER_PID=$!
 
 cleanup() {

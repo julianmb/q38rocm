@@ -305,6 +305,24 @@ Connect your local developer tools and IDEs directly to the OpenAI-compatible AP
 
 ---
 
+## 🐳 Docker Deployment Options
+
+If you prefer running inside a container or want a pre-configured Docker Compose stack with optional Open WebUI integration, see the **[rocmfpx-server Docker Deployment Guide](https://github.com/julianmb/rocmfpx-server/blob/main/docs/DOCKER_GUIDE.md)**:
+
+```bash
+# Clone the unified server repo
+git clone https://github.com/julianmb/rocmfpx-server.git
+cd rocmfpx-server
+
+# Option A: Standalone server
+docker compose up -d
+
+# Option B: Server + Open WebUI chat browser
+docker compose --profile webui up -d
+```
+
+---
+
 ## 🛠️ Building the Engine
 
 To compile the ROCmFPX engine from source for Strix Halo (gfx1151):

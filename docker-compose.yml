@@ -14,7 +14,7 @@ services:
       - HIP_VISIBLE_DEVICES=0
       - AMD_VULKAN_ICD=RADV
       - RADV_PERFTEST=gpl,sam,nggc
-      - CTX=32768
+      - CTX=262144
       - PORT=8000
       # For Strix Halo APU, uncomment:
       # - HSA_OVERRIDE_GFX_VERSION=11.5.1

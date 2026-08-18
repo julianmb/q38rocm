@@ -3,7 +3,7 @@
 # run_inference.sh — Strix Halo Unified Memory Inference Runner
 # ==============================================================================
 # Usage: ./scripts/run_inference.sh [cli|server] [speed|quality] /path/to/model.gguf
-# Env:   CTX_SIZE (default: cli=8192, server=32768)
+# Env:   CTX_SIZE (default: cli=8192, server=262144)
 set -euo pipefail
 
 MODE="${1:-cli}"
@@ -38,7 +38,7 @@ export GGML_HIP_ENABLE_UNIFIED_MEMORY=1
 # Context size handling
 if [ -z "${CTX_SIZE:-}" ]; then
     if [ "$MODE" == "server" ]; then
-        CTX_SIZE=32768
+        CTX_SIZE=262144
     else
         CTX_SIZE=8192
     fi

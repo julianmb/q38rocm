@@ -133,7 +133,7 @@ class StrixHaloHybridPipeline:
             "--port", str(self.gpu_port), "--host", "127.0.0.1",
             "--device", self.device,
             "--spec-type", "draft-mtp", "--spec-draft-n-max", str(self.draft_n),
-            "-ngl", "99", "-fa", "1", "-c", "32768", "-b", "2048", "-ub", "2048",
+            "-ngl", "99", "-fa", "1", "-c", "262144", "-b", "2048", "-ub", "2048",
             "--no-mmap", "--reasoning", "off",
         ]
         env = os.environ.copy()

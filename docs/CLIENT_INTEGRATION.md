@@ -102,7 +102,7 @@ Add the following to `~/.continue/config.json`:
       "model": "qwen38-27b",
       "apiBase": "http://localhost:8000/v1",
       "apiKey": "sk-no-key",
-      "contextLength": 32768,
+      "contextLength": 262144,
       "roles": ["chat", "edit"]
     }
   ],

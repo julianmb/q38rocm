@@ -206,9 +206,9 @@ def main():
     p_serve.add_argument("-m", "--model", type=str, default=None, help="Target GGUF model path")
     p_serve.add_argument("--port", type=int, default=8080, help="Server HTTP port")
     p_serve.add_argument("--host", type=str, default="127.0.0.1", help="Server bind host")
-    p_serve.add_argument("-c", "--ctx", type=int, default=32768, help="Context size")
-    p_serve.add_argument("-n", "--draft-n", type=int, default=6, help="Max draft tokens per speculation step")
-    p_serve.add_argument("-p", "--draft-p", type=float, default=0.60, help="Min probability acceptance threshold")
+    p_serve.add_argument("-c", "--ctx", type=int, default=262144, help="Context size")
+    p_serve.add_argument("-n", "--draft-n", type=int, default=4, help="Max draft tokens per speculation step")
+    p_serve.add_argument("-p", "--draft-p", type=float, default=0.0, help="Min probability acceptance threshold")
     p_serve.add_argument("--strict", action="store_true", help="Enable strict lossless greedy equivalence")
 
     args = parser.parse_args()

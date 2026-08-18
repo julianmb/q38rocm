@@ -103,8 +103,8 @@ CMD=(
     "--port" "${PORT}"
     "--host" "${HOST}"
     "--spec-type" "draft-mtp"
-    "--spec-draft-n-max" "6"
-    "--spec-draft-p-min" "0.60"
+    "--spec-draft-n-max" "4"
+    "--spec-draft-p-min" "0.0"
 )
 
 if [ "$REASONING" == "off" ]; then

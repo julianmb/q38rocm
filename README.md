@@ -1,5 +1,7 @@
 # Qwen 3.8 27B ROCmFP4_FAST on AMD Strix Halo (Ryzen AI Max+ 395)
 
+> 📦 **Dedicated Model Project:** This repository is the dedicated deep-dive project for **Qwen 3.8 27B** on AMD Strix Halo. For the unified multi-model server (Nemotron 3.5 30B, Ornith 35B, DeepSeek V4 Flash 284B, hot-swapping) and support for other AMD GPUs (like the **Radeon RX 9070 XT**), visit the **[rocmfpx-server](https://github.com/julianmb/rocmfpx-server)** repository.
+
 [![Hugging Face](https://img.shields.io/badge/🤗%20Hugging%20Face-julianmb%2FQwen--3.8--27B--ROCmFP4--FAST--GGUF-ffd21e.svg)](https://huggingface.co/julianmb/Qwen-3.8-27B-ROCmFP4-FAST-GGUF)
 [![Hardware](https://img.shields.io/badge/Hardware-AMD_Strix_Halo_(gfx1151)-ED1C24?logo=amd)](https://www.amd.com)
 [![Vulkan](https://img.shields.io/badge/Driver-Mesa_RADV_Wave64-FF5722?logo=vulkan)](https://mesa3d.org)

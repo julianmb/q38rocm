@@ -1,33 +1,36 @@
 services:
-  # Standalone Qwen 3.8 27B Server (Default: docker compose up)
+  # Standalone Qwen 3.8 27B Server (Default: docker compose up -d)
+  # Works on Linux & Windows (Docker Desktop with WSL2 backend)
   qwen38-server:
     build:
       context: .
       dockerfile: Dockerfile
-    image: qwen38-rocmfp4-strix:latest
+    image: ghcr.io/julianmb/q38rocm:latest
     container_name: qwen38-strix-server
     restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
-      - HSA_OVERRIDE_GFX_VERSION=11.5.1
-      - GGML_HIP_ENABLE_UNIFIED_MEMORY=1
       - HIP_VISIBLE_DEVICES=0
       - AMD_VULKAN_ICD=RADV
-      - VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/radeon_icd.json
       - RADV_PERFTEST=gpl,sam,nggc
       - CTX=32768
       - PORT=8000
+      # For Strix Halo APU, uncomment:
+      # - HSA_OVERRIDE_GFX_VERSION=11.5.1
+      # - GGML_HIP_ENABLE_UNIFIED_MEMORY=1
     devices:
       - /dev/kfd:/dev/kfd
       - /dev/dri:/dev/dri
-      - /dev/accel/accel0:/dev/accel/accel0
+      # If using AMD XDNA NPU on Strix Halo, uncomment:
+      # - /dev/accel/accel0:/dev/accel/accel0
     group_add:
       - video
       - render
     volumes:
       - ./Qwen3.8-27B-ROCmFP4-FAST.gguf:/app/models/Qwen3.8-27B-ROCmFP4-FAST.gguf:ro
       - ./models:/app/models
+      - hf-cache:/root/.cache/huggingface/hub
     ipc: host
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -36,7 +39,7 @@ services:
       retries: 5
       start_period: 30s
 
-  # Optional Open WebUI Chat Interface (Launch via: docker compose --profile webui up)
+  # Optional Open WebUI Chat Interface (Launch via: docker compose --profile webui up -d)
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     container_name: qwen38-open-webui
@@ -57,4 +60,5 @@ services:
         condition: service_healthy
 
 volumes:
+  hf-cache:
   open-webui-data:

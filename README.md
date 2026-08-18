@@ -305,21 +305,21 @@ Connect your local developer tools and IDEs directly to the OpenAI-compatible AP
 
 ---
 
-## 🐳 Docker Deployment Options
+## 🐳 Docker Deployment Options (Linux & Windows WSL2)
 
-If you prefer running inside a container or want a pre-configured Docker Compose stack with optional Open WebUI integration, see the **[rocmfpx-server Docker Deployment Guide](https://github.com/julianmb/rocmfpx-server/blob/main/docs/DOCKER_GUIDE.md)**:
+You can run Qwen 3.8 27B in a container with full AMD GPU passthrough on **Linux** or **Windows (Docker Desktop with WSL2 backend)**:
 
 ```bash
-# Clone the unified server repo
-git clone https://github.com/julianmb/rocmfpx-server.git
-cd rocmfpx-server
-
-# Option A: Standalone server
+# Option A: Standalone High-Performance Server
 docker compose up -d
 
-# Option B: Server + Open WebUI chat browser
+# Option B: Server + Open WebUI Chat Browser
 docker compose --profile webui up -d
 ```
+
+👉 **See the complete [Docker Deployment Guide (docs/DOCKER_GUIDE.md)](docs/DOCKER_GUIDE.md)** for Windows WSL2 prerequisites, device passthrough, and direct `docker run` commands.
+
+*(For multi-model serving across Nemotron, Ornith, and DeepSeek, see the [rocmfpx-server](https://github.com/julianmb/rocmfpx-server) container stack).*
 
 ---
 

@@ -1,2 +1,3 @@
-# Python dependencies for Strix Halo benchmarks & TUI
+# Python dependencies for Strix Halo benchmarks, TUI & hybrid NPU pipeline
 requests>=2.31.0
+aiohttp>=3.9.0

@@ -117,18 +117,63 @@ lemonade backends --all
 lemonade backends install flm:npu
 ```
 
----
-
-## 4. Hybrid Pipeline (optional, advanced)
-
-The `npuhalo` research workspace (`/home/user/source/npuhalo/`) contains a hybrid pipeline that bursts the prompt prefix on the NPU, then hands off to the iGPU for verification:
+### 3.5 Pull & load the NPU drafter model
 
 ```bash
-cd /home/user/source/npuhalo
-python3 scripts/run_pipeline.py --device Vulkan0 --draft-n 4 --npu-burst-tokens 24
+# Pull the 0.8B NPU drafter (small, ~0.2 GB)
+lemonade pull qwen3.5-0.8b-FLM
+
+# Load it onto the NPU
+lemonade load qwen3.5-0.8b-FLM
+# -> "Model loaded successfully!"
 ```
 
-This serves an OpenAI-compatible API on port **11435** with the 1.8× first-token speedup.
+---
+
+## 4. Getting the TTFT Speedup — Run the Hybrid Pipeline
+
+The TTFT improvement comes from a hybrid pipeline that streams the **first ~24 tokens from the NPU instantly** (~347 ms), then hands off to the 27B iGPU model for the authoritative continuation. The pipeline is included in this repo.
+
+### 4.1 Prerequisites
+- Qwen 3.8 27B weights downloaded (`./download_model.sh`).
+- ROCmFPX engine built (`./build_engine.sh`).
+- NPU set up per section 3 (IOMMU, XRT, Lemonade + `qwen3.5-0.8b-FLM` loaded).
+
+### 4.2 Install the pipeline dependency
+```bash
+pip install -r requirements.txt   # adds aiohttp
+```
+
+### 4.3 Launch the hybrid pipeline
+```bash
+# Foreground (recommended for first run — watch the logs)
+python3 scripts/run_pipeline.py --device Vulkan0 --draft-n 4
+
+# Or daemonize (double-fork, logs to /tmp/pipeline.log)
+python3 scripts/launch_pipeline.py --device Vulkan0 --draft-n 4
+```
+
+This starts an OpenAI-compatible endpoint on **port 11435**:
+- It launches the iGPU server (Qwen 3.8 ROCmFP4 + embedded MTP K=4) on port 8012.
+- It probes Lemonade for the NPU drafter. If the NPU is available, requests get the **NPU burst → iGPU handoff** path.
+
+### 4.4 Verify the TTFT improvement
+
+```bash
+# Health check (confirms NPU is on)
+curl http://127.0.0.1:11435/health
+# -> "npu_available": true
+
+# Measure TTFT with the hybrid pipeline
+curl -s http://127.0.0.1:11435/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"messages":[{"role":"user","content":"Write a long technical explanation of IOMMU SVA."}],"stream":true}'
+
+# Compare against iGPU-only (baseline ~1587 ms long-prompt TTFT)
+./run_server.sh
+```
+
+**Expected result:** the first token arrives in **~870 ms** (vs ~1587 ms iGPU-only) — a **1.8× first-token speedup** on long prompts. Sustained decode stays at 33.8 tok/s (the NPU does not help there).
 
 ---
 

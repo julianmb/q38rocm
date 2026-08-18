@@ -230,7 +230,12 @@ source /opt/xilinx/xrt/setup.sh
 xrt-smi examine          # should list "RyzenAI-npu5 / aie2p"
 
 # 3. NPU inference runtime comes via Lemonade's FastFlowLM (flm) backend
-lemonade backends --all  # flm:npu backend
+lemonade backends install flm:npu
+lemonade pull qwen3.5-0.8b-FLM
+lemonade load qwen3.5-0.8b-FLM
+
+# 4. Run the hybrid pipeline (NPU burst -> iGPU handoff) for the 1.8x TTFT gain
+python3 scripts/run_pipeline.py --device Vulkan0 --draft-n 4
 ```
 
 See [`docs/NPU_INTEGRATION.md`](docs/NPU_INTEGRATION.md) for the complete setup, the hybrid burst pipeline, and the negative results that shaped this design.
@@ -420,6 +425,8 @@ Qwen 3.8 defaults to high reasoning depth. If an open-ended query produces thous
     ├── benchmark.py           # Multi-stage automated benchmark runner
     ├── tune_mtp.py            # Automated MTP parameter sweep optimizer
     ├── convert_and_quant.sh   # ROCmFP4 quantization script
+    ├── run_pipeline.py        # Hybrid NPU-burst -> iGPU pipeline (1.8x TTFT, optional)
+    ├── launch_pipeline.py     # Daemonize launcher for the hybrid pipeline
     └── npu_sidecar_drafter.py # AMD XDNA 2 NPU sidecar orchestrator & simulator
 ```
 > 📘 **NPU research:** See [`docs/NPU_INTEGRATION.md`](docs/NPU_INTEGRATION.md) for the optional XDNA 2 NPU acceleration guide and full empirical findings.

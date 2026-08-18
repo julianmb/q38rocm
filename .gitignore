@@ -5,3 +5,5 @@ __pycache__/
 *.tmp
 .DS_Store
 xdna-driver/
+engine/bin
+models/

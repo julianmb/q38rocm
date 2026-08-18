@@ -78,10 +78,38 @@ def detect_repetition(text: str, n_gram_size: int = 3, threshold: int = 6) -> bo
     counts = Counter(ngrams)
     return any(count >= threshold for count in counts.values())
 
-def run_prompt_benchmark(host, port, prompt_data):
+def get_active_model(host: str, port: int) -> str:
+    # Try rocmfpx management endpoint
+    try:
+        url = f"http://{host}:{port}/api/v1/status"
+        with urllib.request.urlopen(url, timeout=2) as r:
+            data = json.loads(r.read().decode())
+            m = data.get("engine", {}).get("model_id")
+            if m:
+                return m
+    except Exception:
+        pass
+    
+    # Try OpenAI models endpoint
+    try:
+        url = f"http://{host}:{port}/v1/models"
+        with urllib.request.urlopen(url, timeout=2) as r:
+            data = json.loads(r.read().decode())
+            models = data.get("data", [])
+            for item in models:
+                if item.get("is_active"):
+                    return item.get("id")
+            if models:
+                return models[0].get("id", "qwen38-27b")
+    except Exception:
+        pass
+
+    return "qwen38-27b"
+
+def run_prompt_benchmark(host, port, prompt_data, model_name="qwen38-27b"):
     url = f"http://{host}:{port}/v1/chat/completions"
     payload = json.dumps({
-        "model": "qwen38-27b",
+        "model": model_name,
         "messages": [{"role": "user", "content": prompt_data["prompt"]}],
         "max_tokens": prompt_data["max_tokens"],
         "temperature": 0.0
@@ -127,7 +155,8 @@ def run_prompt_benchmark(host, port, prompt_data):
         return None
 
 def main():
-    parser = argparse.ArgumentParser(description="Strix Halo Benchmark Reporter")
+    parser = argparse.ArgumentParser(description="ROCmFPX Benchmark Reporter")
+    parser.add_argument("--model", type=str, default=None, help="Target model identifier (auto-detected if omitted)")
     parser.add_argument("--port", type=int, default=8000, help="Server port (default: 8000)")
     parser.add_argument("--host", default="127.0.0.1", help="Server host (default: 127.0.0.1)")
     parser.add_argument("--export-dir", default=str(BENCHMARK_DIR), help="Directory to save reports")
@@ -139,11 +168,13 @@ def main():
         with urllib.request.urlopen(health_url, timeout=5) as r:
             pass
     except Exception:
-        print(f"❌ Server not reachable on {health_url}. Please start server with ./run_server.sh or ./quickstart.sh.")
+        print(f"❌ Server not reachable on {health_url}. Please start server with ./run_server.sh or rocmfpx serve.")
         sys.exit(1)
 
+    model_name = args.model or get_active_model(args.host, args.port)
+
     print("\n" + "=" * 80)
-    print(bold(" 📊 RUNNING QWEN 3.8 27B STRIX HALO BENCHMARK SUITE"))
+    print(bold(f" 📊 RUNNING ROCmFPX BENCHMARK SUITE — Model: {model_name}"))
     print("=" * 80)
     
     telemetry = get_system_telemetry()
@@ -155,7 +186,7 @@ def main():
     results = []
     for idx, p in enumerate(BENCHMARK_PROMPTS, 1):
         print(f"[{idx}/{len(BENCHMARK_PROMPTS)}] Benchmarking: {yellow(p['name'])}...", end="", flush=True)
-        res = run_prompt_benchmark(args.host, args.port, p)
+        res = run_prompt_benchmark(args.host, args.port, p, model_name=model_name)
         if res:
             results.append(res)
             tps_val = res['decode_tps']

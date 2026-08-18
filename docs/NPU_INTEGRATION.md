@@ -6,6 +6,14 @@ This document is the complete reference for optionally accelerating **Qwen 3.8 2
 
 > ⚠️ **Scope note:** All NPU findings, benchmarks, and the hybrid pipeline below were **only tested on Qwen 3.8 27B** (dense, ROCmFP4_FAST).
 
+> 🐧 **Platform note:** The entire NPU stack documented here (IOMMU SVA, XRT, FastFlowLM) is **Linux-specific and empirically validated on Linux**. **Windows users:** the same hybrid TTFT pipeline works via Lemonade's `oga` (Ryzen AI / ONNX Runtime GenAI) NPU backend — see [Section 6: Windows Support](#6-windows-support-via-lemonade-oga--ryzen-ai). WSL2 does **not** expose the XDNA NPU to guests.
+
+| Platform | NPU Access Path | Hybrid Pipeline | Status |
+|---|---|---|---|
+| **Linux** (native) | `/dev/accel/accel0` + XRT + FastFlowLM (`flm:npu`) | ✅ Validated (1.8× TTFT measured) | ✅ **Reference platform** |
+| **Windows 11** (native) | AMD NPU driver + Lemonade `oga` backend | ✅ Supported (same OpenAI-compatible pipeline) | ⚙️ Supported, not benchmark-validated |
+| **Windows (WSL2)** | No XDMA NPU passthrough | ❌ NPU not visible in WSL2 | ❌ Not supported |
+
 ---
 
 ## 1. Hardware & System Context
@@ -183,3 +191,32 @@ The full empirical study lives in `/home/user/source/npuhalo/`:
 - `docs/REPORT.md` — full technical report (tools, code, paths, findings).
 - `docs/final_verdict.md` — reconciled verdict and forward-path assessment.
 - `docs/HYBRID_NPU_PIPELINE.md` — hybrid architecture guide.
+
+---
+
+## 6. Windows Support (via Lemonade OGA / Ryzen AI)
+
+The hybrid burst pipeline is cross-platform. On Windows 11 (native):
+- **NPU Backend:** Served by **Lemonade's `oga` backend** (ONNX Runtime GenAI with AMD Ryzen AI / Vitis AI Execution Provider) instead of Linux FastFlowLM.
+- **iGPU Target:** Runs via the Vulkan backend (`llama-server.exe -dev Vulkan0`), which works natively on Radeon 8060S under Windows.
+
+### Windows 11 Setup Steps (PowerShell)
+
+```powershell
+# 1. Install Lemonade SDK
+pip install lemonade-sdk
+
+# 2. Install and verify ONNX Runtime GenAI NPU backend
+lemonade backends install oga
+lemonade backends --all
+
+# 3. Pull and load lightweight NPU drafter
+lemonade pull Qwen2.5-0.5B-Instruct-oga
+lemonade load Qwen2.5-0.5B-Instruct-oga
+
+# 4. Run the hybrid pipeline pointing to the Windows Lemonade endpoint
+python scripts\run_pipeline.py --device Vulkan0 `
+    --npu-url http://127.0.0.1:8000 --npu-model Qwen2.5-0.5B-Instruct-oga
+```
+
+> **Note on WSL2:** The AMD XDNA NPU driver does **not** currently support virtualization passthrough to WSL2 containers/VMs. For NPU acceleration, run the pipeline natively on Windows or natively on Linux.

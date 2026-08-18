@@ -16,7 +16,7 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).resolve().parent.parent
 BENCHMARK_DIR = ROOT_DIR / "benchmarks"
 
-CONTEXT_DEPTHS = [1024, 4096, 32768, 131072, 262144]
+CONTEXT_DEPTHS = [4096, 16384, 32768, 131072, 262144]
 
 def color(text, code): return f"\033[{code}m{text}\033[0m"
 def green(text): return color(text, "1;32")

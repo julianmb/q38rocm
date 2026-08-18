@@ -77,12 +77,12 @@ CMD_STD=(
     -r "$REPEATS"
 )
 
-# Test 2: Context Scaling Suite (512 to 262144 prompt fill)
+# Test 2: Context Scaling Suite (4K to 262K prompt fill)
 CMD_CTX=(
     "$BENCH_BIN"
     -m "$MODEL_PATH"
     -dev "$DEVICE" -ngl 999 -fa on
-    -p "512,4096,32768,131072,262144" -n 0
+    -p "4096,16384,32768,131072,262144" -n 0
     -ctk "$KV_K" -ctv "$KV_V"
     -r 1
 )

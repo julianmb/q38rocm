@@ -174,7 +174,7 @@ def main():
 
     # 3. Context Memory Matrix (using primary STRIX_LEAN quant)
     strix_lean_gb = weight_sizes.get("Q4_0_ROCMFP4_STRIX_LEAN", weight_sizes["Q4_0_ROCMFP4_COHERENT"])
-    contexts = [4096, 32768, 131072, 262144]
+    contexts = [4096, 16384, 32768, 131072, 262144]
 
     print("\n3. Total System RAM Footprint vs Context Length (STRIX_LEAN + q8_0/turbo4 KV):")
     print("   -----------------------------------------------------------------------------------------")

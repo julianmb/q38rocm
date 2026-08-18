@@ -26,7 +26,7 @@ By combining **ROCmFP4 block quantization (4.26 bpw)**, **MTP (Multi-Token Predi
 - [Integration with Upstream ROCmFPX](#-integration-with-upstream-rocmfpx)
 - [Performance Matrix & Benchmarks](#-performance-matrix--benchmarks)
 - [Context Scaling & Memory Budget](#-context-scaling--memory-budget)
-- [Heterogeneous Architecture: iGPU + NPU](#-heterogeneous-architecture-igpu--xdna-2-npu-sidecar)
+- [Optional: AMD XDNA 2 NPU Acceleration](#-optional-amd-xdna-2-npu-acceleration)
 - [Backend Crossover Rule](#-backend-crossover-rule)
 - [Quick Start Guide](#-quick-start)
 - [Building the Engine](#-building-the-engine)
@@ -196,33 +196,44 @@ Thanks to **Asymmetric TurboQuant KV cache** (`-ctk q8_0 -ctv turbo4`) and Qwen 
 
 ---
 
-## 🧠 Heterogeneous Architecture: iGPU + XDNA 2 NPU Sidecar
+## 🧠 Optional: AMD XDNA 2 NPU Acceleration
 
-AMD Strix Halo integrates a **50 TOPS XDNA 2 NPU** at `/dev/accel/accel0` (`amdxdna` kernel module).
+> **Note:** NPU acceleration is **fully optional** — the server runs great without it. The NPU does **not** improve sustained decode speed; it helps first-token latency and background routing. See the full technical report in [`docs/NPU_INTEGRATION.md`](docs/NPU_INTEGRATION.md).
 
+> ⚠️ **Scope note:** All NPU findings below were **only tested on Qwen 3.8 27B** (dense, ROCmFP4_FAST).
+
+AMD Strix Halo integrates a **50 TOPS XDNA 2 NPU** at `/dev/accel/accel0` (`amdxdna` kernel module). After extensive empirical benchmarking (`npuhalo` research workspace), here is the definitive verdict:
+
+### Measured Findings
+
+| Configuration | Prefill | Decode | TTFT (long prompt) |
+|---|---|---|---|
+| iGPU only (no MTP) | 101.4 tok/s | 14.1 tok/s | ~1800 ms |
+| **iGPU + embedded MTP (K=4)** | 74.6 tok/s | **33.8 tok/s** | 1587 ms |
+| **Hybrid NPU-burst → iGPU** | **>370 tok/s** | 33.8 tok/s | **870 ms** *(1.8× faster)* |
+| NPU standalone drafter (0.8B) | 42.9 tok/s | — | 347 ms |
+
+### What the NPU is actually good for
+1. **1.8× faster first token on long prompts** (870 ms vs 1587 ms) — the NPU bursts the prompt prefix while the iGPU loads weights.
+2. **~2 W always-on intent routing** (chat/code/translation classifier) with zero iGPU contention.
+3. It does **not** help sustained decode — any separate drafter loses to the model's own embedded MTP heads, which share weights with zero extra memory traffic.
+
+### Installation (optional)
+
+```bash
+# 1. Enable IOMMU SVA (requires reboot)
+sudo sed -i 's/amd_iommu=off/iommu=pt iommu.passthrough=0/g' /etc/default/grub
+sudo update-grub && sudo reboot
+
+# 2. Install XRT (built from /home/user/source/q38rocm/xdna-driver)
+source /opt/xilinx/xrt/setup.sh
+xrt-smi examine          # should list "RyzenAI-npu5 / aie2p"
+
+# 3. NPU inference runtime comes via Lemonade's FastFlowLM (flm) backend
+lemonade backends --all  # flm:npu backend
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        AMD STRIX HALO (128 GB UMA)                     │
-│                                                                        │
-│   ┌──────────────────────────┐         ┌──────────────────────────┐    │
-│   │   XDNA 2 NPU (50 TOPS)   │         │    Radeon 8060S iGPU     │    │
-│   │    /dev/accel/accel0     │         │   40 CUs (KHR_coopmat)   │    │
-│   │                          │         │                          │    │
-│   │   Small Drafter Model    │  Draft  │   Target 27B Verifier    │    │
-│   │  (0.6B / 1.2B / Head)    │ Tokens  │ (Qwen 3.8 ROCmFP4 / Q3)  │    │
-│   │   Runs in Tile SRAM      │ ──────> │  Consumes 273 GB/s Bus   │    │
-│   └──────────────────────────┘         └──────────────────────────┘    │
-│                 │                                    │                 │
-│                 └──────────────┬─────────────────────┘                 │
-│                                │ Zero-Contention Pipeline              │
-│                                ▼                                       │
-│                +3.29% Main Latency Interference*                       │
-│                (vs +68.96% if draft runs on iGPU)                      │
-└────────────────────────────────────────────────────────────────────────┘
-```
-*\*NPU sidecar memory bus contention figures (+3.29% vs +68.96%) sourced from the [ciru-ai GMKtec EVO-X2 Strix Halo community artifact](https://github.com/ciru-ai/strix-halo-evo-x2-evidence).*
 
-- **Zero Memory Contention:** The NPU executes drafter models inside local Tile SRAM buffers, keeping 100% of the 273 GB/s unified memory bus dedicated to 27B target verification on the Radeon 8060S.
+See [`docs/NPU_INTEGRATION.md`](docs/NPU_INTEGRATION.md) for the complete setup, the hybrid burst pipeline, and the negative results that shaped this design.
 
 ---
 
@@ -411,6 +422,7 @@ Qwen 3.8 defaults to high reasoning depth. If an open-ended query produces thous
     ├── convert_and_quant.sh   # ROCmFP4 quantization script
     └── npu_sidecar_drafter.py # AMD XDNA 2 NPU sidecar orchestrator & simulator
 ```
+> 📘 **NPU research:** See [`docs/NPU_INTEGRATION.md`](docs/NPU_INTEGRATION.md) for the optional XDNA 2 NPU acceleration guide and full empirical findings.
 
 ---
 

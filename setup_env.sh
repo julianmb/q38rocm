@@ -4,14 +4,31 @@
 # Environment Setup for ROCmFPX & Vulkan RADV Wave64 Co-op Matrix Acceleration
 # ==============================================================================
 
+# 1. Hardware & Runtime Settings
 export HSA_OVERRIDE_GFX_VERSION=11.5.1
 export GGML_HIP_ENABLE_UNIFIED_MEMORY=1
 export HIP_VISIBLE_DEVICES=0
 export ROCM_FLUSH_ACCEPT=1
 
 export AMD_VULKAN_ICD=RADV
-export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/radeon_icd.json
 export RADV_PERFTEST="gpl,sam,nggc"
+
+# 2. Dynamic Vulkan RADV ICD Discovery (Fedora/Arch/Ubuntu/Debian)
+POSSIBLE_ICD_PATHS=(
+    "${VK_ICD_FILENAMES:-}"
+    "/usr/share/vulkan/icd.d/radeon_icd.x86_64.json"
+    "/usr/share/vulkan/icd.d/radeon_icd.json"
+    "/usr/share/vulkan/icd.d/radeon_icd.i686.json"
+    "/etc/vulkan/icd.d/radeon_icd.json"
+    "/etc/vulkan/icd.d/radeon_icd.x86_64.json"
+)
+
+for icd in "${POSSIBLE_ICD_PATHS[@]}"; do
+    if [ -n "$icd" ] && [ -f "$icd" ]; then
+        export VK_ICD_FILENAMES="$icd"
+        break
+    fi
+done
 
 # Find local engine if available
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

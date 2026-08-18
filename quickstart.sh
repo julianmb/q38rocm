@@ -98,6 +98,8 @@ CMD=(
     "--poll" "100"
     "-ctk" "q8_0"
     "-ctv" "turbo4"
+    "--presence-penalty" "1.5"
+    "--repeat-penalty" "1.05"
     "--port" "${PORT}"
     "--host" "${HOST}"
     "--spec-type" "draft-mtp"

@@ -8,7 +8,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENGINE_DIR="${SCRIPT_DIR}/engine"
 REPO_URL="https://github.com/charlie12345/ROCmFPX.git"
-PINNED_COMMIT="e87d53e"
+PINNED_COMMIT="${PINNED_COMMIT:-main}"
 RELEASE_TARBALL_URL="https://github.com/julianmb/q38rocm/releases/download/v1.0.0/strix-halo-rocmfpx-engine-v1.0.0-linux-x86_64.tar.gz"
 EXPECTED_TARBALL_SHA="bbc7845db0c012b97f1c9b8a2733a7083c6f9a749a453866fbe1994151d3364f"
 

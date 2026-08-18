@@ -68,6 +68,16 @@ def get_system_telemetry():
         pass
     return telemetry
 
+from collections import Counter
+
+def detect_repetition(text: str, n_gram_size: int = 3, threshold: int = 6) -> bool:
+    words = text.split()
+    if len(words) < n_gram_size * threshold:
+        return False
+    ngrams = [tuple(words[i:i+n_gram_size]) for i in range(len(words) - n_gram_size + 1)]
+    counts = Counter(ngrams)
+    return any(count >= threshold for count in counts.values())
+
 def run_prompt_benchmark(host, port, prompt_data):
     url = f"http://{host}:{port}/v1/chat/completions"
     payload = json.dumps({
@@ -84,6 +94,9 @@ def run_prompt_benchmark(host, port, prompt_data):
         with urllib.request.urlopen(req, timeout=60) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             elapsed = time.time() - t0
+            
+            content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            is_repeating = detect_repetition(content)
             
             timings = data.get("timings", {})
             prompt_ms = timings.get("prompt_ms", 0.0)
@@ -106,6 +119,7 @@ def run_prompt_benchmark(host, port, prompt_data):
                 "draft_tokens": draft_n,
                 "draft_accepted": draft_acc,
                 "draft_acceptance_pct": round(acc_rate, 1),
+                "repetition_detected": is_repeating,
                 "total_time_s": round(elapsed, 2)
             }
     except Exception as e:

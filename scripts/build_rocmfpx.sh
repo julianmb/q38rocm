@@ -27,7 +27,7 @@ if ! command -v hipcc &> /dev/null && ! [ -x /opt/rocm/bin/hipcc ]; then
 fi
 
 # 2. Clone or Update pinned ROCmFPX repository
-PINNED_COMMIT="a5605a72768c6562241b248e268e33dc92787394"
+PINNED_COMMIT="0fc9568e07ccc8553010864cb8db1957e629cbfa"
 
 if [ ! -d "ROCmFPX/.git" ]; then
     echo "[*] Cloning charlie12345/ROCmFPX repository..."
@@ -38,10 +38,6 @@ cd ROCmFPX
 echo "[*] Checking out pinned commit ($PINNED_COMMIT)..."
 git fetch origin
 git checkout "$PINNED_COMMIT"
-
-# Disable Vulkan in build script to prevent missing glslc errors on minimal installs
-echo "[*] Configuring build options (Vulkan=OFF)..."
-sed -i 's/-DGGML_VULKAN=ON/-DGGML_VULKAN=OFF/g' scripts/build-strix-rocmfp4-mtp.sh || true
 
 # 3. Execute Build
 echo "[*] Building ROCmFPX binaries for AMD Strix Halo (gfx1151)..."

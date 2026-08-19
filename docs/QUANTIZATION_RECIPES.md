@@ -10,7 +10,7 @@ This document details the quantization algorithms, layout formats, and conversio
 |---|---|---|---|---|
 | **`Q8_0_ROCMFPX` (`ROCmFP8`)** | **8.25** | **32** | **Vulkan0 / ROCm0** | **Lossless 8-bit precision (<0.003 PPL delta, 26.25 GiB)** |
 | **`Q4_0_ROCMFP4_FAST`** | **4.26** | **32** | **Vulkan0 Wave64 / ROCm0** | **Primary target for maximum MTP speculative throughput (36 tok/s)** |
-| **`Q4_0_ROCMFP4_STRIX_LEAN`** | **4.34** | **32** | **Vulkan0 / ROCm0** | Preserves embedding and final norm layers in FP16 |
+| **`Q4_0_ROCMFP4_STRIX_LEAN`** | **4.34** | **32** | **Vulkan0 / ROCm0** | FAST dense layout, dual-scale attention K/V, and Q5_K embeddings/output |
 | **`Q3_K_M`** | **3.95** | **Mixed** | **Vulkan0 / CPU** | Standard k-quant medium (12.56 GiB) |
 | **`Q3_K_S`** | **3.59** | **Mixed** | **Vulkan0 / CPU** | Small 3-bit quant (11.40 GiB), fastest unassisted decode (16.69 t/s) |
 | **`Q2_0_ROCMFP2`** | **2.69** | **32** | **Vulkan0 / Memory Constrained** | Ultra-compact 2-bit layout (8.56 GiB) |
@@ -25,6 +25,12 @@ On AMD Strix Halo (Radeon 8060S / RDNA 3.5 / `gfx1151`), the Vulkan RADV driver 
 - **8-Bit Execution Model:** RDNA 3.5 is a consumer client APU architecture that uses INT8 vector dot products and register-level unpacking to FP16 cooperative matrix ALUs. Because LLM generation is strictly **memory-bus bandwidth bound** (rather than compute ALU bound), streaming 8-bit weights (26.25 GB) across the 273 GB/s bus saves 50% memory bandwidth over FP16 (54.6 GB), delivering **18.96 tok/s** with zero precision loss.
 - **4-Bit Performance King:** `ROCmFP4` halves the transfer payload again to **13.55 GB**, unlocking **36.04 tok/s** with MTP speculative decoding.
 - **MTP Head Preservation:** Speculative prediction heads (`mtp_block.dense`, `mtp_block.norm`) are automatically preserved in high-precision (FP16 or Q8_0) during the quantize pass to maintain 80%+ draft acceptance.
+
+### FAST versus STRIX_LEAN
+
+- **FAST:** Uses one scale per 32-weight block for the dense transformer path. It is the smallest and highest-throughput ROCmFP4 preset, but applies the most aggressive quality tradeoff.
+- **STRIX_LEAN:** Retains the FAST layout for dense tensors, switches attention K/V tensors in every layer to the two-scale ROCmFP4 layout, and protects token embeddings/output with Q5_K. It is slightly larger and may be slightly slower, but targets better perplexity and long-agent coherence.
+- Both presets preserve the model's MTP tensors in higher precision when supported by the quantizer; the difference is primarily dense/attention/embedding tensor policy, not MTP availability.
 
 ---
 

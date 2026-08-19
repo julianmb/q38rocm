@@ -8,9 +8,12 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENGINE_DIR="${SCRIPT_DIR}/engine"
 REPO_URL="https://github.com/charlie12345/ROCmFPX.git"
-PINNED_COMMIT="${PINNED_COMMIT:-main}"
+PINNED_COMMIT="${PINNED_COMMIT:-0fc9568e07ccc8553010864cb8db1957e629cbfa}"
 RELEASE_TARBALL_URL="https://github.com/julianmb/q38rocm/releases/download/v1.0.0/strix-halo-rocmfpx-engine-v1.0.0-linux-x86_64.tar.gz"
 EXPECTED_TARBALL_SHA="bbc7845db0c012b97f1c9b8a2733a7083c6f9a749a453866fbe1994151d3364f"
+LINKAGE="static"
+CLEAN_BUILD=0
+USE_PREBUILT=0
 
 download_prebuilt() {
     echo "================================================================================"
@@ -39,14 +42,26 @@ download_prebuilt() {
     exit 0
 }
 
-# Check for --prebuilt flag
-if [[ "${1:-}" == "--prebuilt" ]] || [[ "${1:-}" == "--download" ]]; then
+# Parse build mode before dependency checks.
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --prebuilt|--download) USE_PREBUILT=1; shift ;;
+        --static) LINKAGE="static"; shift ;;
+        --shared) LINKAGE="shared"; shift ;;
+        --clean) CLEAN_BUILD=1; shift ;;
+        *) echo "Unknown option: $1" >&2; exit 2 ;;
+    esac
+done
+
+if [ "$USE_PREBUILT" -eq 1 ]; then
     download_prebuilt
 fi
 
 echo "================================================================================"
 echo " ⚙️ ROCmFPX llama.cpp Engine Setup for AMD Strix Halo"
 echo " Target Architecture: gfx1151 (Radeon 8060S / RDNA 3.5)"
+echo " Source Revision: ${PINNED_COMMIT}"
+echo " Linkage:         ${LINKAGE}"
 echo " Options: Run './build_engine.sh --prebuilt' to download pre-compiled binaries"
 echo "================================================================================"
 
@@ -86,14 +101,18 @@ fi
 cd "${ENGINE_DIR}/src"
 echo "Checking out pinned commit: ${PINNED_COMMIT}..."
 git fetch origin
-git checkout "${PINNED_COMMIT}" || true
+git checkout --detach "${PINNED_COMMIT}"
 
 # Configure CMake with Dual ROCm + Vulkan Acceleration
-BUILD_DIR="${ENGINE_DIR}/src/build"
+BUILD_DIR="${ENGINE_DIR}/src/build-${LINKAGE}"
+if [ "$CLEAN_BUILD" -eq 1 ] && [ -d "$BUILD_DIR" ]; then
+    rm -rf "$BUILD_DIR"
+fi
 mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
 
 CMAKE_FLAGS=(
+    -DGGML_NATIVE=ON
     -DGGML_HIP=ON
     -DAMDGPU_TARGETS=gfx1151
     -DGGML_VULKAN=ON
@@ -106,8 +125,14 @@ CMAKE_FLAGS=(
     -DCMAKE_BUILD_TYPE=Release
 )
 
-echo "Configuring CMake with Vulkan & ROCm support..."
-cmake .. "${CMAKE_FLAGS[@]}"
+if [ "$LINKAGE" = "static" ]; then
+    CMAKE_FLAGS+=("-DGGML_BACKEND_DL=OFF" "-DBUILD_SHARED_LIBS=OFF")
+else
+    CMAKE_FLAGS+=("-DGGML_BACKEND_DL=OFF" "-DBUILD_SHARED_LIBS=ON")
+fi
+
+echo "Configuring a native ${LINKAGE} build with Vulkan & ROCm support..."
+cmake -S "${ENGINE_DIR}/src" -B "${BUILD_DIR}" "${CMAKE_FLAGS[@]}"
 
 JOBS="${JOBS:-$(nproc 2>/dev/null || echo 8)}"
 echo "Compiling binaries with ${JOBS} parallel threads..."

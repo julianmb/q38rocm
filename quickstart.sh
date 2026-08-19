@@ -124,6 +124,7 @@ if [ "${CACHE_MODE}" = "cache" ]; then
 else
     CMD+=(
         "-ctk" "q8_0" "-ctv" "turbo4"
+        "-ctxcp" "0" "-cram" "0" "--no-cache-prompt" "--no-cache-idle-slots"
         "--spec-type" "draft-mtp" "--spec-draft-n-max" "4" "--spec-draft-p-min" "0.0"
     )
 fi

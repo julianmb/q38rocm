@@ -10,25 +10,87 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/setup_env.sh"
 source "${SCRIPT_DIR}/scripts/cache_profile.sh"
 
-# 1. Parse Arguments & Environment Overrides
+# 1. Select Profile Defaults, Then Parse Explicit Overrides
 MODEL_PATH="${MODEL_PATH:-}"
 PORT="${PORT:-8000}"
 HOST="${HOST:-127.0.0.1}"
-CTX="${CTX:-131072}"
-DRAFT_N="${DRAFT_N:-4}"
-DRAFT_P="${DRAFT_P:-0.0}"
-MTP="${MTP:-1}"
-KV_K="${KV_K:-q8_0}"
-KV_V="${KV_V:-turbo4}"
-REASONING="${REASONING:-auto}"
 REASONING_BUDGET="${REASONING_BUDGET:-4096}"
 DEVICE="${DEVICE:-auto}"
-CACHE_MODE="${CACHE_MODE:-speed}"
-BATCH_SIZE="${BATCH_SIZE:-2048}"
-UBATCH_SIZE="${UBATCH_SIZE:-1024}"
+PROFILE="${PROFILE:-${CACHE_MODE:-speed}}"
+
+ARGS=("$@")
+for ((i = 0; i < ${#ARGS[@]}; i++)); do
+    case "${ARGS[$i]}" in
+        --profile)
+            if ((i + 1 >= ${#ARGS[@]})); then
+                echo "--profile requires one of: speed, agent, cache, safe" >&2
+                exit 2
+            fi
+            PROFILE="${ARGS[$((i + 1))]}"
+            ;;
+        --cache-mode) PROFILE="cache" ;;
+    esac
+done
+
+case "${PROFILE}" in
+    speed)
+        CTX="${CTX:-131072}"
+        MTP="${MTP:-1}"
+        STRICT_MTP="${STRICT_MTP:-0}"
+        KV_K="${KV_K:-q8_0}"
+        KV_V="${KV_V:-turbo4}"
+        REASONING="${REASONING:-auto}"
+        BATCH_SIZE="${BATCH_SIZE:-2048}"
+        UBATCH_SIZE="${UBATCH_SIZE:-1024}"
+        TEMPERATURE="${TEMPERATURE:-${TEMP:-0.8}}"
+        REPEAT_PENALTY="${REPEAT_PENALTY:-1.05}"
+        ;;
+    agent)
+        CTX="${CTX:-65536}"
+        MTP="${MTP:-1}"
+        STRICT_MTP="${STRICT_MTP:-1}"
+        KV_K="${KV_K:-q8_0}"
+        KV_V="${KV_V:-turbo4}"
+        REASONING="${REASONING:-off}"
+        BATCH_SIZE="${BATCH_SIZE:-2048}"
+        UBATCH_SIZE="${UBATCH_SIZE:-1024}"
+        TEMPERATURE="${TEMPERATURE:-${TEMP:-0.0}}"
+        REPEAT_PENALTY="${REPEAT_PENALTY:-1.0}"
+        ;;
+    cache)
+        CTX="${CTX:-131072}"
+        MTP=0
+        STRICT_MTP=0
+        KV_K="q8_0"
+        KV_V="q8_0"
+        REASONING="${REASONING:-off}"
+        BATCH_SIZE="${BATCH_SIZE:-2048}"
+        UBATCH_SIZE="${UBATCH_SIZE:-1024}"
+        TEMPERATURE="${TEMPERATURE:-${TEMP:-0.0}}"
+        REPEAT_PENALTY="${REPEAT_PENALTY:-1.0}"
+        ;;
+    safe)
+        CTX="${CTX:-65536}"
+        MTP=0
+        STRICT_MTP=0
+        KV_K="${KV_K:-q8_0}"
+        KV_V="${KV_V:-q8_0}"
+        REASONING="${REASONING:-off}"
+        BATCH_SIZE="${BATCH_SIZE:-1024}"
+        UBATCH_SIZE="${UBATCH_SIZE:-512}"
+        TEMPERATURE="${TEMPERATURE:-${TEMP:-0.0}}"
+        REPEAT_PENALTY="${REPEAT_PENALTY:-1.0}"
+        ;;
+    *)
+        echo "Unknown profile '${PROFILE}'. Expected: speed, agent, cache, safe" >&2
+        exit 2
+        ;;
+esac
+
+DRAFT_N="${DRAFT_N:-4}"
+DRAFT_P="${DRAFT_P:-0.0}"
 PRESENCE_PENALTY="${PRESENCE_PENALTY:-0.0}"
-REPEAT_PENALTY="${REPEAT_PENALTY:-1.05}"
-TEMPERATURE="${TEMPERATURE:-${TEMP:-0.8}}"
+CACHE_MODE="$([ "${PROFILE}" = "cache" ] && printf cache || printf disabled)"
 configure_cache_profile
 EXTRA_ARGS=()
 
@@ -45,7 +107,8 @@ while [[ $# -gt 0 ]]; do
         --checkpoint-every) CHECKPOINT_EVERY="$2"; shift 2 ;;
         --slot-save-path) SLOT_SAVE_PATH="$2"; shift 2 ;;
         --mlock) MLOCK=1; shift ;;
-        --cache-mode) CACHE_MODE="cache"; shift ;;
+        --profile) shift 2 ;;
+        --cache-mode) shift ;;
         -b|--batch) BATCH_SIZE="$2"; shift 2 ;;
         -ub|--ubatch) UBATCH_SIZE="$2"; shift 2 ;;
         --presence-penalty) PRESENCE_PENALTY="$2"; shift 2 ;;
@@ -60,7 +123,8 @@ while [[ $# -gt 0 ]]; do
         --reasoning) REASONING="$2"; shift 2 ;;
         --reasoning-budget) REASONING_BUDGET="$2"; shift 2 ;;
         --no-reasoning) REASONING="off"; shift ;;
-        --strict) EXTRA_ARGS+=("--spec-mtp-strict-qwen"); shift ;;
+        --strict) STRICT_MTP=1; shift ;;
+        --no-strict) STRICT_MTP=0; shift ;;
         -*) EXTRA_ARGS+=("$1"); shift ;;
         *)
             if [ -z "$MODEL_PATH" ]; then
@@ -72,7 +136,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [ "${CACHE_MODE}" = "cache" ]; then
+if [ "${PROFILE}" = "cache" ]; then
     MTP=0
     KV_K="q8_0"
     KV_V="q8_0"
@@ -93,7 +157,7 @@ if [ -z "$MODEL_PATH" ]; then
     fi
 fi
 
-if [ "${CACHE_MODE}" = "cache" ]; then
+if [ "${PROFILE}" = "cache" ]; then
     mkdir -p "${SLOT_SAVE_PATH}"
 fi
 
@@ -161,7 +225,7 @@ CMD=(
     "--host" "${HOST}"
 )
 
-if [ "${CACHE_MODE}" = "cache" ]; then
+if [ "${PROFILE}" = "cache" ]; then
     CMD+=(
         "-ctxcp" "${CTX_CHECKPOINTS}"
         "-cpent" "${CHECKPOINT_EVERY}"
@@ -170,6 +234,8 @@ if [ "${CACHE_MODE}" = "cache" ]; then
         "--cache-reuse" "${CACHE_REUSE}"
         "--slot-save-path" "${SLOT_SAVE_PATH}"
     )
+else
+    CMD+=("-ctxcp" "0" "-cram" "0" "--no-cache-prompt" "--no-cache-idle-slots")
 fi
 
 if [ "${MLOCK}" = "1" ]; then
@@ -178,6 +244,9 @@ fi
 
 if [ "${MTP}" = "1" ]; then
     CMD+=("--spec-type" "draft-mtp" "--spec-draft-n-max" "${DRAFT_N}" "--spec-draft-p-min" "${DRAFT_P}")
+    if [ "${STRICT_MTP}" = "1" ]; then
+        CMD+=("--spec-mtp-strict-qwen")
+    fi
 fi
 
 if [ "$REASONING" == "off" ]; then
@@ -194,17 +263,18 @@ echo "==========================================================================
 echo " 🚀 Starting Qwen 3.8 27B Server on AMD Strix Halo"
 echo "================================================================================"
 echo " Model:          $(basename "$MODEL_PATH")"
+echo " Profile:        ${PROFILE}"
 echo " Device Backend: ${DEVICE}"
 echo " Context:        ${CTX} tokens (KV: K=${KV_K}, V=${KV_V})"
-if [ "${CACHE_MODE}" = "cache" ]; then
+if [ "${PROFILE}" = "cache" ]; then
     echo " Prompt Cache:   ${CACHE_PROFILE} profile (${CACHE_RAM_MIB} MiB, ${CTX_CHECKPOINTS} checkpoints, reuse ${CACHE_REUSE})"
 else
-    echo " Prompt Cache:   disabled in MTP speed mode (use --cache-mode for reusable checkpoints)"
+    echo " Prompt Cache:   disabled explicitly (checkpoints=0, RAM cache=0)"
 fi
 echo " Concurrency:    ${SLOTS} slot(s), continuous batching, unified KV"
 echo " Batching:       logical=${BATCH_SIZE}, physical=${UBATCH_SIZE}"
 echo " Sampling:       temperature=${TEMPERATURE}, presence=${PRESENCE_PENALTY}, repeat=${REPEAT_PENALTY}"
-echo " Speculation:    $([ "${MTP}" = "1" ] && printf 'MTP n_max=%s, p_min=%s' "${DRAFT_N}" "${DRAFT_P}" || printf 'disabled')"
+echo " Speculation:    $([ "${MTP}" = "1" ] && printf 'MTP n_max=%s, p_min=%s, strict=%s' "${DRAFT_N}" "${DRAFT_P}" "${STRICT_MTP}" || printf 'disabled')"
 echo " Reasoning:      ${REASONING} (Budget: ${REASONING_BUDGET:-unlimited} tokens)"
 echo " API Endpoint:   http://${HOST}:${PORT}/v1"
 echo "================================================================================"

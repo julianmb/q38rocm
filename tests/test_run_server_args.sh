@@ -21,6 +21,11 @@ no_mmap_count=0
 presence_count=0
 repeat_count=0
 temperature_count=0
+ctxcp_count=0
+cram_count=0
+no_cache_prompt_count=0
+strict_count=0
+ctx_count=0
 while [ "$#" -gt 0 ]; do
     case "$1" in
         -b)
@@ -52,6 +57,29 @@ while [ "$#" -gt 0 ]; do
             temperature="$2"
             shift 2
             ;;
+        -c)
+            ctx_count=$((ctx_count + 1))
+            ctx="$2"
+            shift 2
+            ;;
+        -ctxcp)
+            ctxcp_count=$((ctxcp_count + 1))
+            ctxcp="$2"
+            shift 2
+            ;;
+        -cram)
+            cram_count=$((cram_count + 1))
+            cram="$2"
+            shift 2
+            ;;
+        --no-cache-prompt)
+            no_cache_prompt_count=$((no_cache_prompt_count + 1))
+            shift
+            ;;
+        --spec-mtp-strict-qwen)
+            strict_count=$((strict_count + 1))
+            shift
+            ;;
         *) shift ;;
     esac
 done
@@ -62,6 +90,11 @@ printf 'no_mmap_count=%s\n' "$no_mmap_count"
 printf 'presence=%s count=%s\n' "$presence" "$presence_count"
 printf 'repeat=%s count=%s\n' "$repeat" "$repeat_count"
 printf 'temperature=%s count=%s\n' "$temperature" "$temperature_count"
+printf 'ctx=%s count=%s\n' "$ctx" "$ctx_count"
+printf 'ctxcp=%s count=%s\n' "$ctxcp" "$ctxcp_count"
+printf 'cram=%s count=%s\n' "$cram" "$cram_count"
+printf 'no_cache_prompt_count=%s\n' "$no_cache_prompt_count"
+printf 'strict_count=%s\n' "$strict_count"
 EOF
 chmod +x "$TMP_DIR/llama-server"
 
@@ -85,5 +118,33 @@ output="$({
 [[ "$output" == *"presence=0.25 count=1"* ]]
 [[ "$output" == *"repeat=1.02 count=1"* ]]
 [[ "$output" == *"temperature=0 count=1"* ]]
+[[ "$output" == *"ctxcp=0 count=1"* ]]
+[[ "$output" == *"cram=0 count=1"* ]]
+[[ "$output" == *"no_cache_prompt_count=1"* ]]
+
+agent_output="$({
+    ROCMFPX_BIN_DIR="$TMP_DIR" \
+    MODEL_PATH="$TMP_DIR/model.gguf" \
+    "$ROOT_DIR/run_server.sh" --profile agent
+} 2>&1)"
+
+[[ "$agent_output" == *"Profile:        agent"* ]]
+[[ "$agent_output" == *"ctx=65536 count=1"* ]]
+[[ "$agent_output" == *"ubatch=1024 count=1"* ]]
+[[ "$agent_output" == *"temperature=0.0 count=1"* ]]
+[[ "$agent_output" == *"strict_count=1"* ]]
+[[ "$agent_output" == *"ctxcp=0 count=1"* ]]
+
+safe_output="$({
+    ROCMFPX_BIN_DIR="$TMP_DIR" \
+    MODEL_PATH="$TMP_DIR/model.gguf" \
+    "$ROOT_DIR/run_server.sh" --profile safe
+} 2>&1)"
+
+[[ "$safe_output" == *"Profile:        safe"* ]]
+[[ "$safe_output" == *"ctx=65536 count=1"* ]]
+[[ "$safe_output" == *"batch=1024 count=1"* ]]
+[[ "$safe_output" == *"ubatch=512 count=1"* ]]
+[[ "$safe_output" == *"strict_count=0"* ]]
 
 printf '%s\n' "run_server argument tests passed"

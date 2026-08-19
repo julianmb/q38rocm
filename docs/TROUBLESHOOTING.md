@@ -71,10 +71,11 @@ This checks Linux kernel support, OS-visible RAM, ROCm drivers (`hipcc`, `rocmin
 ### 6. Agent output repeats or turns into random characters
 * **Likely Causes:** Non-strict MTP rollback at tool-call boundaries, an aggressive presence penalty, or client-side retries that append duplicate assistant messages.
 * **Solution:**
-  1. Use boundary-safe, exact greedy Qwen MTP: `./run_server.sh --strict --temperature 0 --draft-n 4 --draft-p 0.0 --ubatch 1024 --reasoning off`.
-  2. If corruption persists, isolate speculation with `./run_server.sh --no-mtp --reasoning off`.
+  1. Use the boundary-safe agent profile: `./run_server.sh --profile agent`.
+  2. If corruption persists, isolate speculation and checkpoints with `./run_server.sh --profile safe`.
   3. Keep `--presence-penalty 0.0`; values such as `1.5` can push long output toward rare-token gibberish.
-  4. Check the client log for retries or duplicated assistant/tool messages before attributing repeated UI text to the model.
+  4. Start the client in the intended project/workspace directory. Pi exposes its launch directory to the model; it cannot infer a benchmark stored elsewhere.
+  5. Check the client and server logs for repeated tool calls, retries, context-checkpoint churn, or a GPU reset before attributing repeated UI text to MTP.
 
 ---
 
@@ -85,6 +86,23 @@ This checks Linux kernel support, OS-visible RAM, ROCm drivers (`hipcc`, `rocmin
   ```bash
   sudo apt-get update && sudo apt-get install -y vulkan-tools libvulkan-dev shaderc
   ```
+
+---
+
+### 8. `failed to find ggml_backend_init` after a manual build
+* **Root Cause:** A dynamically linked executable is loading incompatible or incomplete `libggml-*.so` backend modules after the binaries are copied out of the CMake build tree.
+* **Solution:** Configure a native static build, which is now the default in `build_engine.sh`:
+  ```bash
+  cmake -S . -B build-strix \
+    -DGGML_BACKEND_DL=OFF \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DGGML_NATIVE=ON \
+    -DGGML_HIP=ON \
+    -DGGML_VULKAN=ON \
+    -DCMAKE_HIP_ARCHITECTURES=gfx1151
+  cmake --build build-strix -j "$(nproc)" --target llama-server
+  ```
+  `GGML_NATIVE=ON` produces CPU-specific binaries, so build on the target Strix Halo host. Fedora users should also ensure the Vulkan loader/development packages and `glslc` are installed before configuring.
 
 ---
 

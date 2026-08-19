@@ -17,7 +17,7 @@ High-performance, memory-optimized deployment of **Qwen 3.8 27B** custom-enginee
 
 By combining **ROCmFP4 block quantization (4.26 bpw)**, **MTP (Multi-Token Prediction) Speculative Decoding**, **Asymmetric TurboQuant KV Cache**, and the **RADV Wave64 Cooperative Matrix** engine, this package delivers **30.56 – 36.04 tokens/second** generation throughput on a single 128 GB unified memory APU — breaking past the traditional 27B memory-bandwidth ceiling.
 
-> ⚠️ **Engine Requirement:** `ROCmFP4` is a custom ROCmFPX quantization layout designed for RDNA 3.5 / gfx1151 cooperative matrix hardware. It **requires** the ROCmFPX-enabled `llama.cpp` engine fork (pinned build: `e87d53e (213)`). Upstream stock `llama.cpp` or stock Ollama will fail to load ROCmFP4 GGUFs without this backend. See [Building the Engine](#-building-the-engine) below.
+> ⚠️ **Engine Requirement:** `ROCmFP4` is a custom ROCmFPX quantization layout designed for RDNA 3.5 / gfx1151 cooperative matrix hardware. It **requires** the ROCmFPX-enabled `llama.cpp` engine fork (pinned commit: `0fc9568e07ccc8553010864cb8db1957e629cbfa`). Upstream stock `llama.cpp` or stock Ollama will fail to load ROCmFP4 GGUFs without this backend. See [Building the Engine](#-building-the-engine) below.
 
 ---
 
@@ -111,7 +111,7 @@ This repository (`julianmb/q38rocm`) builds on top of the open-source **[charlie
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Engine Core:** Our build scripts (`./build_engine.sh`) fetch and build against pinned upstream commits (build `e87d53e (213)`) or download pre-compiled Strix Halo binaries from our release assets.
+- **Engine Core:** Our build scripts (`./build_engine.sh`) fetch the tested ROCmFPX revision `0fc9568e07ccc8553010864cb8db1957e629cbfa` or download pre-compiled Strix Halo binaries from our release assets.
 - **Upstream Contributions:** Benchmark evidence, bug fixes, and calibration profiles are continuously contributed back to upstream ROCmFPX and the wider Strix Halo community.
 
 ---
@@ -146,7 +146,7 @@ All benchmark results below were measured directly on **AMD Ryzen AI Max+ 395 (4
 | Workload Type | Optimal Profile | Recommended Launch Flags | Measured Single-Slot TPS | Measured Aggregate TPS |
 |---|---|---|---|---|
 | **Single-User Sustained Decode (Sweet Spot)** | `n4 / p0.0` | `./run_server.sh --draft-n 4 --draft-p 0.0 --ubatch 2048 --reasoning off` | 🔥 **33.80 tok/s sustained** (2.40× over baseline) | **33.80 tok/s** |
-| **Coding Agents (Exact Greedy)** | Strict `n4 / p0.0` | `./run_server.sh --strict --temperature 0 --draft-n 4 --draft-p 0.0 --ubatch 1024 --reasoning off` | **34.82 tok/s measured** | **34.82 tok/s** |
+| **Coding Agents (Exact Greedy)** | Strict `n4 / p0.0` | `./run_server.sh --profile agent` | **34.82 tok/s measured** | **34.82 tok/s** |
 | **Single-User Interactive Chat (Burst)** | `n5 / p0.50` | `./run_server.sh --draft-n 5 --draft-p 0.50` | 🔥 **28.59 – 36.04 tok/s** | **28.59 – 36.04 tok/s** |
 | **Parallel Multi-Agent Slots (4-Way)** | `n6 / p0.60` | `./run_server.sh --slots 4 --draft-n 6 --draft-p 0.60` | **12.4 – 16.7 tok/s / slot** | 🔥 **23.15 (sustained) – 40.50 (burst) tok/s** |
 
@@ -162,6 +162,7 @@ All benchmark results below were measured directly on **AMD Ryzen AI Max+ 395 (4
 |---|---|---|---|---|---|
 | **`ROCmFP8` (`Q8_0_ROCMFPX`)** | **26.25 GiB** | **8.25** | **7.66 tok/s** *(Measured)* | **18.96 tok/s** *(Measured)* | **Zero-loss 8-bit precision (<0.003 PPL delta)** |
 | **`ROCmFP4_FAST`** | **13.55 GiB** | **4.26** | **14.02 tok/s** | 🔥 **30.56 – 36.04 tok/s** *(Measured)* | **Gold Standard (Highest Total Throughput)** |
+| **`ROCmFP4_STRIX_LEAN`** | **13.82 GiB** | **4.34** | Not measured here | Not measured here | Better coherence with protected attention K/V and embeddings/output |
 | **`Q3_K_M`** | 12.56 GiB | 3.95 | 15.15 tok/s *(Measured)* | 25.0 – 28.5 tok/s *(Projected)* | Balanced 3-bit deployment |
 | **`Q3_K_S`** | 11.40 GiB | 3.59 | **16.69 tok/s** *(Measured)* | 20.44 – 26.11 tok/s *(Measured)* | Fastest unassisted decode |
 | **`ROCmFP2`** | 8.56 GiB | 2.69 | 12.82 tok/s *(Measured)* | 17.5 – 19.0 tok/s *(Projected)* | Bound by dequantization compute overhead |
@@ -292,8 +293,25 @@ source ./setup_env.sh
 
 #### 4. Launch OpenAI-Compatible API Server
 ```bash
-./run_server.sh
+./run_server.sh --profile speed
 ```
+
+Choose one explicit runtime profile:
+
+| Profile | Context | MTP | Prompt Checkpoints | Intended Workload |
+|---|---:|---|---|---|
+| `speed` | 128K | K=4, non-strict | Disabled | Interactive generation and maximum decode throughput |
+| `agent` | 64K | K=4, strict | Disabled | Pi and other long-running tool agents |
+| `cache` | 128K | Disabled | RAM-aware | Repeated long documents and stable shared prefixes |
+| `safe` | 64K | Disabled | Disabled | Diagnosis and conservative agent execution |
+
+```bash
+./run_server.sh --profile agent
+./run_server.sh --profile cache
+./run_server.sh --profile safe
+```
+
+Non-cache profiles explicitly pass zero context checkpoints and zero prompt-cache RAM. This matters because ROCmFPX otherwise enables checkpoints and RAM caching by default even when the launcher does not request them.
 
 Server endpoints available:
 - **Chat Completions:** `POST http://localhost:8000/v1/chat/completions`
@@ -352,6 +370,16 @@ To compile the ROCmFPX engine from source for Strix Halo (gfx1151):
 ./build_engine.sh
 ```
 This builds `llama-server`, `llama-cli`, `llama-bench`, and `llama-quantize` with Mesa RADV cooperative matrix and ROCm HIP targets.
+
+The default is a native static build, which avoids runtime backend-module and symbol-version mismatches when executables are copied away from the CMake tree. Static and shared builds use separate directories so stale CMake cache values cannot cross modes:
+
+```bash
+./build_engine.sh --static          # Default: portable single-directory deployment
+./build_engine.sh --shared          # Developer build; copies matching .so files
+./build_engine.sh --shared --clean  # Reconfigure that mode from scratch
+```
+
+Both modes set `GGML_NATIVE=ON`, so build on the Strix Halo machine where the binaries will run.
 
 ---
 

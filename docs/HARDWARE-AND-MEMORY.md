@@ -107,16 +107,16 @@ Qwen's embedded MTP and context checkpoint restoration are not compatible in the
 
 ```bash
 # Default: fastest single-stream decode with embedded MTP.
-./run_server.sh
+./run_server.sh --profile speed
 
 # Reusable-prefix mode: disables MTP and uses q8_0/q8_0 KV checkpoints.
-./run_server.sh --cache-mode --no-reasoning
+./run_server.sh --profile cache
 ```
 
 Override any setting when launching:
 
 ```bash
-CACHE_RAM_MIB=32768 CTX_CHECKPOINTS=16 SLOTS=2 ./run_server.sh --cache-mode
+CACHE_RAM_MIB=32768 CTX_CHECKPOINTS=16 SLOTS=2 ./run_server.sh --profile cache
 
 # Pin model pages only after configuring an adequate memlock limit.
 MLOCK=1 ./run_server.sh

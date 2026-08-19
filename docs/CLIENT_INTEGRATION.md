@@ -16,7 +16,7 @@ By default, the server runs **headless/standalone** to maximize available unifie
 - [4. Continue.dev (VS Code & JetBrains)](#4-continuedev-vs-code--jetbrains)
 - [5. Cursor IDE](#5-cursor-ide)
 - [6. LiteLLM Proxy](#6-litellm-proxy)
-- [7. Python Agent Frameworks (LangChain, LlamaIndex, AutoGen)](#7-python-agent-frameworks)
+- [7. Pi Coding Agent](#7-pi-coding-agent)
 
 ---
 
@@ -147,3 +147,48 @@ Run LiteLLM proxy:
 ```bash
 litellm --config litellm_config.yaml --port 4000
 ```
+
+---
+
+## 7. Pi Coding Agent
+
+Start the server with bounded context, strict MTP verification, and no hidden prompt checkpoints:
+
+```bash
+./run_server.sh --profile agent
+```
+
+Add this provider to `~/.pi/agent/models.json`:
+
+```json
+{
+  "providers": {
+    "q38rocm": {
+      "baseUrl": "http://127.0.0.1:8000/v1",
+      "api": "openai-completions",
+      "apiKey": "none",
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false
+      },
+      "models": [
+        {
+          "id": "qwen38-27b",
+          "reasoning": false,
+          "contextWindow": 65536,
+          "maxTokens": 8192
+        }
+      ]
+    }
+  }
+}
+```
+
+Launch Pi from the exact directory the agent is allowed to inspect:
+
+```bash
+cd /path/to/project-or-benchmark/workspace
+pi --provider q38rocm --model qwen38-27b
+```
+
+For the invoice sandbox benchmark, give Pi the generated `runs/<id>/workspace` directory, not the repository root or your home directory. If tool calls repeat, compare with `./run_server.sh --profile safe` and inspect both Pi JSON events and the server log for connection retries or a GPU reset.

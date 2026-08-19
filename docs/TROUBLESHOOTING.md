@@ -68,7 +68,17 @@ This checks Linux kernel support, OS-visible RAM, ROCm drivers (`hipcc`, `rocmin
 
 ---
 
-### 6. `glslc not found` during `build_rocmfpx.sh`
+### 6. Agent output repeats or turns into random characters
+* **Likely Causes:** Non-strict MTP rollback at tool-call boundaries, an aggressive presence penalty, or client-side retries that append duplicate assistant messages.
+* **Solution:**
+  1. Use boundary-safe, exact greedy Qwen MTP: `./run_server.sh --strict --temperature 0 --draft-n 4 --draft-p 0.0 --ubatch 1024 --reasoning off`.
+  2. If corruption persists, isolate speculation with `./run_server.sh --no-mtp --reasoning off`.
+  3. Keep `--presence-penalty 0.0`; values such as `1.5` can push long output toward rare-token gibberish.
+  4. Check the client log for retries or duplicated assistant/tool messages before attributing repeated UI text to the model.
+
+---
+
+### 7. `glslc not found` during `build_rocmfpx.sh`
 * **Root Cause:** Vulkan shader compiler packages are not installed on Ubuntu / Linux host.
 * **Solution:**
   Install Vulkan development tools:

@@ -25,7 +25,7 @@ Authorization: Bearer sk-no-key (optional)
 | `top_k` | integer | `20` | Top-K sampling threshold |
 | `max_tokens` | integer | `4096` | Maximum generation tokens |
 | `stream` | boolean | `false` | Enable Server-Sent Events (SSE) streaming |
-| `presence_penalty`| float | `1.5` | Presence penalty to prevent repetition |
+| `presence_penalty`| float | `0.0` | Presence penalty; high values can degrade long agent output |
 | `stop` | array | `null` | Custom stop sequence strings |
 
 ### Example Request (`curl`)

@@ -1,0 +1,68 @@
+{
+  "timestamp": "2026-08-19T10:52:10.514772",
+  "server": "http://127.0.0.1:18081",
+  "model": "qwen38-27b",
+  "markers": {
+    "early": "HALO-EARLY-7Q2M",
+    "middle": "HALO-MIDDLE-4X9K",
+    "late": "HALO-LATE-8V3P"
+  },
+  "results": [
+    {
+      "target_tokens": 32768,
+      "document_tokens": 32728,
+      "cold": {
+        "wall_seconds": 136.683,
+        "prompt_tokens": 32759,
+        "prompt_ms": 135776.676,
+        "prompt_tps": 241.2711885802831,
+        "completion_tokens": 31,
+        "decode_tps": 35.88544440071308,
+        "finish_reason": "stop",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "HALO-EARLY-7Q2M\nHALO-MIDDLE-4X9K\nHALO-LATE-8V3P"
+      },
+      "cached": {
+        "wall_seconds": 137.563,
+        "prompt_tokens": 32761,
+        "prompt_ms": 135751.419,
+        "prompt_tps": 241.33081069303594,
+        "completion_tokens": 58,
+        "decode_tps": 32.88677254317381,
+        "finish_reason": "stop",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "EARLY RETRIEVAL MARKER: HALO-EARLY-7Q2M\nMIDDLE RETRIEVAL MARKER: HALO-MIDDLE-4X9K\nLATE RETRIEVAL MARKER: HALO-LATE-8V3P"
+      },
+      "quality": {
+        "wall_seconds": 149.269,
+        "prompt_tokens": 32769,
+        "prompt_ms": 136192.071,
+        "prompt_tps": 240.60872089976516,
+        "completion_tokens": 238,
+        "decode_tps": 18.275570883145463,
+        "finish_reason": "stop",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "*   **Unified Memory Architecture:** Evaluates the performance characteristics of AMD Strix Halo\u2019s shared LPDDR5X memory pool, which is accessible by both Zen CPU cores and RDNA integrated GPU components without traditional data copying overheads.\n*   **Memory-Bandwidth-Bound Inference:** Assesses how inference workloads behave when constrained by memory bandwidth rather than compute capacity, highlighting the bottleneck dynamics in unified architecture designs.\n*   **Cache Reuse Efficiency:** Measures the effectiveness of cache hierarchies in retaining and reusing data across different processing units to minimize redundant memory accesses during sequential operations.\n*   **Deterministic Retrieval Consistency:** Verifies that specific retrieval markers are consistently identified and processed within a long, repetitive context window, ensuring stable behavior under high-volume text input.\n*   **Context Checkpoint Management:** Tests the system's ability to maintain state and accurately locate distinct checkpoints (early, middle, late) amidst large volumes of neutral benchmark data without instruction interference.\n\n**Marker Values:**\nHALO-EARLY-7Q2M\nHALO-MIDDLE-4X9K\nHALO-LATE-8V3P"
+      },
+      "cache_prefill_speedup": 1.0
+    }
+  ]
+}

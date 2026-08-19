@@ -145,11 +145,14 @@ All benchmark results below were measured directly on **AMD Ryzen AI Max+ 395 (4
 
 | Workload Type | Optimal Profile | Recommended Launch Flags | Measured Single-Slot TPS | Measured Aggregate TPS |
 |---|---|---|---|---|
-| **Single-User Sustained Decode (Sweet Spot)** | `n4 / p0.0` | `./run_server.sh --draft-n 4 --draft-p 0.0 --no-mmap -ub 2048 --reasoning off` | 🔥 **33.80 tok/s sustained** (2.40× over baseline) | **33.80 tok/s** |
+| **Single-User Sustained Decode (Sweet Spot)** | `n4 / p0.0` | `./run_server.sh --draft-n 4 --draft-p 0.0 --ubatch 2048 --reasoning off` | 🔥 **33.80 tok/s sustained** (2.40× over baseline) | **33.80 tok/s** |
+| **Coding Agents (Exact Greedy)** | Strict `n4 / p0.0` | `./run_server.sh --strict --temperature 0 --draft-n 4 --draft-p 0.0 --ubatch 1024 --reasoning off` | **34.82 tok/s measured** | **34.82 tok/s** |
 | **Single-User Interactive Chat (Burst)** | `n5 / p0.50` | `./run_server.sh --draft-n 5 --draft-p 0.50` | 🔥 **28.59 – 36.04 tok/s** | **28.59 – 36.04 tok/s** |
 | **Parallel Multi-Agent Slots (4-Way)** | `n6 / p0.60` | `./run_server.sh --slots 4 --draft-n 6 --draft-p 0.60` | **12.4 – 16.7 tok/s / slot** | 🔥 **23.15 (sustained) – 40.50 (burst) tok/s** |
 
 > 💡 **MTP Depth (`K`) Scaling Insight:** Empirical sweeps show `K=4` is the optimal single-stream sweet spot on Strix Halo. `K=6` regresses slightly due to bus saturation, and `K=8` causes severe rollback degradation (18.2 tok/s). For 4-slot parallel concurrency, `K=6 / p0.60` maintains higher shared-slot throughput.
+
+> For long-running coding agents, use strict Qwen MTP so target verification remains boundary-safe and greedy-exact. If output loops or degenerates, retry with `--no-mtp` to distinguish an MTP issue from sampling or client retries. Avoid large presence penalties; values such as `1.5` can force rare-token gibberish in long generations.
 
 *Community Validation: 4 concurrent 131K slots run continuously under thermal soak at 71.88°C with zero GPU resets or OOM events (credit: MrWidmoreHK & kujetic).*
 

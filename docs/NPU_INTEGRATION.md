@@ -140,7 +140,7 @@ lemonade load qwen3.5-0.8b-FLM
 
 ## 4. Getting the TTFT Speedup — Run the Hybrid Pipeline
 
-The TTFT improvement comes from a hybrid pipeline that streams the **first ~24 tokens from the NPU instantly** (~347 ms), then hands off to the 27B iGPU model for the authoritative continuation. The pipeline is included in this repo.
+The hybrid pipeline streams the **first ~24 tokens from the NPU** and then asks the 27B iGPU model to continue that prefix. This is a latency/quality tradeoff, not speculative verification: tokens already sent to the client cannot be corrected by the target model. Use the normal iGPU-only endpoint for strict structured output, tool calls, or other correctness-sensitive requests.
 
 ### 4.1 Prerequisites
 - Qwen 3.8 27B weights downloaded (`./download_model.sh`).

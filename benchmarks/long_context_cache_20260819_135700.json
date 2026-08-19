@@ -1,0 +1,68 @@
+{
+  "timestamp": "2026-08-19T13:57:00.865757",
+  "server": "http://127.0.0.1:18081",
+  "model": "qwen38-27b",
+  "markers": {
+    "early": "HALO-EARLY-7Q2M",
+    "middle": "HALO-MIDDLE-4X9K",
+    "late": "HALO-LATE-8V3P"
+  },
+  "results": [
+    {
+      "target_tokens": 228500,
+      "document_tokens": 228473,
+      "cold": {
+        "wall_seconds": 2171.953,
+        "prompt_tokens": 228504,
+        "prompt_ms": 2168292.557,
+        "prompt_tps": 105.38430308323011,
+        "completion_tokens": 31,
+        "decode_tps": 9.029866136603815,
+        "finish_reason": "stop",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "HALO-EARLY-7Q2M\nHALO-MIDDLE-4X9K\nHALO-LATE-8V3P"
+      },
+      "cached": {
+        "wall_seconds": 24.329,
+        "prompt_tokens": 1030,
+        "prompt_ms": 17572.625,
+        "prompt_tps": 58.613895192095654,
+        "completion_tokens": 58,
+        "decode_tps": 8.906817185734472,
+        "finish_reason": "stop",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "EARLY RETRIEVAL MARKER: HALO-EARLY-7Q2M\nMIDDLE RETRIEVAL MARKER: HALO-MIDDLE-4X9K\nLATE RETRIEVAL MARKER: HALO-LATE-8V3P"
+      },
+      "quality": {
+        "wall_seconds": 47.635,
+        "prompt_tokens": 1038,
+        "prompt_ms": 17963.905,
+        "prompt_tps": 57.78253670346175,
+        "completion_tokens": 259,
+        "decode_tps": 8.797700478109165,
+        "finish_reason": "stop",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "*   **Long-Context Retention:** Evaluates the model's ability to maintain focus on specific data points buried within a massive volume of repetitive filler text without losing track of the core subject matter.\n*   **Deterministic Retrieval Accuracy:** Tests whether the system can precisely locate and extract unique alphanumeric identifiers from a noisy environment, ensuring no hallucinations or omissions occur during extraction.\n*   **Noise Resistance & Attention Span:** Measures how well the model filters out thousands of identical \"neutral benchmark record\" entries to isolate distinct signal markers without being distracted by the high volume of redundant context.\n*   **Instruction Adherence Under Load:** Verifies that the model can follow complex formatting constraints (concise, non-repetitive bullets followed by a specific list) while processing an extremely long input sequence that approaches or exceeds typical context window limits.\n*   **Memory Bandwidth Efficiency Proxy:** Serves as a qualitative proxy for memory-bandwidth-bound inference performance, checking if the underlying architecture can efficiently manage and retrieve information from unified memory structures without degradation in output quality.\n\n**Marker Values:**\n1. HALO-EARLY-7Q2M\n2. HALO-MIDDLE-4X9K\n3. HALO-LATE-8V3P"
+      },
+      "cache_prefill_speedup": 123.39
+    }
+  ]
+}

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-run_pipeline.py — Strix Halo Hybrid NPU + iGPU Pipeline (Implicit Verification)
+run_pipeline.py — Strix Halo Hybrid NPU + iGPU Prefix-Handoff Pipeline
 
 Real hybrid architecture (Qwen 3.8 27B only, empirically validated):
   1. NPU (qwen3.5-0.8b-FLM @ ~42 tok/s, ~347ms TTFT, ~2W) streams the FIRST tokens
      of the answer to the client instantly — giving sub-350ms perceived latency.
-  2. The pipeline feeds the NPU's draft as an assistant continuation into the
-     27B iGPU model (Qwen3.8 ROCmFP4 + embedded MTP, 33.8 tok/s), which verifies
-     the draft via a batched prefill and then streams the authoritative
-     continuation. One coherent answer, instant start, peak-quality finish.
+  2. The pipeline feeds the already-streamed NPU prefix to the 27B iGPU model,
+     which prefills that text and continues it. This is not target-logit
+     speculative verification: the iGPU cannot correct prefix tokens already
+     sent to the client.
 
 Exposes an OpenAI-compatible endpoint on --port (default: 11435).
 
@@ -101,7 +101,7 @@ class StrixHaloHybridPipeline:
     async def handle_health(self, request: web.Request) -> web.Response:
         return web.json_response({
             "status": "healthy",
-            "pipeline": "Strix-Halo-Hybrid-Implicit-Verification",
+            "pipeline": "Strix-Halo-Hybrid-Prefix-Handoff",
             "npu_node": "/dev/accel/accel0",
             "npu_available": self.npu_available,
             "gpu_device": self.device,
@@ -133,8 +133,9 @@ class StrixHaloHybridPipeline:
             "--port", str(self.gpu_port), "--host", "127.0.0.1",
             "--device", self.device,
             "--spec-type", "draft-mtp", "--spec-draft-n-max", str(self.draft_n),
-            "-ngl", "99", "-fa", "1", "-c", "262144", "-b", "2048", "-ub", "2048",
-            "--no-mmap", "--reasoning", "off",
+            "-ngl", "99", "-fa", "1", "-c", "131072", "-b", "2048", "-ub", "2048",
+            "-np", "1", "--no-mmap", "--cont-batching", "--kv-unified",
+            "--reasoning", "off",
         ]
         env = os.environ.copy()
         env["AMD_VULKAN_ICD"] = "RADV"
@@ -236,7 +237,7 @@ class StrixHaloHybridPipeline:
                     await response.write(sse(delta))
             npu_ms = (time.perf_counter() - t0) * 1000
 
-            # === Phase 2: GPU continuation (authoritative 27B answer) ===
+            # === Phase 2: GPU continuation from the already-streamed NPU prefix ===
             cont_messages = list(messages) + [{"role": "assistant", "content": npu_draft}] if npu_draft else list(messages)
             gpu_payload = {"messages": cont_messages, "max_tokens": max_tokens,
                            "temperature": temperature, "stream": True}
@@ -283,6 +284,7 @@ def main():
     p = argparse.ArgumentParser(description="Strix Halo Hybrid NPU + iGPU pipeline (Qwen 3.8 27B)")
     p.add_argument("--gpu-model", default=resolve_gpu_model())
     p.add_argument("--npu-model", default=DEFAULT_NPU_MODEL)
+    p.add_argument("--npu-url", default=NPU_SERVER_URL)
     p.add_argument("--port", type=int, default=PIPELINE_PORT)
     p.add_argument("--gpu-port", type=int, default=GPU_SERVER_PORT)
     p.add_argument("--device", default="Vulkan0")
@@ -295,7 +297,7 @@ def main():
         sys.exit(1)
 
     pipe = StrixHaloHybridPipeline(gpu_model_path=args.gpu_model, npu_model_name=args.npu_model,
-                                   port=args.port, gpu_port=args.gpu_port, device=args.device,
+                                   port=args.port, gpu_port=args.gpu_port, npu_url=args.npu_url, device=args.device,
                                    draft_n=args.draft_n, npu_burst_tokens=args.npu_burst_tokens)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)

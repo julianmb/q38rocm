@@ -1,0 +1,68 @@
+{
+  "timestamp": "2026-08-19T12:58:07.154700",
+  "server": "http://127.0.0.1:18081",
+  "model": "qwen38-27b",
+  "markers": {
+    "early": "HALO-EARLY-7Q2M",
+    "middle": "HALO-MIDDLE-4X9K",
+    "late": "HALO-LATE-8V3P"
+  },
+  "results": [
+    {
+      "target_tokens": 195500,
+      "document_tokens": 195473,
+      "cold": {
+        "wall_seconds": 1633.499,
+        "prompt_tokens": 195504,
+        "prompt_ms": 1629904.753,
+        "prompt_tps": 119.94811331162491,
+        "completion_tokens": 31,
+        "decode_tps": 9.160970365442928,
+        "finish_reason": "stop",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "HALO-EARLY-7Q2M\nHALO-MIDDLE-4X9K\nHALO-LATE-8V3P"
+      },
+      "cached": {
+        "wall_seconds": 21.185,
+        "prompt_tokens": 1030,
+        "prompt_ms": 14547.069,
+        "prompt_tps": 70.80464112736388,
+        "completion_tokens": 58,
+        "decode_tps": 9.059138210429724,
+        "finish_reason": "stop",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "EARLY RETRIEVAL MARKER: HALO-EARLY-7Q2M\nMIDDLE RETRIEVAL MARKER: HALO-MIDDLE-4X9K\nLATE RETRIEVAL MARKER: HALO-LATE-8V3P"
+      },
+      "quality": {
+        "wall_seconds": 39.569,
+        "prompt_tokens": 1038,
+        "prompt_ms": 14802.003,
+        "prompt_tps": 70.12564448203395,
+        "completion_tokens": 220,
+        "decode_tps": 8.96763413715809,
+        "finish_reason": "stop",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "*   **Long-Context Attention:** Evaluates the model's ability to maintain focus on specific data points buried within a massive volume of repetitive filler text.\n*   **Deterministic Retrieval:** Tests whether the system can accurately extract unique identifiers from a noisy environment without hallucinating or omitting them.\n*   **Memory Bandwidth Efficiency:** Measures how effectively the inference engine handles high-token loads, simulating memory-bandwidth-bound scenarios typical in unified architecture systems like AMD Strix Halo.\n*   **Cache Reuse Validation:** Assesses if repeated patterns in the prompt allow for efficient KV-cache reuse or if the model must process each token independently due to lack of structural compression.\n*   **Context Checkpoint Integrity:** Verifies that critical information remains accessible and uncorrupted across different segments (early, middle, late) of a long context window.\n\n**Marker Values:**\n1.  HALO-EARLY-7Q2M\n2.  HALO-MIDDLE-4X9K\n3.  HALO-LATE-8V3P"
+      },
+      "cache_prefill_speedup": 112.04
+    }
+  ]
+}

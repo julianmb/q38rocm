@@ -88,3 +88,38 @@ export HSA_OVERRIDE_GFX_VERSION=11.5.1
 # Enable HIP Unified Memory Allocation
 export GGML_HIP_ENABLE_UNIFIED_MEMORY=1
 ```
+
+---
+
+## 🧠 RAM-Aware Prompt Cache Profiles
+
+The launchers automatically select a prompt-cache profile from physical RAM:
+
+| System RAM | RAM Prompt Cache | Context Checkpoints | Checkpoint Interval |
+|---:|---:|---:|---:|
+| Under 56 GiB | 8 GiB | 4 | 4,096 tokens |
+| 56–111 GiB | 16 GiB | 8 | 4,096 tokens |
+| 112+ GiB | 32 GiB | 16 | 4,096 tokens |
+
+Cache mode enables prompt caching, context checkpoints, slot-save endpoint storage, continuous batching, unified KV, and `--no-mmap`. It primarily accelerates repeated prefixes, agent loops, and long-document follow-up requests; it does not increase the memory-bandwidth-bound single-token decode ceiling.
+
+Qwen's embedded MTP and context checkpoint restoration are not compatible in the tested engine build: MTP requests produce `spec-boundary-mismatch` and fall back to a cold prefill. The launchers therefore expose two explicit modes:
+
+```bash
+# Default: fastest single-stream decode with embedded MTP.
+./run_server.sh
+
+# Reusable-prefix mode: disables MTP and uses q8_0/q8_0 KV checkpoints.
+./run_server.sh --cache-mode --no-reasoning
+```
+
+Override any setting when launching:
+
+```bash
+CACHE_RAM_MIB=32768 CTX_CHECKPOINTS=16 SLOTS=2 ./run_server.sh --cache-mode
+
+# Pin model pages only after configuring an adequate memlock limit.
+MLOCK=1 ./run_server.sh
+```
+
+`MLOCK=1`, multiple slots, TTM overrides, and bootloader changes are intentionally not enabled automatically because they can exhaust host memory or destabilize the system.

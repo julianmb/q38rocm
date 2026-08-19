@@ -1,0 +1,69 @@
+{
+  "timestamp": "2026-08-19T15:52:50.256692",
+  "server": "http://127.0.0.1:18081",
+  "model": "qwen38-27b",
+  "backend": "ROCm0",
+  "markers": {
+    "early": "HALO-EARLY-7Q2M",
+    "middle": "HALO-MIDDLE-4X9K",
+    "late": "HALO-LATE-8V3P"
+  },
+  "results": [
+    {
+      "target_tokens": 131000,
+      "document_tokens": 130958,
+      "cold": {
+        "wall_seconds": 869.065,
+        "prompt_tokens": 130989,
+        "prompt_ms": 864816.698,
+        "prompt_tps": 151.46446675108024,
+        "completion_tokens": 31,
+        "decode_tps": 7.537773973768547,
+        "finish_reason": "stop",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "HALO-EARLY-7Q2M\nHALO-MIDDLE-4X9K\nHALO-LATE-8V3P"
+      },
+      "cached": {
+        "wall_seconds": 19.369,
+        "prompt_tokens": 1030,
+        "prompt_ms": 11425.246,
+        "prompt_tps": 90.15123175465982,
+        "completion_tokens": 58,
+        "decode_tps": 7.430974891376443,
+        "finish_reason": "stop",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "EARLY RETRIEVAL MARKER: HALO-EARLY-7Q2M\nMIDDLE RETRIEVAL MARKER: HALO-MIDDLE-4X9K\nLATE RETRIEVAL MARKER: HALO-LATE-8V3P"
+      },
+      "quality": {
+        "wall_seconds": 21.956,
+        "prompt_tokens": 1038,
+        "prompt_ms": 11956.429,
+        "prompt_tps": 86.81521882495183,
+        "completion_tokens": 73,
+        "decode_tps": 7.403939463768163,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": false,
+          "middle": false,
+          "late": false
+        },
+        "all_markers_found": false,
+        "repeated_6gram_ratio": 0.0,
+        "content": "*   **Long-Context Retention:** Evaluates the model's ability to maintain attention over a massive token window filled with repetitive filler text without degrading performance or losing track of specific data points.\n*   **Deterministic Retrieval Accuracy:** Tests whether the system can precisely locate and extract unique, non-repeating identifiers embedded within large volumes of identical noise."
+      },
+      "cache_prefill_speedup": 75.69
+    }
+  ]
+}

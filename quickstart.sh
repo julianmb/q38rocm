@@ -10,6 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${SCRIPT_DIR}"
 
 source "${SCRIPT_DIR}/setup_env.sh"
+source "${SCRIPT_DIR}/scripts/cache_profile.sh"
 
 PORT="${PORT:-8000}"
 HOST="127.0.0.1"
@@ -17,6 +18,11 @@ REASONING="${REASONING:-auto}"
 REASONING_BUDGET="${REASONING_BUDGET:-4096}"
 MODEL_FILE="${SCRIPT_DIR}/Qwen3.8-27B-ROCmFP4-FAST.gguf"
 FALLBACK_MODEL="/home/user/source/strix-halo-rocmfpx-hub/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf"
+CACHE_MODE="${CACHE_MODE:-speed}"
+configure_cache_profile
+if [ "${CACHE_MODE}" = "cache" ]; then
+    mkdir -p "${SLOT_SAVE_PATH}"
+fi
 
 echo "================================================================================"
 echo " 🚀 Qwen 3.8 27B ROCmFP4_FAST — Strix Halo 1-Command Quickstart"
@@ -77,7 +83,13 @@ SERVER_LOG="${SCRIPT_DIR}/server.log"
 echo "Starting ROCmFPX llama-server in background..."
 echo "  • Backend:       ${DEVICE}"
 echo "  • Model:         $(basename "$MODEL_FILE")"
-echo "  • Speculation:   MTP Speculative Decoding (n_max=6, p_min=0.60)"
+if [ "${CACHE_MODE}" = "cache" ]; then
+    echo "  • Speculation:   disabled for checkpoint compatibility"
+    echo "  • Prompt Cache:  ${CACHE_PROFILE} profile (${CACHE_RAM_MIB} MiB, ${CTX_CHECKPOINTS} checkpoints)"
+else
+    echo "  • Speculation:   MTP Speculative Decoding (n_max=4, p_min=0.0)"
+    echo "  • Prompt Cache:  disabled in MTP speed mode"
+fi
 echo "  • Reasoning:     ${REASONING} (Budget cap: ${REASONING_BUDGET} tokens)"
 echo "  • Logs:          ${SERVER_LOG}"
 echo "--------------------------------------------------------------------------------"
@@ -88,24 +100,37 @@ CMD=(
     "-dev" "${DEVICE}"
     "-ngl" "99"
     "-fa" "on"
-    "-np" "1"
-    "-ctxcp" "0"
-    "-cram" "16384"
-    "-c" "262144"
+    "-np" "${SLOTS}"
+    "-c" "131072"
     "-b" "2048"
     "-ub" "1024"
     "-t" "16"
     "--poll" "100"
-    "-ctk" "q8_0"
-    "-ctv" "turbo4"
-    "--presence-penalty" "1.5"
+    "--presence-penalty" "0.0"
     "--repeat-penalty" "1.05"
+    "--no-mmap"
+    "--cont-batching"
+    "--kv-unified"
     "--port" "${PORT}"
     "--host" "${HOST}"
-    "--spec-type" "draft-mtp"
-    "--spec-draft-n-max" "4"
-    "--spec-draft-p-min" "0.0"
 )
+
+if [ "${CACHE_MODE}" = "cache" ]; then
+    CMD+=(
+        "-ctk" "q8_0" "-ctv" "q8_0"
+        "-ctxcp" "${CTX_CHECKPOINTS}" "-cpent" "${CHECKPOINT_EVERY}" "-cram" "${CACHE_RAM_MIB}"
+        "--cache-prompt" "--cache-reuse" "${CACHE_REUSE}" "--slot-save-path" "${SLOT_SAVE_PATH}"
+    )
+else
+    CMD+=(
+        "-ctk" "q8_0" "-ctv" "turbo4"
+        "--spec-type" "draft-mtp" "--spec-draft-n-max" "4" "--spec-draft-p-min" "0.0"
+    )
+fi
+
+if [ "${MLOCK}" = "1" ]; then
+    CMD+=("--mlock")
+fi
 
 if [ "$REASONING" == "off" ]; then
     CMD+=("--reasoning" "off")

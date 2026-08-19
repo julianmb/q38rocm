@@ -27,6 +27,11 @@ jobs:
           bash -n *.sh
           bash -n scripts/*.sh
 
+      - name: Shell regression tests
+        run: |
+          bash tests/test_cache_profile.sh
+          bash tests/test_run_server_args.sh
+
       - name: Check SHA256SUMS file format
         run: |
           test -f SHA256SUMS

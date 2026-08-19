@@ -6,7 +6,7 @@
 
 FROM ./Qwen3.8-27B-ROCmFP4-FAST.gguf
 
-PARAMETER num_ctx 262144
+PARAMETER num_ctx 131072
 PARAMETER num_gpu 99
 PARAMETER num_thread 16
 PARAMETER temperature 0.7

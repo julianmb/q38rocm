@@ -232,7 +232,10 @@ AMD Strix Halo integrates a **50 TOPS XDNA 2 NPU** at `/dev/accel/accel0` (`amdx
 sudo sed -i 's/amd_iommu=off/iommu=pt iommu.passthrough=0/g' /etc/default/grub
 sudo update-grub && sudo reboot
 
-# 2. Install XRT (built from /home/user/source/q38rocm/xdna-driver)
+# 2. Install XRT (built from the bundled amd/xdna-driver submodule)
+git submodule update --init --recursive
+cd xdna-driver/xrt/build && ./build.sh -npu -opt
+sudo make install Release/XRT/xilinx/xrt.rpm
 source /opt/xilinx/xrt/setup.sh
 xrt-smi examine          # should list "RyzenAI-npu5 / aie2p"
 
@@ -257,6 +260,29 @@ See [`docs/NPU_INTEGRATION.md`](docs/NPU_INTEGRATION.md) for the complete setup,
 ---
 
 ## 🚀 Quick Start
+
+> ### ⚠️ Prerequisites: ROCm 7.2.3 Runtime Required
+> The ROCmFPX engine binaries are dynamically linked against ROCm runtime libraries
+> (`libhipblas.so.3`, `librocblas.so.5`, `libamdhip64.so.7`, `libhipblaslt.so.1`, `libhsa-runtime64.so.1`,
+> `librocprofiler-register.so.0`). **ROCm is NOT bundled.** Install it first, otherwise the
+> server will fail with `error while loading shared libraries: libhipblas.so.3` (see
+> [issue #5](https://github.com/julianmb/q38rocm/issues/5)). `./setup_env.sh` and
+> Docker now auto-detect this and show install instructions.
+>
+> **Ubuntu 24.04 (one-time):**
+> ```bash
+> curl -fsSL https://repo.radeon.com/amdgpu-install/7.2.3/ubuntu/noble/amdgpu-install_7.2.3.70203-1_all.deb -o /tmp/amdgpu.deb
+> sudo apt install /tmp/amdgpu.deb && sudo apt-get update
+> sudo apt-get install --no-install-recommends \
+>     hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr \
+>     rocprofiler-register rocsolver roctracer comgr
+> ```
+> **Fedora/RHEL (one-time):**
+> ```bash
+> sudo dnf install https://repo.radeon.com/amdgpu-install/7.2.3/rhel/9.5/amdgpu-install-7.2.3.70203-1.el9.noarch.rpm
+> sudo dnf install rocm-dev hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr
+> ```
+> **Docker:** The included `Dockerfile` installs the ROCm runtime automatically — no host setup needed.
 
 ### ⚡ 1-Command Quickstart (Recommended)
 Run the automated launcher which downloads weights if missing, boots the background server with health check polling, and opens the streaming terminal chat:

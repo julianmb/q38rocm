@@ -32,7 +32,33 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     tar \
     git \
+    findutils \
     && rm -rf /var/lib/apt/lists/*
+
+# Install ROCm 7.2.3 runtime libraries (required by ROCmFPX engine binaries, issue #5).
+# ROCmFPX links against libhipblas.so.3 / librocblas.so.5 / libamdhip64.so.7 etc.,
+# which are NOT part of a base Ubuntu image. Install only the runtime subset
+# (~1.2 GB) instead of the full ~4 GB ROCm toolchain.
+RUN curl -fsSL "https://repo.radeon.com/amdgpu-install/7.2.3/ubuntu/noble/amdgpu-install_7.2.3.70203-1_all.deb" -o /tmp/amdgpu-install.deb \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends /tmp/amdgpu-install.deb \
+    && rm -f /tmp/amdgpu-install.deb \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        hip-runtime-amd \
+        hipblas \
+        rocblas \
+        hipblaslt \
+        hsa-rocr \
+        rocprofiler-register \
+        rocsolver \
+        roctracer \
+        comgr \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV ROCM_HOME=/opt/rocm
+ENV LD_LIBRARY_PATH="/opt/rocm/lib:/app/engine/bin:${LD_LIBRARY_PATH}"
 
 # Download and install pre-built ROCmFPX engine binaries
 RUN mkdir -p /app/engine && \

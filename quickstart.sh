@@ -16,8 +16,9 @@ PORT="${PORT:-8000}"
 HOST="127.0.0.1"
 REASONING="${REASONING:-auto}"
 REASONING_BUDGET="${REASONING_BUDGET:-4096}"
+HUB_DIR="${HALOFPX_HUB_DIR:-${HOME}/source/strix-halo-rocmfpx-hub}"
 MODEL_FILE="${SCRIPT_DIR}/Qwen3.8-27B-ROCmFP4-FAST.gguf"
-FALLBACK_MODEL="/home/user/source/strix-halo-rocmfpx-hub/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf"
+FALLBACK_MODEL="${HUB_DIR}/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf"
 CACHE_MODE="${CACHE_MODE:-speed}"
 configure_cache_profile
 if [ "${CACHE_MODE}" = "cache" ]; then
@@ -48,8 +49,8 @@ fi
 LLAMA_SERVER_BIN="$(which llama-server 2>/dev/null || true)"
 if [ -z "$LLAMA_SERVER_BIN" ] && [ -x "${SCRIPT_DIR}/engine/bin/llama-server" ]; then
     LLAMA_SERVER_BIN="${SCRIPT_DIR}/engine/bin/llama-server"
-elif [ -z "$LLAMA_SERVER_BIN" ] && [ -x "/home/user/source/strix-halo-rocmfpx-hub/engine/bin/llama-server" ]; then
-    LLAMA_SERVER_BIN="/home/user/source/strix-halo-rocmfpx-hub/engine/bin/llama-server"
+elif [ -z "$LLAMA_SERVER_BIN" ] && [ -x "${HUB_DIR}/engine/bin/llama-server" ]; then
+    LLAMA_SERVER_BIN="${HUB_DIR}/engine/bin/llama-server"
 fi
 
 if [ -z "$LLAMA_SERVER_BIN" ]; then

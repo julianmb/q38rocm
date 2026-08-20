@@ -1,0 +1,3 @@
+[submodule "xdna-driver"]
+	path = xdna-driver
+	url = https://github.com/amd/xdna-driver.git

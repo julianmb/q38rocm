@@ -87,11 +87,10 @@ sudo reboot
 
 ### 3.2 Install XRT (user-space runtime)
 
-XRT is built from the AMD XDNA driver source (see `xdna-driver/` in this repo):
+XRT is built from the AMD XDNA driver source (bundled as the `xdna-driver/` git submodule in this repo):
 ```bash
-cd /home/user/source/q38rocm/xdna-driver
 git submodule update --init --recursive
-cd xrt/build
+cd xdna-driver/xrt/build
 ./build.sh -npu -opt -j 16 -noert -disable-werror
 cd Release && sudo make install
 ```

@@ -34,8 +34,9 @@ bash tests/test_build_engine_flags.sh
    them in the repo (decision from issue #5 — documented, not vendored).
 4. **MTP:** Qwen 3.8 27B is the model where MTP IS a big win (2.4–2.94x).
    Keep strict-greedy (`--spec-mtp-strict-qwen`) available for agents.
-5. `q38rocmDf2/` sibling folder is a stale second clone with uncommitted
-   DFlash experiments — pending salvage/deletion, do not treat as canonical.
+5. Speech pipeline: NPU Whisper + pyannote work formerly staged in the
+   `q38rocmDf2` sibling clone now lives in `npuhalo-speech`
+   (github.com/julianmb/npuhalo-speech). The duplicate clone has been retired.
 6. Commit style: conventional commits; push straight to `main`.
 
 ## Benchmarks

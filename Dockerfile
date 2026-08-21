@@ -21,7 +21,7 @@ ENV LD_LIBRARY_PATH="/app/engine/bin:${LD_LIBRARY_PATH}"
 WORKDIR /app
 
 # Install system dependencies & Mesa RADV Vulkan drivers
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN groupadd render && apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     vulkan-tools \
@@ -62,7 +62,7 @@ ENV LD_LIBRARY_PATH="/opt/rocm/lib:/app/engine/bin:${LD_LIBRARY_PATH}"
 
 # Download and install pre-built ROCmFPX engine binaries
 RUN mkdir -p /app/engine && \
-    curl -L "https://github.com/julianmb/q38rocm/releases/download/v1.0.0/strix-halo-rocmfpx-engine-v1.0.0-linux-x86_64.tar.gz" -o /tmp/engine.tar.gz && \
+    curl -L "https://github.com/julianmb/q38rocm/releases/download/v1.1.0/strix-halo-rocmfpx-engine-v1.0.0-linux-x86_64.tar.gz" -o /tmp/engine.tar.gz && \
     tar -xzf /tmp/engine.tar.gz -C /tmp/ && \
     cp -a /tmp/strix-halo-rocmfpx-engine/* /app/engine/ && \
     rm -rf /tmp/strix-halo-rocmfpx-engine /tmp/engine.tar.gz

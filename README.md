@@ -392,6 +392,13 @@ docker compose --profile webui up -d
 ## 🛠️ Building the Engine
 
 To compile the ROCmFPX engine from source for Strix Halo (gfx1151):
+
+```bash
+# Ubuntu 24.04 build dependencies (Node.js is not required by default)
+sudo apt install build-essential cmake git glslc libvulkan-dev \
+    mesa-vulkan-drivers spirv-headers
+```
+
 ```bash
 ./build_engine.sh
 ```
@@ -403,9 +410,13 @@ The default is a native static build, which avoids runtime backend-module and sy
 ./build_engine.sh --static          # Default: portable single-directory deployment
 ./build_engine.sh --shared          # Developer build; copies matching .so files
 ./build_engine.sh --shared --clean  # Reconfigure that mode from scratch
+./build_engine.sh --rocm-only       # HIP-only fallback; skips Vulkan/SPIR-V requirements
+./build_engine.sh --webui           # Opt in to embedded WebUI (requires Node.js/npm)
 ```
 
-Both modes set `GGML_NATIVE=ON`, so build on the Strix Halo machine where the binaries will run.
+All builds set `CMAKE_POSITION_INDEPENDENT_CODE=ON`, preventing Ubuntu's PIE linker from rejecting static HIP objects. The headless OpenAI API server is the default, so `LLAMA_BUILD_WEBUI=OFF` avoids an unnecessary Node.js dependency; use `--webui` only when you need the embedded UI. Vulkan builds require the Khronos `spirv-headers` package; `--rocm-only` is available for HIP-only environments.
+
+Both linkage modes set `GGML_NATIVE=ON`, so build on the Strix Halo machine where the binaries will run. ROCm officially supports Ubuntu 24.04, while Debian 13 is not currently available in AMD's ROCm apt repository.
 
 ---
 

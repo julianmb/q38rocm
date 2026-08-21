@@ -14,6 +14,8 @@ EXPECTED_TARBALL_SHA="bbc7845db0c012b97f1c9b8a2733a7083c6f9a749a453866fbe1994151
 LINKAGE="static"
 CLEAN_BUILD=0
 USE_PREBUILT=0
+ENABLE_VULKAN=1
+BUILD_WEBUI=0
 
 download_prebuilt() {
     echo "================================================================================"
@@ -49,6 +51,8 @@ while [[ $# -gt 0 ]]; do
         --static) LINKAGE="static"; shift ;;
         --shared) LINKAGE="shared"; shift ;;
         --clean) CLEAN_BUILD=1; shift ;;
+        --webui) BUILD_WEBUI=1; shift ;;
+        --rocm-only|--no-vulkan) ENABLE_VULKAN=0; shift ;;
         *) echo "Unknown option: $1" >&2; exit 2 ;;
     esac
 done
@@ -62,6 +66,8 @@ echo " ⚙️ ROCmFPX llama.cpp Engine Setup for AMD Strix Halo"
 echo " Target Architecture: gfx1151 (Radeon 8060S / RDNA 3.5)"
 echo " Source Revision: ${PINNED_COMMIT}"
 echo " Linkage:         ${LINKAGE}"
+echo " Vulkan:          $([ "$ENABLE_VULKAN" -eq 1 ] && echo enabled || echo disabled)"
+echo " WebUI:           $([ "$BUILD_WEBUI" -eq 1 ] && echo enabled || echo disabled)"
 echo " Options: Run './build_engine.sh --prebuilt' to download pre-compiled binaries"
 echo "================================================================================"
 
@@ -74,15 +80,36 @@ for tool in cmake git; do
     fi
 done
 
-# Check Vulkan shader compiler (glslc)
-if ! command -v glslc >/dev/null 2>&1; then
+# Check Vulkan build dependencies when the dual-backend build is requested.
+if [ "$ENABLE_VULKAN" -eq 1 ] && ! command -v glslc >/dev/null 2>&1; then
     echo "⚠️  'glslc' (Vulkan shader compiler) not found."
     echo "   Without glslc, CMake will produce a ROCm-only binary without Vulkan0 Wave64 support."
-    echo "   To compile with Vulkan, install: sudo apt install glslc libvulkan-dev mesa-vulkan-drivers"
+    echo "   To compile with Vulkan, install: sudo apt install glslc libvulkan-dev mesa-vulkan-drivers spirv-headers"
+    echo "   Or explicitly build HIP-only: ./build_engine.sh --rocm-only"
     read -p "Would you like to download the pre-compiled Strix Halo binaries instead? [Y/n] " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Nn]$ ]]; then
         download_prebuilt
+    fi
+fi
+
+if [ "$ENABLE_VULKAN" -eq 1 ]; then
+    SPIRV_HEADER_FOUND=0
+    for header in \
+        /usr/include/spirv/unified1/spirv.hpp \
+        /usr/local/include/spirv/unified1/spirv.hpp \
+        /usr/include/spirv-headers/spirv.hpp \
+        /usr/local/include/spirv-headers/spirv.hpp; do
+        if [ -f "$header" ]; then
+            SPIRV_HEADER_FOUND=1
+            break
+        fi
+    done
+    if [ "$SPIRV_HEADER_FOUND" -ne 1 ]; then
+        echo "❌ SPIR-V C++ headers are required for the Vulkan backend (issue #9)." >&2
+        echo "   Ubuntu 24.04: sudo apt install spirv-headers" >&2
+        echo "   Or build HIP-only: ./build_engine.sh --rocm-only" >&2
+        exit 1
     fi
 fi
 
@@ -115,15 +142,22 @@ CMAKE_FLAGS=(
     -DGGML_NATIVE=ON
     -DGGML_HIP=ON
     -DAMDGPU_TARGETS=gfx1151
-    -DGGML_VULKAN=ON
     -DGGML_VULKAN_CHECK_RESULTS=OFF
     -DGGML_AVX=ON
     -DGGML_AVX2=ON
     -DGGML_AVX512=ON
     -DGGML_F16C=ON
     -DGGML_FMA=ON
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+    -DLLAMA_BUILD_WEBUI=$([ "$BUILD_WEBUI" -eq 1 ] && echo ON || echo OFF)
     -DCMAKE_BUILD_TYPE=Release
 )
+
+if [ "$ENABLE_VULKAN" -eq 1 ]; then
+    CMAKE_FLAGS+=("-DGGML_VULKAN=ON")
+else
+    CMAKE_FLAGS+=("-DGGML_VULKAN=OFF")
+fi
 
 if [ "$LINKAGE" = "static" ]; then
     CMAKE_FLAGS+=("-DGGML_BACKEND_DL=OFF" "-DBUILD_SHARED_LIBS=OFF")
@@ -131,7 +165,11 @@ else
     CMAKE_FLAGS+=("-DGGML_BACKEND_DL=OFF" "-DBUILD_SHARED_LIBS=ON")
 fi
 
-echo "Configuring a native ${LINKAGE} build with Vulkan & ROCm support..."
+if [ "$ENABLE_VULKAN" -eq 1 ]; then
+    echo "Configuring a native ${LINKAGE} build with Vulkan & ROCm support..."
+else
+    echo "Configuring a native ${LINKAGE} ROCm/HIP-only build..."
+fi
 cmake -S "${ENGINE_DIR}/src" -B "${BUILD_DIR}" "${CMAKE_FLAGS[@]}"
 
 JOBS="${JOBS:-$(nproc 2>/dev/null || echo 8)}"

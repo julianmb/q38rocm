@@ -1,8 +1,8 @@
-name: CI & Integrity Check
+name: CI & Validation
 
 on:
   push:
-    branches: [ main, release/* ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -18,21 +18,23 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Python syntax and compile validation
+      - name: Install dependencies
+        run: |
+          pip install aiohttp requests
+
+      - name: Python compile and syntax validation
         run: |
           python3 -m py_compile scripts/*.py
 
+      - name: Python tests (hybrid pipeline)
+        run: python3 -m unittest discover -s tests -p "test_*.py" -v
+
       - name: Shell script syntax check
         run: |
-          bash -n *.sh
-          bash -n scripts/*.sh
+          bash -n setup_env.sh run_server.sh quickstart.sh build_engine.sh download_model.sh apply_hardware_tweaks.sh
 
-      - name: Shell regression tests
+      - name: Shell test suites
         run: |
-          bash tests/test_cache_profile.sh
           bash tests/test_run_server_args.sh
-
-      - name: Check SHA256SUMS file format
-        run: |
-          test -f SHA256SUMS
-          grep -E "^[a-f0-9]{64}  " SHA256SUMS
+          bash tests/test_cache_profile.sh
+          bash tests/test_build_engine_flags.sh

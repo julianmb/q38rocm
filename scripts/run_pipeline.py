@@ -64,6 +64,11 @@ NPU_SERVER_URL = "http://127.0.0.1:13305"   # lemonade front
 PIPELINE_PORT = 11435
 NPU_BURST_TOKENS = 24   # how many tokens the NPU drafts before GPU handoff
 
+# Requests carrying structured-output fields bypass the NPU burst entirely:
+# the 0.8B drafter cannot honor tool templates, and once a prefix is streamed
+# it cannot be retracted (issue #11).
+STRUCTURED_FIELDS = ("tools", "tool_choice", "response_format", "parallel_tool_calls")
+
 
 class StrixHaloHybridPipeline:
     def __init__(
@@ -203,14 +208,19 @@ class StrixHaloHybridPipeline:
         except Exception:
             return web.json_response({"error": "Invalid JSON body"}, status=400)
 
-        stream = body.get("stream", False)
-        messages = body.get("messages", [])
-        max_tokens = body.get("max_tokens", 512)
-        temperature = body.get("temperature", 0.7)
+        stream = bool(body.get("stream", False))
 
-        if not stream:
-            gpu_payload = {"messages": messages, "max_tokens": max_tokens,
-                           "temperature": temperature, "stream": False}
+        # Structured-output requests (tools / tool_choice / response_format)
+        # must not touch the NPU drafter: it cannot honor tool templates and
+        # a streamed prefix cannot be retracted. Route them straight to the
+        # iGPU with every OpenAI field preserved (issue #11).
+        structured = any(k in body for k in STRUCTURED_FIELDS)
+
+        if not stream or structured:
+            # Forward the client's payload verbatim; only pin the stream mode.
+            # This preserves tools, tool_choice, response_format, top_p, stop,
+            # seed, etc. instead of silently dropping them (issue #11).
+            gpu_payload = {**body, "stream": False}
             async with self.http_session.post(f"http://127.0.0.1:{self.gpu_port}/v1/chat/completions",
                                               json=gpu_payload) as r:
                 return web.json_response(await r.json())
@@ -232,15 +242,16 @@ class StrixHaloHybridPipeline:
             npu_draft = ""
             t0 = time.perf_counter()
             if self.npu_available:
-                async for delta in self.npu_stream(messages, self.npu_burst_tokens):
+                async for delta in self.npu_stream(body.get("messages", []), self.npu_burst_tokens):
                     npu_draft += delta
                     await response.write(sse(delta))
             npu_ms = (time.perf_counter() - t0) * 1000
 
             # === Phase 2: GPU continuation from the already-streamed NPU prefix ===
-            cont_messages = list(messages) + [{"role": "assistant", "content": npu_draft}] if npu_draft else list(messages)
-            gpu_payload = {"messages": cont_messages, "max_tokens": max_tokens,
-                           "temperature": temperature, "stream": True}
+            messages = body.get("messages", [])
+            cont_messages = list(messages) + [{"role": "assistant", "content": npu_draft}] if npu_draft else messages
+            # Full-field passthrough so nothing the client asked for is lost.
+            gpu_payload = {**body, "messages": cont_messages, "stream": True}
             async with self.http_session.post(f"http://127.0.0.1:{self.gpu_port}/v1/chat/completions",
                                               json=gpu_payload) as r:
                 async for line in r.content:

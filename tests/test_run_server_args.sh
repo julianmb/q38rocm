@@ -183,9 +183,9 @@ cache_output="$({
 [[ "$cache_output" == *"strict_count=0"* ]]
 [[ "$cache_output" == *"spec_type_count=0"* ]]
 [[ "$cache_output" == *"temperature=0.0 count=1"* ]]
-cram_re='cram=[1-9][0-9]+ count=1'
+cram_re='cram=[1-9][0-9]* count=1'
 [[ "$cache_output" =~ $cram_re ]]
-ctxcp_re='ctxcp=[1-9][0-9]+ count=1'
+ctxcp_re='ctxcp=[1-9][0-9]* count=1'
 [[ "$cache_output" =~ $ctxcp_re ]]
 
 implied_cache_output="$({

@@ -18,6 +18,11 @@ ENV RADV_PERFTEST="gpl,sam,nggc"
 ENV PATH="/app/engine/bin:${PATH}"
 ENV LD_LIBRARY_PATH="/app/engine/bin:${LD_LIBRARY_PATH}"
 
+# Bind to all interfaces by default: run_server.sh defaults HOST=127.0.0.1,
+# which breaks `docker run -p` port publishing (the in-container healthcheck
+# would still pass, masking the problem).
+ENV HOST=0.0.0.0
+
 WORKDIR /app
 
 # Install system dependencies & Mesa RADV Vulkan drivers

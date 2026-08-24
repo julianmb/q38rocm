@@ -130,6 +130,12 @@ echo "Checking out pinned commit: ${PINNED_COMMIT}..."
 git fetch origin
 git checkout --detach "${PINNED_COMMIT}"
 
+PATCH_FILE="${SCRIPT_DIR}/patches/mtp-prompt-cache-fix.patch"
+if [ -f "${PATCH_FILE}" ]; then
+    echo "Applying MTP prompt cache checkpoint fix..."
+    git apply "${PATCH_FILE}" 2>/dev/null || true
+fi
+
 # Configure CMake with Dual ROCm + Vulkan Acceleration
 BUILD_DIR="${ENGINE_DIR}/src/build-${LINKAGE}"
 if [ "$CLEAN_BUILD" -eq 1 ] && [ -d "$BUILD_DIR" ]; then

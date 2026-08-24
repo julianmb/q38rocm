@@ -18,6 +18,11 @@ REASONING_BUDGET="${REASONING_BUDGET:-4096}"
 DEVICE="${DEVICE:-auto}"
 PROFILE="${PROFILE:-${CACHE_MODE:-speed}}"
 
+# Scan args for profile selection before parsing values.
+# An explicit --profile always wins; otherwise any cache-enabling flag implies
+# the cache profile (issues #12/#13: these flags used to be silently ignored
+# while speed/agent kept prompt caching disabled).
+EXPLICIT_PROFILE=0
 ARGS=("$@")
 for ((i = 0; i < ${#ARGS[@]}; i++)); do
     case "${ARGS[$i]}" in
@@ -27,8 +32,13 @@ for ((i = 0; i < ${#ARGS[@]}; i++)); do
                 exit 2
             fi
             PROFILE="${ARGS[$((i + 1))]}"
+            EXPLICIT_PROFILE=1
             ;;
-        --cache-mode) PROFILE="cache" ;;
+        --cache-mode|--cache-prompt|--cache-ram|--ctx-checkpoints|--checkpoint-every|--slot-save-path|--cache-reuse)
+            if [ "$EXPLICIT_PROFILE" -eq 0 ]; then
+                PROFILE="cache"
+            fi
+            ;;
     esac
 done
 
@@ -109,6 +119,7 @@ while [[ $# -gt 0 ]]; do
         --mlock) MLOCK=1; shift ;;
         --profile) shift 2 ;;
         --cache-mode) shift ;;
+        --cache-prompt) shift ;;
         -b|--batch) BATCH_SIZE="$2"; shift 2 ;;
         -ub|--ubatch) UBATCH_SIZE="$2"; shift 2 ;;
         --presence-penalty) PRESENCE_PENALTY="$2"; shift 2 ;;

@@ -15,6 +15,18 @@ if [ "${1:-}" = "--list-devices" ]; then
     exit 0
 fi
 
+batch=""
+ubatch=""
+presence=""
+repeat=""
+temperature=""
+ctx=""
+ctxcp=""
+cram=""
+strict=""
+no_cache_prompt=""
+cache_prompt=""
+
 batch_count=0
 ubatch_count=0
 no_mmap_count=0
@@ -24,6 +36,7 @@ temperature_count=0
 ctxcp_count=0
 cram_count=0
 no_cache_prompt_count=0
+cache_prompt_count=0
 strict_count=0
 ctx_count=0
 while [ "$#" -gt 0 ]; do
@@ -76,6 +89,10 @@ while [ "$#" -gt 0 ]; do
             no_cache_prompt_count=$((no_cache_prompt_count + 1))
             shift
             ;;
+        --cache-prompt)
+            cache_prompt_count=$((cache_prompt_count + 1))
+            shift
+            ;;
         --spec-mtp-strict-qwen)
             strict_count=$((strict_count + 1))
             shift
@@ -94,6 +111,7 @@ printf 'ctx=%s count=%s\n' "$ctx" "$ctx_count"
 printf 'ctxcp=%s count=%s\n' "$ctxcp" "$ctxcp_count"
 printf 'cram=%s count=%s\n' "$cram" "$cram_count"
 printf 'no_cache_prompt_count=%s\n' "$no_cache_prompt_count"
+printf 'cache_prompt_count=%s\n' "$cache_prompt_count"
 printf 'strict_count=%s\n' "$strict_count"
 EOF
 chmod +x "$TMP_DIR/llama-server"
@@ -146,5 +164,40 @@ safe_output="$({
 [[ "$safe_output" == *"batch=1024 count=1"* ]]
 [[ "$safe_output" == *"ubatch=512 count=1"* ]]
 [[ "$safe_output" == *"strict_count=0"* ]]
+
+cache_output="$({
+    ROCMFPX_BIN_DIR="$TMP_DIR" \
+    MODEL_PATH="$TMP_DIR/model.gguf" \
+    "$ROOT_DIR/run_server.sh" --profile cache --slot-save-path "$TMP_DIR/slots"
+} 2>&1)"
+
+[[ "$cache_output" == *"Profile:        cache"* ]]
+[[ "$cache_output" == *"no_cache_prompt_count=0"* ]]
+[[ "$cache_output" == *"strict_count=0"* ]]
+[[ "$cache_output" == *"temperature=0.0 count=1"* ]]
+cram_re='cram=[1-9][0-9]+ count=1'
+[[ "$cache_output" =~ $cram_re ]]
+ctxcp_re='ctxcp=[1-9][0-9]+ count=1'
+[[ "$cache_output" =~ $ctxcp_re ]]
+
+implied_cache_output="$({
+    ROCMFPX_BIN_DIR="$TMP_DIR" \
+    MODEL_PATH="$TMP_DIR/model.gguf" \
+    "$ROOT_DIR/run_server.sh" --cache-prompt --slot-save-path "$TMP_DIR/slots"
+} 2>&1)"
+
+[[ "$implied_cache_output" == *"Profile:        cache"* ]]
+[[ "$implied_cache_output" == *"cache_prompt_count=1"* ]]
+[[ "$implied_cache_output" == *"no_cache_prompt_count=0"* ]]
+
+explicit_profile_wins="$({
+    ROCMFPX_BIN_DIR="$TMP_DIR" \
+    MODEL_PATH="$TMP_DIR/model.gguf" \
+    "$ROOT_DIR/run_server.sh" --cache-prompt --profile agent
+} 2>&1)"
+
+[[ "$explicit_profile_wins" == *"Profile:        agent"* ]]
+[[ "$explicit_profile_wins" == *"no_cache_prompt_count=1"* ]]
+[[ "$explicit_profile_wins" == *"strict_count=1"* ]]
 
 printf '%s\n' "run_server argument tests passed"

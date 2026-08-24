@@ -16,6 +16,9 @@ services:
       - RADV_PERFTEST=gpl,sam,nggc
       - CTX=131072
       - PORT=8000
+      # Bind all interfaces so the published port mapping works
+      # (run_server.sh would otherwise default to 127.0.0.1)
+      - HOST=0.0.0.0
       # For Strix Halo APU, uncomment:
       # - HSA_OVERRIDE_GFX_VERSION=11.5.1
       # - GGML_HIP_ENABLE_UNIFIED_MEMORY=1

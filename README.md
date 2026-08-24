@@ -132,6 +132,15 @@ All benchmark results below were measured directly on **AMD Ryzen AI Max+ 395 (4
 | **`ROCmFP4_FAST` + MTP (`n6/p0.60`)** | 32K / TurboQuant KV | 14.02 tok/s | **30.56 – 34.82 tok/s** | **2.50× – 2.84×** | 439.4 ms |
 | **`ROCmFP4_FAST` + Deep Spec (`n7/p0.35`)** | 32K / TurboQuant KV | 14.02 tok/s | 🔥 **36.04 tok/s** *(JSON/Code)* | 🔥 **2.94×** | 445.8 ms |
 
+> ⚠️ **Measured conditions — sampling temperature governs MTP gains.** Every MTP number in
+> these tables was measured with greedy / near-greedy sampling (`temperature ≈ 0`). At
+> conversational temperatures the draft acceptance rate collapses — measured in
+> [issue #12](https://github.com/julianmb/q38rocm/issues/12): ~88% at temp 0 vs ~25% at
+> temp 0.8, with per-position acceptance falling to 5% late in generation — and speculative
+> decoding returns close to unassisted decode speed. For maximum throughput keep
+> `TEMPERATURE=0.0–0.2` (`./run_server.sh --temperature 0` or `--profile agent`); for
+> high-temperature chat workloads, expect decode nearer the *Unassisted* column.
+
 ### Task-Specific Speculative Speedup
 
 | Benchmark Task | Unassisted *(Measured)* | MTP Speculative *(Measured)* | Draft Acceptance Rate | Peak Speedup |

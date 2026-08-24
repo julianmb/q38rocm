@@ -9,8 +9,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENGINE_DIR="${SCRIPT_DIR}/engine"
 REPO_URL="https://github.com/charlie12345/ROCmFPX.git"
 PINNED_COMMIT="${PINNED_COMMIT:-0fc9568e07ccc8553010864cb8db1957e629cbfa}"
-RELEASE_TARBALL_URL="https://github.com/julianmb/q38rocm/releases/download/v1.0.0/strix-halo-rocmfpx-engine-v1.0.0-linux-x86_64.tar.gz"
-EXPECTED_TARBALL_SHA="bbc7845db0c012b97f1c9b8a2733a7083c6f9a749a453866fbe1994151d3364f"
+RELEASE_TARBALL_URL="https://github.com/julianmb/q38rocm/releases/download/v1.4.0/strix-halo-rocmfpx-engine-v1.4.0-linux-x86_64.tar.gz"
+EXPECTED_TARBALL_SHA="7edd6bb87e00faebdf3af7887230f9293887b00633b04829817844429e4a6bcc"
 LINKAGE="static"
 CLEAN_BUILD=0
 USE_PREBUILT=0
@@ -19,11 +19,11 @@ BUILD_WEBUI=0
 
 download_prebuilt() {
     echo "================================================================================"
-    echo " 📥 Downloading Pre-Compiled ROCmFPX Engine (v1.0.0) for AMD Strix Halo"
+    echo " 📥 Downloading Pre-Compiled ROCmFPX Engine (v1.4.0) for AMD Strix Halo"
     echo " Source: ${RELEASE_TARBALL_URL}"
     echo "================================================================================"
     mkdir -p "${ENGINE_DIR}"
-    TAR_PATH="/tmp/strix-halo-engine-v1.0.0.tar.gz"
+    TAR_PATH="/tmp/strix-halo-engine-v1.4.0.tar.gz"
     
     curl -L "${RELEASE_TARBALL_URL}" -o "${TAR_PATH}" --progress-bar
     
@@ -130,11 +130,16 @@ echo "Checking out pinned commit: ${PINNED_COMMIT}..."
 git fetch origin
 git checkout --detach "${PINNED_COMMIT}"
 
-PATCH_FILE="${SCRIPT_DIR}/patches/mtp-prompt-cache-fix.patch"
-if [ -f "${PATCH_FILE}" ]; then
-    echo "Applying MTP prompt cache checkpoint fix..."
-    git apply "${PATCH_FILE}" 2>/dev/null || true
-fi
+shopt -s nullglob
+for PATCH_FILE in "${SCRIPT_DIR}/patches/"*.patch; do
+    git apply --check "${PATCH_FILE}" || {
+        echo "❌ Local patch does not apply at ${PINNED_COMMIT}: ${PATCH_FILE}" >&2
+        echo "   Rebase or delete it in patches/ — refusing to build without it silently." >&2
+        exit 1
+    }
+    echo "Applying $(basename "${PATCH_FILE}")..."
+    git apply "${PATCH_FILE}"
+done
 
 # Configure CMake with Dual ROCm + Vulkan Acceleration
 BUILD_DIR="${ENGINE_DIR}/src/build-${LINKAGE}"

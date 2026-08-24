@@ -26,6 +26,7 @@ cram=""
 strict=""
 no_cache_prompt=""
 cache_prompt=""
+spec_type=""
 
 batch_count=0
 ubatch_count=0
@@ -39,6 +40,7 @@ no_cache_prompt_count=0
 cache_prompt_count=0
 strict_count=0
 ctx_count=0
+spec_type_count=0
 while [ "$#" -gt 0 ]; do
     case "$1" in
         -b)
@@ -97,6 +99,10 @@ while [ "$#" -gt 0 ]; do
             strict_count=$((strict_count + 1))
             shift
             ;;
+        --spec-type)
+            spec_type_count=$((spec_type_count + 1))
+            shift
+            ;;
         *) shift ;;
     esac
 done
@@ -113,6 +119,7 @@ printf 'cram=%s count=%s\n' "$cram" "$cram_count"
 printf 'no_cache_prompt_count=%s\n' "$no_cache_prompt_count"
 printf 'cache_prompt_count=%s\n' "$cache_prompt_count"
 printf 'strict_count=%s\n' "$strict_count"
+printf 'spec_type_count=%s\n' "$spec_type_count"
 EOF
 chmod +x "$TMP_DIR/llama-server"
 
@@ -174,6 +181,7 @@ cache_output="$({
 [[ "$cache_output" == *"Profile:        cache"* ]]
 [[ "$cache_output" == *"no_cache_prompt_count=0"* ]]
 [[ "$cache_output" == *"strict_count=0"* ]]
+[[ "$cache_output" == *"spec_type_count=0"* ]]
 [[ "$cache_output" == *"temperature=0.0 count=1"* ]]
 cram_re='cram=[1-9][0-9]+ count=1'
 [[ "$cache_output" =~ $cram_re ]]
@@ -199,5 +207,24 @@ explicit_profile_wins="$({
 [[ "$explicit_profile_wins" == *"Profile:        agent"* ]]
 [[ "$explicit_profile_wins" == *"no_cache_prompt_count=1"* ]]
 [[ "$explicit_profile_wins" == *"strict_count=1"* ]]
+
+cache_mtp_output="$({
+    ROCMFPX_BIN_DIR="$TMP_DIR" \
+    MODEL_PATH="$TMP_DIR/model.gguf" \
+    MTP=1 \
+    "$ROOT_DIR/run_server.sh" --profile cache --slot-save-path "$TMP_DIR/slots"
+} 2>&1)"
+
+[[ "$cache_mtp_output" == *"Profile:        cache"* ]]
+[[ "$cache_mtp_output" == *"spec_type_count=1"* ]]
+[[ "$cache_mtp_output" == *"MTP + prompt cache needs a patched engine"* ]]
+
+cache_mtp_flag_output="$({
+    ROCMFPX_BIN_DIR="$TMP_DIR" \
+    MODEL_PATH="$TMP_DIR/model.gguf" \
+    "$ROOT_DIR/run_server.sh" --profile cache --mtp --slot-save-path "$TMP_DIR/slots"
+} 2>&1)"
+
+[[ "$cache_mtp_flag_output" == *"spec_type_count=1"* ]]
 
 printf '%s\n' "run_server argument tests passed"

@@ -69,8 +69,8 @@ case "${PROFILE}" in
         ;;
     cache)
         CTX="${CTX:-131072}"
-        MTP=0
-        STRICT_MTP=0
+        MTP="${MTP:-0}"
+        STRICT_MTP="${STRICT_MTP:-0}"
         KV_K="q8_0"
         KV_V="q8_0"
         REASONING="${REASONING:-off}"
@@ -129,6 +129,7 @@ while [[ $# -gt 0 ]]; do
         --draft-n) DRAFT_N="$2"; shift 2 ;;
         --draft-p) DRAFT_P="$2"; shift 2 ;;
         --no-mtp) MTP=0; shift ;;
+        --mtp) MTP=1; shift ;;
         --kv-k) KV_K="$2"; shift 2 ;;
         --kv-v) KV_V="$2"; shift 2 ;;
         --reasoning) REASONING="$2"; shift 2 ;;
@@ -147,8 +148,10 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# cache profile keeps q8_0/q8_0 KV (TurboQuant rotation is incompatible with
+# checkpoint restore). MTP stays off unless explicitly opted in via MTP=1 or
+# --mtp: coexistence requires the patched engine (patches/mtp-prompt-cache-fix.patch).
 if [ "${PROFILE}" = "cache" ]; then
-    MTP=0
     KV_K="q8_0"
     KV_V="q8_0"
 fi
@@ -279,6 +282,11 @@ echo " Device Backend: ${DEVICE}"
 echo " Context:        ${CTX} tokens (KV: K=${KV_K}, V=${KV_V})"
 if [ "${PROFILE}" = "cache" ]; then
     echo " Prompt Cache:   ${CACHE_PROFILE} profile (${CACHE_RAM_MIB} MiB, ${CTX_CHECKPOINTS} checkpoints, reuse ${CACHE_REUSE})"
+    if [ "${MTP}" = "1" ]; then
+        echo " ⚠️  MTP + prompt cache needs a patched engine (built with"
+        echo "     patches/mtp-prompt-cache-fix.patch, release v1.3.0+). Older engines"
+        echo "     silently fall back to full cold prefill via spec-boundary-mismatch."
+    fi
 else
     echo " Prompt Cache:   disabled explicitly (checkpoints=0, RAM cache=0)"
 fi

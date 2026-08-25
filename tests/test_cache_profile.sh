@@ -14,9 +14,9 @@ check_profile() {
     [ "$CTX_CHECKPOINTS" = "$expected_checkpoints" ]
 }
 
-check_profile 33554432 32GB 8192 4
-check_profile 67108864 64GB 16384 8
-check_profile 134217728 128GB 32768 16
+check_profile 33554432 32GB 8192 16
+check_profile 67108864 64GB 16384 32
+check_profile 134217728 128GB 32768 64
 
 unset CACHE_PROFILE CTX_CHECKPOINTS
 CACHE_RAM_MIB=24576

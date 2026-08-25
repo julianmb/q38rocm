@@ -17,15 +17,15 @@ configure_cache_profile() {
     if [ "$mem_total_kib" -ge 117440512 ]; then
         CACHE_PROFILE="128GB"
         CACHE_RAM_MIB="${CACHE_RAM_MIB:-32768}"
-        CTX_CHECKPOINTS="${CTX_CHECKPOINTS:-16}"
+        CTX_CHECKPOINTS="${CTX_CHECKPOINTS:-64}"
     elif [ "$mem_total_kib" -ge 58720256 ]; then
         CACHE_PROFILE="64GB"
         CACHE_RAM_MIB="${CACHE_RAM_MIB:-16384}"
-        CTX_CHECKPOINTS="${CTX_CHECKPOINTS:-8}"
+        CTX_CHECKPOINTS="${CTX_CHECKPOINTS:-32}"
     else
         CACHE_PROFILE="32GB"
         CACHE_RAM_MIB="${CACHE_RAM_MIB:-8192}"
-        CTX_CHECKPOINTS="${CTX_CHECKPOINTS:-4}"
+        CTX_CHECKPOINTS="${CTX_CHECKPOINTS:-16}"
     fi
 
     CACHE_REUSE="${CACHE_REUSE:-256}"

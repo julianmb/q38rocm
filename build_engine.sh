@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENGINE_DIR="${SCRIPT_DIR}/engine"
 REPO_URL="https://github.com/charlie12345/ROCmFPX.git"
 PINNED_COMMIT="${PINNED_COMMIT:-0fc9568e07ccc8553010864cb8db1957e629cbfa}"
-RELEASE_TARBALL_URL="https://github.com/julianmb/q38rocm/releases/download/v1.5.0/strix-halo-rocmfpx-engine-v1.5.0-linux-x86_64.tar.gz"
+RELEASE_TARBALL_URL="https://github.com/julianmb/q38rocm/releases/download/v1.5.1/strix-halo-rocmfpx-engine-v1.5.1-linux-x86_64.tar.gz"
 EXPECTED_TARBALL_SHA="7352ab06dff8a2a346cc20bf25a21d41f86ca490387fea77fce926340f6ce73f"
 LINKAGE="static"
 CLEAN_BUILD=0
@@ -19,7 +19,7 @@ BUILD_WEBUI=0
 
 download_prebuilt() {
     echo "================================================================================"
-    echo " 📥 Downloading Pre-Compiled ROCmFPX Engine (v1.5.0) for AMD Strix Halo"
+    echo " 📥 Downloading Pre-Compiled ROCmFPX Engine (v1.5.1) for AMD Strix Halo"
     echo " Source: ${RELEASE_TARBALL_URL}"
     echo "================================================================================"
     mkdir -p "${ENGINE_DIR}"

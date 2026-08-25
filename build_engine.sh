@@ -9,8 +9,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENGINE_DIR="${SCRIPT_DIR}/engine"
 REPO_URL="https://github.com/charlie12345/ROCmFPX.git"
 PINNED_COMMIT="${PINNED_COMMIT:-0fc9568e07ccc8553010864cb8db1957e629cbfa}"
-RELEASE_TARBALL_URL="https://github.com/julianmb/q38rocm/releases/download/v1.4.0/strix-halo-rocmfpx-engine-v1.4.0-linux-x86_64.tar.gz"
-EXPECTED_TARBALL_SHA="7edd6bb87e00faebdf3af7887230f9293887b00633b04829817844429e4a6bcc"
+RELEASE_TARBALL_URL="https://github.com/julianmb/q38rocm/releases/download/v1.5.0/strix-halo-rocmfpx-engine-v1.5.0-linux-x86_64.tar.gz"
+EXPECTED_TARBALL_SHA="7352ab06dff8a2a346cc20bf25a21d41f86ca490387fea77fce926340f6ce73f"
 LINKAGE="static"
 CLEAN_BUILD=0
 USE_PREBUILT=0
@@ -19,11 +19,11 @@ BUILD_WEBUI=0
 
 download_prebuilt() {
     echo "================================================================================"
-    echo " 📥 Downloading Pre-Compiled ROCmFPX Engine (v1.4.0) for AMD Strix Halo"
+    echo " 📥 Downloading Pre-Compiled ROCmFPX Engine (v1.5.0) for AMD Strix Halo"
     echo " Source: ${RELEASE_TARBALL_URL}"
     echo "================================================================================"
     mkdir -p "${ENGINE_DIR}"
-    TAR_PATH="/tmp/strix-halo-engine-v1.4.0.tar.gz"
+    TAR_PATH="/tmp/strix-halo-engine-v1.5.0.tar.gz"
     
     curl -L "${RELEASE_TARBALL_URL}" -o "${TAR_PATH}" --progress-bar
     
@@ -190,7 +190,9 @@ cmake --build . --config Release -j "${JOBS}" --target llama-server llama-cli ll
 # Link/Install Executables to engine/bin
 mkdir -p "${ENGINE_DIR}/bin"
 cp -f bin/llama-server bin/llama-cli bin/llama-bench bin/llama-quantize "${ENGINE_DIR}/bin/"
-if [ -d bin ]; then
+if [ "$LINKAGE" = "shared" ] && [ -d bin ]; then
+    # shared builds need their .so files; copying them into a static deployment
+    # makes the static binary dlopen stale libs at startup and abort
     cp -f bin/*.so* "${ENGINE_DIR}/bin/" 2>/dev/null || true
 fi
 

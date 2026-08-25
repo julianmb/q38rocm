@@ -26,6 +26,23 @@ ports the ROCmFPx quant types and fixes Vulkan batched mat-vec kernels so FP4 an
 speculative decoding work well *together*. It is **not** part of the stock
 charlie12345/ROCmFPX engine this repository builds by default.
 
+## Community sidecar (ROCmFP4-FAST quantized drafter)
+
+A ROCmFP4_FAST requantization of the DFlash2 drafter, specifically paired with our
+`Qwen3.8-27B-ROCmFP4-FAST.gguf` target, is available from the community:
+
+- **[agentionai/Qwen3.8-27B-DFlash2-ROCmFP4-FAST-GGUF](https://huggingface.co/agentionai/Qwen3.8-27B-DFlash2-ROCmFP4-FAST-GGUF)**
+
+Measured on Strix Halo with adaptive draft sizing (`--spec-draft-adaptive`, n_min 3 / n_max 7):
+
+| Content | tok/s | vs bare |
+|---|---:|---|
+| Structured output | **65.6** | 4.7× |
+| Prose | 26.1 | 1.9× |
+
+Requires [LaurentZuijdwijk/llama.cpp](https://github.com/LaurentZuijdwijk/llama.cpp) (carries PR #27342 + ROCmFPx types).
+Credit: u/Dutchnamn for the quant and benchmark data.
+
 ## When it wins — and when it doesn't
 
 Acceptance drives everything. DFlash2's block drafting accepts near-100% on highly

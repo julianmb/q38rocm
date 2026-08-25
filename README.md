@@ -165,7 +165,7 @@ All benchmark results below were measured directly on **AMD Ryzen AI Max+ 395 (4
 
 *Community Validation: 4 concurrent 131K slots run continuously under thermal soak at 71.88°C with zero GPU resets or OOM events (credit: MrWidmoreHK & kujetic).*
 
-*Community Validation (2026-08-22, Reddit/u-Dutchnamn): the **36.04 tok/s** MTP peak was independently replicated with "tiny error" on the same APU. In the same session, the DFlash2 drafter ([LaurentZuijdwijk fork](https://github.com/LaurentZuijdwijk/llama.cpp), PR #27342) reached **~42 tok/s on the same structured task**, with the advantage diminishing at longer context lengths and on prose — where embedded MTP sustains ~33.8 tok/s vs DFlash2's ~24.6. See [docs/DFLASH2_ALTERNATIVE.md](docs/DFLASH2_ALTERNATIVE.md).*
+*Community Validation (2026-08-22, Reddit/u-Dutchnamn): the **36.04 tok/s** MTP peak was independently replicated with "tiny error" on the same APU. In the same session, the DFlash2 drafter ([LaurentZuijdwijk fork](https://github.com/LaurentZuijdwijk/llama.cpp), PR #27342) reached **~42 tok/s on the same structured task**, with the advantage diminishing at longer context lengths and on prose — where embedded MTP sustains ~33.8 tok/s vs DFlash2's ~24.6. See [docs/DFLASH2_ALTERNATIVE.md](docs/DFLASH2_ALTERNATIVE.md). A community-quantized DFlash2 sidecar in ROCmFP4_FAST format is available at [agentionai/Qwen3.8-27B-DFlash2-ROCmFP4-FAST-GGUF](https://huggingface.co/agentionai/Qwen3.8-27B-DFlash2-ROCmFP4-FAST-GGUF) — **65.6 tok/s structured** with adaptive draft sizing.*
 
 ### Quantization Level Comparison (2-bit to 8-bit)
 

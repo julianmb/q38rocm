@@ -6,5 +6,6 @@ __pycache__/
 .DS_Store
 cache/
 engine/bin
+engine/src
 models/
 .omo/

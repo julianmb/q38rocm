@@ -5,7 +5,7 @@
 | Workload | Recommended speculation | Measured |
 |---|---|---|
 | **Prose / long context** | Embedded MTP (default, `--spec-type draft-mtp`) | **~33.8 tok/s sustained** |
-| **Highly structured output** (JSON, code, counting-style) | DFlash2 via the LaurentZuijdwijk fork | **~42 tok/s** (community) / **40.7** (fork author) |
+| **Highly structured output** (JSON, code, counting-style) | DFlash2 via the LaurentZuijdwijk fork | **~42 tok/s** typical; up to **65.6** with adaptive drafting (see [community caveats](#community-replication--known-caveats-2026-08-26)) |
 
 Both approaches are bounded by the same hardware ceiling — the batch-8 verification
 rate (~55–60 tok/s single-stream on gfx1151 with ROCmFP4). The only variable is how
@@ -59,6 +59,33 @@ predictable output, filling the verification batch; on free-form prose its accep
 
 Sources: fork author's NOTES (2026-08-21 measurements); community replication
 2026-08-22 (Reddit u/Dutchnamn).
+
+## Community replication & known caveats (2026-08-26)
+
+Independent runs on other Strix Halo boxes land well below the 65 tok/s headline:
+
+| Reporter | Hardware / setup | Result |
+|---|---|---|
+| u/Head_Cucumber7615 | ROCmFP4 + DFlash2, built from source | ~30 tok/s decode ("was not able to see 65") |
+| u/Icy_Article8511 | fork's `scripts/benchmark.py`, bosgame M5 128 GB | 32.5–44.1 tok/s across structured tasks |
+| u/omlette_du_chomage | Q8_K_L target + Q8 drafter | only ~+10% over no-spec |
+
+Treat **~30–45 tok/s as the realistic DFlash2 range**; the 65 tok/s figure requires
+the exact adaptive-draft recipe (`--spec-draft-adaptive`, n_min 3 / n_max 7) and a
+highly predictable content type.
+
+Known issues reported against the fork (as of release b10641):
+
+- **Crash**: `GGML_ASSERT(n_blocks > 0 && n_tokens % n_blocks == 0)` in
+  `dflash.cpp` mid-generation on a ~7.9K-token code-writing prompt; acknowledged
+  upstream, not yet fixed.
+- **Quality regression**: a deepswe agentic eval failed 4/4 easy tasks under
+  DFlash2 speculation while plain ROCmFP4_FAST (no spec) scored 4/4 — validate
+  acceptance quality on your own workload before adopting.
+- **Long-context prefill collapse**: prefill degrades from >500 tok/s to
+  ~80 tok/s near 100K context on the fork; stock builds sustain ~155 tok/s at
+  128K cold prefill. For long context prefer the stock engine + embedded MTP,
+  matching Dutchnamn's own guidance ("Use MTP for long context").
 
 ## Trade-offs
 

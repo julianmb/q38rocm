@@ -97,19 +97,19 @@ The launchers automatically select a prompt-cache profile from physical RAM:
 
 | System RAM | RAM Prompt Cache | Context Checkpoints | Checkpoint Interval |
 |---:|---:|---:|---:|
-| Under 56 GiB | 8 GiB | 4 | 4,096 tokens |
-| 56–111 GiB | 16 GiB | 8 | 4,096 tokens |
-| 112+ GiB | 32 GiB | 16 | 4,096 tokens |
+| Under 56 GiB | 8 GiB | 16 | 4,096 tokens |
+| 56–111 GiB | 16 GiB | 32 | 4,096 tokens |
+| 112+ GiB | 32 GiB | 64 | 4,096 tokens |
 
 Cache mode enables prompt caching, context checkpoints, slot-save endpoint storage, continuous batching, unified KV, and `--no-mmap`. It primarily accelerates repeated prefixes, agent loops, and long-document follow-up requests; it does not increase the memory-bandwidth-bound single-token decode ceiling.
 
-Qwen's embedded MTP and context checkpoint restoration are not compatible in the tested engine build: MTP requests produce `spec-boundary-mismatch` and fall back to a cold prefill. The launchers therefore expose two explicit modes:
+When MTP is enabled alongside prompt caching (`--profile cache --mtp`), identical or monotonically extended prefixes reuse cache seamlessly. However, when prompts diverge significantly (e.g., LCP is only a fraction of the cached context), MTP draft boundary constraints prevent salvaging the divergent tail, and the engine gracefully falls back to cold prefill (`spec-boundary-mismatch`). The launchers therefore expose explicit modes:
 
 ```bash
 # Default: fastest single-stream decode with embedded MTP.
 ./run_server.sh --profile speed
 
-# Reusable-prefix mode: disables MTP and uses q8_0/q8_0 KV checkpoints.
+# Reusable-prefix mode: disables MTP for maximum cache reuse across divergent prompts.
 ./run_server.sh --profile cache
 ```
 

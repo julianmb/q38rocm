@@ -106,6 +106,14 @@ This checks Linux kernel support, OS-visible RAM, ROCm drivers (`hipcc`, `rocmin
 
 ---
 
+### 9. `failed to load prompt from cache` or `prompt cache skip: reason=spec-boundary-mismatch`
+* **Root Cause:** When running with MTP speculation (`--mtp` or `MTP=1`) alongside prompt caching, the speculative draft state requires exact boundary matching with the target KV state. If a subsequent request diverges significantly from the cached prompt (e.g., LCP is only a fraction of the cached tokens), the engine cannot safely salvage the trailing draft state without desynchronizing MTP. The engine outputs a warning (`W slot prompt_load: failed to load prompt from cache`) and gracefully falls back to a clean cold prefill (`prompt cache cold fallback: reason=target-draft-restore-rejected`).
+* **Solution:**
+  1. This is normal and expected fallback behavior when prompts branch significantly under speculative decoding. The server does not crash or error out; it safely invalidates the divergent slot/checkpoints and pre-fills the new prompt cleanly.
+  2. For workloads with frequent divergent multi-turn branching, document switches, or deep prompt caching where maximum cache reuse is priority, run the standard cache profile without MTP: `./run_server.sh --profile cache` (which defaults to `MTP=0`).
+
+---
+
 ## ❓ Frequently Asked Questions (FAQ)
 
 ### Q: Can I run 262K context window models on a 32 GB system?
@@ -119,3 +127,4 @@ This checks Linux kernel support, OS-visible RAM, ROCm drivers (`hipcc`, `rocmin
 ## 💡 Support & Issues
 
 For bugs in ROCmFPX kernels, submit issues or pull requests to upstream [charlie12345/ROCmFPX](https://github.com/charlie12345/ROCmFPX).
+

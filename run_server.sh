@@ -284,8 +284,8 @@ if [ "${PROFILE}" = "cache" ]; then
     echo " Prompt Cache:   ${CACHE_PROFILE} profile (${CACHE_RAM_MIB} MiB, ${CTX_CHECKPOINTS} checkpoints, reuse ${CACHE_REUSE})"
     if [ "${MTP}" = "1" ]; then
         echo " ⚠️  MTP + prompt cache needs a patched engine (built with"
-        echo "     patches/mtp-prompt-cache-fix.patch, release v1.3.0+). Older engines"
-        echo "     silently fall back to full cold prefill via spec-boundary-mismatch."
+        echo "     patches/mtp-prompt-cache-fix.patch, release v1.5.0+). Divergent prompt"
+        echo "     tails will gracefully fall back to cold prefill via spec-boundary-mismatch."
     fi
 else
     echo " Prompt Cache:   disabled explicitly (checkpoints=0, RAM cache=0)"

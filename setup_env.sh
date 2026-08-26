@@ -54,7 +54,7 @@ check_rocm_runtime() {
     local needed=(libhipblas.so.3 librocblas.so.5 libamdhip64.so.7)
     local missing=0
     local rocm_home=""
-    for d in /opt/rocm /opt/rocm-7.2.3 /opt/rocm-*; do
+    for d in /opt/rocm-* /opt/rocm-7.2.3 /opt/rocm; do
         if [ -e "${d}/lib/libamdhip64.so.7" ] || [ -e "${d}/lib/libamdhip64.so" ]; then
             rocm_home="$d"
             break

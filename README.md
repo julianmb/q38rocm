@@ -239,14 +239,15 @@ AMD Strix Halo integrates a **50 TOPS XDNA 2 NPU** at `/dev/accel/accel0` (`amdx
 ### Installation (optional)
 
 ```bash
-# 1. Enable IOMMU SVA (requires reboot)
-sudo sed -i 's/amd_iommu=off/iommu=pt iommu.passthrough=0/g' /etc/default/grub
+# 1. Enable IOMMU SVA & module auto-load (requires reboot)
+sudo sed -i 's/amd_iommu=off/iommu=pt/g' /etc/default/grub
+echo amdxdna | sudo tee /etc/modules-load.d/amdxdna.conf
 sudo update-grub && sudo reboot
 
 # 2. Install XRT (built from the bundled amd/xdna-driver submodule)
 git submodule update --init --recursive
 cd xdna-driver/xrt/build && ./build.sh -npu -opt
-sudo make install Release/XRT/xilinx/xrt.rpm
+sudo make install Release/XRT/xilinx/xrt.rpm  # Or follow Debian/Ubuntu package instructions for .deb
 source /opt/xilinx/xrt/setup.sh
 xrt-smi examine          # should list "RyzenAI-npu5 / aie2p"
 

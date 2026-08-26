@@ -78,9 +78,10 @@ cat /proc/cmdline
 # Must include: iommu=pt iommu.passthrough=0
 ```
 
-If missing, update GRUB and reboot:
+If missing, update GRUB, ensure the module auto-loads, and reboot:
 ```bash
-sudo sed -i 's/amd_iommu=off/iommu=pt iommu.passthrough=0/g' /etc/default/grub
+sudo sed -i 's/amd_iommu=off/iommu=pt/g' /etc/default/grub
+echo amdxdna | sudo tee /etc/modules-load.d/amdxdna.conf
 sudo update-grub
 sudo reboot
 ```

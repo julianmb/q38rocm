@@ -26,7 +26,7 @@ By combining **ROCmFP4 block quantization (4.26 bpw)**, **MTP (Multi-Token Predi
 - [Integration with Upstream ROCmFPX](#-integration-with-upstream-rocmfpx)
 - [Performance Matrix & Benchmarks](#-performance-matrix--benchmarks)
 - [Context Scaling & Memory Budget](#-context-scaling--memory-budget)
-- [Optional: AMD XDNA 2 NPU Acceleration](#-optional-amd-xdna-2-npu-acceleration)
+- [Experimental: AMD XDNA 2 NPU Acceleration](#-experimental--optional-amd-xdna-2-npu-acceleration)
 - [Backend Crossover Rule](#-backend-crossover-rule)
 - [Quick Start Guide](#-quick-start)
 - [Building the Engine](#-building-the-engine)
@@ -214,13 +214,12 @@ Thanks to **Asymmetric TurboQuant KV cache** (`-ctk q8_0 -ctv turbo4`) and Qwen 
 
 ---
 
-## 🧠 Optional: AMD XDNA 2 NPU Acceleration
+## 🧪 Experimental / Optional: AMD XDNA 2 NPU Acceleration
 
-> **Note:** NPU acceleration is **fully optional** — the server runs great without it. The NPU does **not** improve sustained decode speed; it helps first-token latency and background routing. See the full technical report in [`docs/NPU_INTEGRATION.md`](docs/NPU_INTEGRATION.md).
-
-> ⚠️ **Scope note:** All NPU findings below were **only tested on Qwen 3.8 27B** (dense, ROCmFP4_FAST).
-
-AMD Strix Halo integrates a **50 TOPS XDNA 2 NPU** at `/dev/accel/accel0` (`amdxdna` kernel module). After extensive empirical benchmarking (`npuhalo` research workspace), here is the definitive verdict:
+> ⚠️ **Status: Experimental / Research Only**
+> NPU acceleration and the hybrid pipeline are **purely experimental research features** from exploratory prototyping.
+> For production deployments, **do not use the NPU** — the recommended and supported path is the standalone **iGPU (Vulkan0/ROCm0) + Embedded MTP**, which delivers superior stability and 34–36 tok/s decode with zero DRAM contention.
+> See the complete empirical research report in [`docs/NPU_INTEGRATION.md`](docs/NPU_INTEGRATION.md).
 
 ### Measured Findings
 

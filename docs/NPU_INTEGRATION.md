@@ -1,10 +1,9 @@
-# NPU Integration (Optional) — AMD XDNA 2 on Strix Halo
+# NPU Integration (Experimental / Research) — AMD XDNA 2 on Strix Halo
 
-This document is the complete reference for optionally accelerating **Qwen 3.8 27B** by combining the **AMD XDNA 2 NPU** (`/dev/accel/accel0`) with the **Radeon 8060S iGPU** (`Vulkan0` / `KHR_coopmat`).
+This document is the reference report for experimental research exploring the **AMD XDNA 2 NPU** (`/dev/accel/accel0`) alongside the **Radeon 8060S iGPU** (`Vulkan0` / `KHR_coopmat`).
 
-> **Important:** NPU acceleration is **fully optional**. The server works perfectly without it. The NPU does **not** improve sustained decode speed — see the definitive findings below.
-
-> ⚠️ **Scope note:** All NPU findings, benchmarks, and the hybrid pipeline below were **only tested on Qwen 3.8 27B** (dense, ROCmFP4_FAST).
+> ⚠️ **Status: Experimental / Research Only**
+> NPU integration is strictly an **exploratory research component**. For production serving, the standalone **iGPU (Vulkan0/ROCm0) + Embedded MTP** is the supported and recommended architecture. Sustained decode drafting on the NPU is not recommended due to shared DRAM bus contention.
 
 > 🐧 **Platform note:** The entire NPU stack documented here (IOMMU SVA, XRT, FastFlowLM) is **Linux-specific and empirically validated on Linux**. **Windows users:** the same hybrid TTFT pipeline works via Lemonade's `oga` (Ryzen AI / ONNX Runtime GenAI) NPU backend — see [Section 6: Windows Support](#6-windows-support-via-lemonade-oga--ryzen-ai). WSL2 does **not** expose the XDNA NPU to guests.
 

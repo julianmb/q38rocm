@@ -227,4 +227,13 @@ cache_mtp_flag_output="$({
 
 [[ "$cache_mtp_flag_output" == *"spec_type_count=1"* ]]
 
+cache_multislot_output="$({
+    ROCMFPX_BIN_DIR="$TMP_DIR" \
+    MODEL_PATH="$TMP_DIR/model.gguf" \
+    "$ROOT_DIR/run_server.sh" --profile cache --slots 4 --slot-save-path "$TMP_DIR/slots"
+} 2>&1)"
+
+[[ "$cache_multislot_output" == *"Concurrency:    4 slot(s)"* ]]
+[[ "$cache_multislot_output" == *"Profile:        cache"* ]]
+
 printf '%s\n' "run_server argument tests passed"

@@ -1,0 +1,58 @@
+# Upstream Tracking & Workaround Matrix
+
+This document tracks upstream `llama.cpp` and `ROCmFPX` patches, speculative decoding state interactions, known boundary limitations, and production workarounds for AMD Strix Halo deployments.
+
+---
+
+## 1. Speculative Decoding & Prompt Cache Interplay (Issue #19)
+
+### Technical Mechanics
+In `llama-server`, standard autoregressive inference (`MTP=0`) supports prefix tree KV reuse: when a prompt shares a Longest Common Prefix (`LCP`) with a cached slot, the server keeps the prefix tokens in the KV cache and truncates only the divergent suffix.
+
+However, when **Multi-Token Prediction (MTP)** or other speculative decoding methods are enabled:
+1. The engine maintains coupled state: target model KV context + draft recurrent state (`rs_seq`).
+2. When a subsequent request diverges by more tokens than the draft recurrent rollback depth (`delta > llama_n_rs_seq(ctx)`), the draft state cannot be rolled back without desynchronizing draft generation.
+3. The server safely skips checkpoint restoration (`reason=spec-boundary-mismatch`), logs `W slot prompt_load: failed to load prompt from cache`, clears the divergent slot/draft state, and initiates a clean **cold prefill fallback**.
+
+```
+[Request 1: 93,260 tokens] ──> Saved to slot & checkpoints (MTP draft boundary active)
+                                       │
+[Request 2: 186,726 tokens] ───────────┴──> Common prefix = 18,967 tokens
+                                            Divergence = 74,293 tokens (> n_rs_seq)
+                                            ├── Draft state cannot safely rewind 74k tokens
+                                            ├── Engine emits: reason=spec-boundary-mismatch
+                                            └── Safe fallback: clears slot & cold-prefills Request 2
+```
+
+---
+
+## 2. Workaround Matrix
+
+Depending on your workload characteristics, use the appropriate profile or launcher configuration:
+
+| Workload Type | Recommended Profile / Flags | Speculation | KV Cache / Prefix Behavior |
+|---|---|---|---|
+| **Single-turn or Monotonic Chat** | `./run_server.sh --profile speed` *(Default)* | MTP ($K=4$) enabled | Peak decode speed (34–36 tok/s). Monotonic history reuses cache smoothly. |
+| **Branching Agent / Document QA** | `./run_server.sh --profile cache` | MTP disabled ($K=0$) | Maximum prefix tree reuse and RAM checkpoints (16–64) across arbitrary prompt branches. |
+| **Concurrent Independent Sessions** | `./run_server.sh --profile cache --slots 4` | MTP disabled ($K=0$) | Isolates sessions across slots so branching in Session A does not evict Session B. |
+| **Structured Output Burst** | LaurentZuijdwijk fork + DFlash2 (`--spec-draft-n-max 15`) | DFlash2 Block 16 | Up to 80 tok/s on structured JSON/code; requires sidecar GGUF. |
+
+---
+
+## 3. Upstream Patch & PR Registry
+
+| Component / Patch | Repository / PR | Status | Scope |
+|---|---|---|---|
+| `mtp-prompt-cache-fix.patch` | Local / `patches/` | ✅ Applied in `v1.5.0+` | Allows MTP checkpoint rollback during prefill when replaying matching prefix batches. |
+| **DFlash2 Block Diffusion** | `ggml-org/llama.cpp#27342` | ⏳ Upstream Under Review | Adds `draft-dflash` block-diffusion speculative decoding support. |
+| **Vulkan Batched Mat-Vec** | `LaurentZuijdwijk/llama.cpp` (`b10681`) | 🔬 Community Fork | Fixes Vulkan batched mat-vec for FP4 + speculative decoding sidecars. |
+| **Selective Draft State Rollback** | Upstream RFC | 📋 Tracking | Proposed RFC to decouple draft recurrent state reset from primary KV prefix truncation on large divergences. |
+
+---
+
+## 4. Engine Pinned Baseline
+
+* **Upstream Engine Repository:** [`charlie12345/ROCmFPX`](https://github.com/charlie12345/ROCmFPX)
+* **Pinned Commit:** `0fc9568e07ccc8553010864cb8db1957e629cbfa` (`v1.5.2`)
+* **Pre-built Tarball:** `https://github.com/julianmb/q38rocm/releases/download/v1.5.2/strix-halo-rocmfpx-engine-v1.5.2-linux-x86_64.tar.gz`
+* **Verification:** `build_engine.sh --prebuilt` verifies SHA256 checksum `7352ab06dff8a2a346cc20bf25a21d41f86ca490387fea77fce926340f6ce73f`.

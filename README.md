@@ -511,8 +511,14 @@ Qwen 3.8 defaults to high reasoning depth. If an open-ended query produces thous
     ├── run_pipeline.py        # Hybrid NPU-burst -> iGPU pipeline (1.8x TTFT, optional)
     ├── launch_pipeline.py     # Daemonize launcher for the hybrid pipeline
     └── npu_sidecar_drafter.py # AMD XDNA 2 NPU sidecar orchestrator & simulator
-```
-> 📘 **NPU research:** See [`docs/NPU_INTEGRATION.md`](docs/NPU_INTEGRATION.md) for the optional XDNA 2 NPU acceleration guide and full empirical findings.
+> 📘 **Documentation & Guides:**
+> - [Troubleshooting & FAQs (`docs/TROUBLESHOOTING.md`)](docs/TROUBLESHOOTING.md)
+> - [Upstream Tracking & Workaround Matrix (`docs/UPSTREAM_TRACKING.md`)](docs/UPSTREAM_TRACKING.md)
+> - [Hardware Sizing & Memory Configuration (`docs/HARDWARE-AND-MEMORY.md`)](docs/HARDWARE-AND-MEMORY.md)
+> - [DFlash2 Alternative Drafter Guide (`docs/DFLASH2_ALTERNATIVE.md`)](docs/DFLASH2_ALTERNATIVE.md)
+> - [NPU Integration & Hybrid Pipeline (`docs/NPU_INTEGRATION.md`)](docs/NPU_INTEGRATION.md)
+> - [Quantization Recipes & Precision (`docs/QUANTIZATION_RECIPES.md`)](docs/QUANTIZATION_RECIPES.md)
+> - [Client Integration & SDKs (`docs/CLIENT_INTEGRATION.md`)](docs/CLIENT_INTEGRATION.md)
 
 ---
 

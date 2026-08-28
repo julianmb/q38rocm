@@ -28,7 +28,7 @@ bash tests/test_build_engine_flags.sh
 1. **Engine flags:** fork accepts SINGLE-dash only for `-ctxcp -cpent -cram`;
    double-dash is rejected at startup.
 2. **Hub path:** `quickstart.sh` resolves weights/engine via
-   `HUB_DIR="${HALOFPX_HUB_DIR:-${HOME}/source/strix-halo-rocmfpx-hub}"` —
+   `HUB_DIR="${HALOFPX_HUB_DIR:-${HOME}/source/halofpx-research}"` —
    intentional default, do not hardcode other absolute paths.
 3. **ROCm requirement:** engine needs ROCm 7.2.x runtime libs; never bundle
    them in the repo (decision from issue #5 — documented, not vendored).

@@ -38,7 +38,7 @@ ROOT_DIR = SCRIPT_DIR.parent
 def resolve_engine_bin(name="llama-server"):
     candidates = [
         ROOT_DIR / "engine" / "bin" / name,
-        Path("/home/user/source/strix-halo-rocmfpx-hub/engine/bin") / name,
+        Path("/home/user/source/halofpx-research/engine/bin") / name,
         Path("/home/user/source/ROCmFPX/build-strix-rocmfp4/bin") / name,
         shutil.which(name) or "",
     ]
@@ -51,7 +51,7 @@ def resolve_gpu_model():
     candidates = [
         ROOT_DIR / "Qwen3.8-27B-ROCmFP4-FAST.gguf",
         ROOT_DIR / "models" / "Qwen3.8-27B-ROCmFP4-FAST.gguf",
-        Path("/home/user/source/strix-halo-rocmfpx-hub/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf"),
+        Path("/home/user/source/halofpx-research/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf"),
     ]
     for c in candidates:
         if c.exists():

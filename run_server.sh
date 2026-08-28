@@ -164,8 +164,8 @@ if [ -z "$MODEL_PATH" ]; then
         MODEL_PATH="${SCRIPT_DIR}/Qwen3.8-27B-ROCmFP8.gguf"
     elif [ -f "${SCRIPT_DIR}/models/Qwen3.8-27B-ROCmFP4-FAST.gguf" ]; then
         MODEL_PATH="${SCRIPT_DIR}/models/Qwen3.8-27B-ROCmFP4-FAST.gguf"
-    elif [ -f "/home/user/source/strix-halo-rocmfpx-hub/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf" ]; then
-        MODEL_PATH="/home/user/source/strix-halo-rocmfpx-hub/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf"
+    elif [ -f "/home/user/source/halofpx-research/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf" ]; then
+        MODEL_PATH="/home/user/source/halofpx-research/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf"
     else
         MODEL_PATH="${SCRIPT_DIR}/Qwen3.8-27B-ROCmFP4-FAST.gguf"
     fi
@@ -187,8 +187,8 @@ fi
 LLAMA_SERVER_BIN="$(which llama-server 2>/dev/null || true)"
 if [ -z "$LLAMA_SERVER_BIN" ] && [ -x "${SCRIPT_DIR}/engine/bin/llama-server" ]; then
     LLAMA_SERVER_BIN="${SCRIPT_DIR}/engine/bin/llama-server"
-elif [ -z "$LLAMA_SERVER_BIN" ] && [ -x "/home/user/source/strix-halo-rocmfpx-hub/engine/bin/llama-server" ]; then
-    LLAMA_SERVER_BIN="/home/user/source/strix-halo-rocmfpx-hub/engine/bin/llama-server"
+elif [ -z "$LLAMA_SERVER_BIN" ] && [ -x "/home/user/source/halofpx-research/engine/bin/llama-server" ]; then
+    LLAMA_SERVER_BIN="/home/user/source/halofpx-research/engine/bin/llama-server"
 fi
 
 if [ ! -x "$LLAMA_SERVER_BIN" ]; then

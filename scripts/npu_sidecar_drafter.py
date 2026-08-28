@@ -104,8 +104,8 @@ def find_llama_server():
         return Path(server)
     candidates = [
         ROOT_DIR / "engine" / "bin" / "llama-server",
-        ROOT_DIR.parent / "strix-halo-rocmfpx-hub" / "engine" / "bin" / "llama-server",
-        Path("/home/user/source/strix-halo-rocmfpx-hub/engine/bin/llama-server"),
+        ROOT_DIR.parent / "halofpx-research" / "engine" / "bin" / "llama-server",
+        Path("/home/user/source/halofpx-research/engine/bin/llama-server"),
         Path("/usr/local/bin/llama-server")
     ]
     for c in candidates:
@@ -129,7 +129,7 @@ def launch_heterogeneous_server(args):
             ROOT_DIR / "Qwen3.8-27B-ROCmFP4-FAST.gguf",
             ROOT_DIR / "models" / "Qwen3.8-27B-ROCmFP4-FAST.gguf",
             ROOT_DIR / "models" / "qwen38-27b" / "Qwen3.8-27B-ROCmFP4-FAST.gguf",
-            Path("/home/user/source/strix-halo-rocmfpx-hub/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf")
+            Path("/home/user/source/halofpx-research/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf")
         ]
         for mc in model_candidates:
             if mc.exists():

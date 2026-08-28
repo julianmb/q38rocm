@@ -104,6 +104,7 @@ def find_llama_server():
         return Path(server)
     candidates = [
         ROOT_DIR / "engine" / "bin" / "llama-server",
+        Path("/home/user/source/ROCmFPX/build-strix-rocmfp4/bin/llama-server"),
         ROOT_DIR.parent / "halofpx-research" / "engine" / "bin" / "llama-server",
         Path("/home/user/source/halofpx-research/engine/bin/llama-server"),
         Path("/usr/local/bin/llama-server")

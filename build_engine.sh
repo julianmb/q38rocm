@@ -34,6 +34,11 @@ download_prebuilt() {
     
     echo "Extracting binaries into ${ENGINE_DIR}..."
     tar -xzf "${TAR_PATH}" -C /tmp/
+    # never write through a symlinked engine/bin: it may point at the shared
+    # canonical ROCmFPX build, and polluting it would break every other project
+    if [ -L "${ENGINE_DIR}/bin" ]; then
+        rm "${ENGINE_DIR}/bin"
+    fi
     cp -a /tmp/strix-halo-rocmfpx-engine/* "${ENGINE_DIR}/"
     rm -rf /tmp/strix-halo-rocmfpx-engine "${TAR_PATH}"
     
@@ -188,6 +193,10 @@ echo "Compiling binaries with ${JOBS} parallel threads..."
 cmake --build . --config Release -j "${JOBS}" --target llama-server llama-cli llama-bench llama-quantize
 
 # Link/Install Executables to engine/bin
+# same symlink guard as download_prebuilt: never write through engine/bin
+if [ -L "${ENGINE_DIR}/bin" ]; then
+    rm "${ENGINE_DIR}/bin"
+fi
 mkdir -p "${ENGINE_DIR}/bin"
 cp -f bin/llama-server bin/llama-cli bin/llama-bench bin/llama-quantize "${ENGINE_DIR}/bin/"
 if [ "$LINKAGE" = "shared" ] && [ -d bin ]; then

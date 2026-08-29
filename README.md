@@ -103,7 +103,7 @@ This repository (`julianmb/q38rocm`) builds on top of the open-source **[charlie
 │               DEPLOYMENT STACK: julianmb/q38rocm                       │
 │  • Qwen 3.8 27B Quantized Weights Release (ROCmFP4 & ROCmFP8)          │
 │  • 1-Click Quickstart & Auto-Detecting Production OpenAI Server        │
-│  • Pre-Compiled Strix Halo Engine Binaries (v1.0.0 Release)            │
+│  • Pre-Compiled Strix Halo Engine Binaries (v1.5.2 Release)            │
 │  • Streaming Terminal TUI Speedometer & Telemetry Dashboard            │
 │  • Multi-Prompt Benchmark & Context Scaling Verification Suite         │
 │  • Docker & Docker Compose Stack with Open WebUI Integration           │
@@ -321,11 +321,13 @@ source ./setup_env.sh
 
 #### 3. Setup ROCmFPX Engine (Pre-Built or Compile)
 ```bash
-# Option A: Download pre-compiled Strix Halo binaries (fastest)
-./build_engine.sh --prebuilt
-
-# Option B: Compile from source using CMake & ROCm/Vulkan
+# Option A: Compile from source at the pinned ROCmFPX commit (recommended)
+#           Needs cmake, git, glslc + spirv-headers, and the ROCm toolchain.
 ./build_engine.sh
+
+# Option B: Download pre-compiled Strix Halo binaries (faster, but may lag the
+#           pinned source revision — check the printed "Engine build:" line)
+./build_engine.sh --prebuilt
 ```
 
 #### 4. Launch OpenAI-Compatible API Server
@@ -466,10 +468,11 @@ If your engine was compiled without `glslc` (Vulkan shader compiler), CMake sile
   ```bash
   ./build_engine.sh --prebuilt
   ```
-- Or install the shader compiler and recompile:
+- Or install the shader compiler and recompile (`build_engine.sh` enables the
+  Vulkan backend automatically once `glslc` and the SPIR-V headers are present;
+  `GGML_VULKAN` is a CMake option, exporting it as an env var has no effect):
   ```bash
-  sudo apt install glslc libvulkan-dev mesa-vulkan-drivers
-  export GGML_VULKAN=ON
+  sudo apt install glslc libvulkan-dev mesa-vulkan-drivers spirv-headers
   ./build_engine.sh
   ```
 

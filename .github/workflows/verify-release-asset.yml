@@ -33,9 +33,18 @@ jobs:
             exit 1
           fi
 
-      - name: Verify tarball layout
+      - name: Verify tarball layout and engine build
         run: |
           set -euo pipefail
           # v1.5.1 shipped llama-server at the archive root instead of bin/, which
           # silently produced an engine/bin without a server binary
           tar -tzf /tmp/engine.tar.gz | grep -q '/bin/llama-server$'
+          tar -xzf /tmp/engine.tar.gz -C /tmp/ --wildcards '*/bin/llama-server'
+          bin="$(find /tmp -type f -path '*/bin/llama-server' | head -1)"
+          # --version is emitted by the log system, i.e. on stderr, not stdout
+          version="$("$bin" --version 2>&1 | head -1)"
+          echo "engine build: ${version}"
+          if [ -z "${version}" ]; then
+            echo "::error::llama-server --version produced no output"
+            exit 1
+          fi

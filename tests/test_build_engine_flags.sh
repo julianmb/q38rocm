@@ -12,6 +12,12 @@ script="$(<"$ROOT_DIR/build_engine.sh")"
 [[ "$script" == *"sudo apt install spirv-headers"* ]]
 [[ "$script" == *"-DGGML_VULKAN=OFF"* ]]
 
+# Patches must apply at the pinned commit, but a tree that already carries one (a
+# previous build, or a manual `git apply`) must not fail the build — see issue #20.
+[[ "$script" == *"git apply --reverse --check"* ]]
+# A prebuilt that extracts without bin/llama-server leaves a broken engine/bin
+[[ "$script" == *'if [ ! -x "${ENGINE_DIR}/bin/llama-server" ]'* ]]
+
 # Release asset pinning (issue #20): RELEASE_TARBALL_URL and EXPECTED_TARBALL_SHA
 # must be bumped together. The checksum kept pointing at the v1.5.0 asset while the
 # URL served v1.5.2, which made `./build_engine.sh --prebuilt` fail for every user.

@@ -50,10 +50,20 @@ download_prebuilt() {
     cp -a /tmp/strix-halo-rocmfpx-engine/* "${ENGINE_DIR}/"
     rm -rf /tmp/strix-halo-rocmfpx-engine "${TAR_PATH}"
     
+    # v1.5.1 shipped llama-server at the archive root instead of bin/, which silently
+    # produced an engine/bin without a server binary
+    if [ ! -x "${ENGINE_DIR}/bin/llama-server" ]; then
+        echo "❌ No llama-server in ${ENGINE_DIR}/bin after extraction" >&2
+        echo "   The release tarball layout is unexpected; list it with:" >&2
+        echo "     tar -tzf ${TAR_PATH} | head" >&2
+        exit 1
+    fi
+
     echo "✅ Pre-built engine ready in: ${ENGINE_DIR}/bin"
     # report the engine build: when triaging server-side bugs (e.g. issue #20) this is
-    # the only way to tell which source revision the binary on disk came from
-    echo "Engine build:  $("${ENGINE_DIR}/bin/llama-server" --version 2>/dev/null | head -1)"
+    # the only way to tell which source revision the binary on disk came from.
+    # note: --version is emitted through the log system, i.e. on stderr, not stdout
+    echo "Engine build:  $("${ENGINE_DIR}/bin/llama-server" --version 2>&1 | head -1)"
     echo "Verifying available hardware acceleration backends..."
     "${ENGINE_DIR}/bin/llama-server" --list-devices 2>/dev/null || true
     echo "Run: source ./setup_env.sh"
@@ -148,13 +158,19 @@ git checkout --detach "${PINNED_COMMIT}"
 
 shopt -s nullglob
 for PATCH_FILE in "${SCRIPT_DIR}/patches/"*.patch; do
-    git apply --check "${PATCH_FILE}" || {
+    if git apply --check "${PATCH_FILE}" 2>/dev/null; then
+        echo "Applying $(basename "${PATCH_FILE}")..."
+        git apply "${PATCH_FILE}"
+    elif git apply --reverse --check "${PATCH_FILE}" 2>/dev/null; then
+        # the source tree already carries this patch (e.g. a previous build left it
+        # applied, or it was applied by hand) — re-applying would fail the build
+        echo "Already applied: $(basename "${PATCH_FILE}")"
+    else
         echo "❌ Local patch does not apply at ${PINNED_COMMIT}: ${PATCH_FILE}" >&2
-        echo "   Rebase or delete it in patches/ — refusing to build without it silently." >&2
+        echo "   Rebase it, or restore the pristine source with:" >&2
+        echo "     git -C ${ENGINE_DIR}/src checkout -- ." >&2
         exit 1
-    }
-    echo "Applying $(basename "${PATCH_FILE}")..."
-    git apply "${PATCH_FILE}"
+    fi
 done
 
 # Configure CMake with Dual ROCm + Vulkan Acceleration

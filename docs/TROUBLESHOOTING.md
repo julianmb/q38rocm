@@ -133,6 +133,23 @@ This checks Linux kernel support, OS-visible RAM, ROCm drivers (`hipcc`, `rocmin
 
 ---
 
+### 11. `force-killing model instance name=X after 10 seconds timeout` in router mode
+* **Symptom:** a `load-on-startup` model is killed ~10 s after the router starts, then the router exits:
+  ```
+  srv    operator(): force-killing model instance name=big after 10 seconds timeout
+  srv    operator(): instance name=big exited with status 1
+  srv          main: exiting due to HTTP server error
+  ```
+* **Root Cause:** the 10 s is **`stop-timeout`**, the *graceful-shutdown* timeout — not a load timeout. It fires when the router shuts down (or the model is unloaded) while the child is still loading. Shutdown sends `cmd_router_to_child:exit` over the child's stdin, but the child only installs its stdin monitor *after* the model finishes loading, so a 38 GB model that needs 40 s never answers; the router waits the full `stop-timeout`, then SIGTERMs it (hence `exit status 1`).
+  The usual trigger is the router itself failing to bind its port — look one line earlier in the log for `couldn't bind HTTP server socket, hostname: ..., port: 8080` (typically another server already on 8080). The router then goes straight into cleanup while the startup model is still loading.
+* **Solution:**
+  1. Free the router port, or start it elsewhere: `llama-server --models-preset router.ini --port 8081`.
+  2. Raise the graceful-stop timeout per model in the ini: `stop-timeout = 120` (default 10 s).
+  3. Use the patched engine (`patches/router-loading-child-stop-timeout.patch`, applied automatically by `build_engine.sh`): it terminates a still-loading child immediately instead of waiting out `stop-timeout`. Measured on the same scenario: **11 s → 1 s**, and the log line becomes `model name=big is still loading, skipping graceful stop timeout`.
+* **Not a bug:** a `load-on-startup` model that fails to load does **not** take down the router (verified with a missing model file: the router stays up and `/v1/models` still answers), and there is no cap on how long a model may take to load — a 32 GB model that needs 40 s reaches `status: loaded` normally.
+
+---
+
 ## ❓ Frequently Asked Questions (FAQ)
 
 ### Q: Can I run 262K context window models on a 32 GB system?

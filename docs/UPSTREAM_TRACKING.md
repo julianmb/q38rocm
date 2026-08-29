@@ -43,6 +43,7 @@ Depending on your workload characteristics, use the appropriate profile or launc
 
 | Component / Patch | Repository / PR | Status | Scope |
 |---|---|---|---|
+| `router-loading-child-stop-timeout.patch` | Local / `patches/` | ✅ Applied by `build_engine.sh` (not in `v1.5.2` prebuilt) | Terminates a router child that is still loading instead of waiting out `stop-timeout` (issue #21). |
 | `mtp-prompt-cache-fix.patch` | Local / `patches/` | ✅ Applied in `v1.5.0+` | Allows MTP checkpoint rollback during prefill when replaying matching prefix batches. |
 | **DFlash2 Block Diffusion** | `ggml-org/llama.cpp#27342` | ⏳ Upstream Under Review | Adds `draft-dflash` block-diffusion speculative decoding support. |
 | **Vulkan Batched Mat-Vec** | `LaurentZuijdwijk/llama.cpp` (`b10681`) | 🔬 Community Fork | Fixes Vulkan batched mat-vec for FP4 + speculative decoding sidecars. |

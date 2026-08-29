@@ -1,0 +1,25 @@
+diff --git a/tools/server/server-models.cpp b/tools/server/server-models.cpp
+index 698489a..b207ba9 100644
+--- a/tools/server/server-models.cpp
++++ b/tools/server/server-models.cpp
+@@ -832,6 +832,20 @@ void server_models::load(const std::string & name) {
+             if (!subprocess_alive(child_proc.get())) {
+                 return;
+             }
++            // a child that has not finished loading cannot act on the exit command: its
++            // stdin monitoring thread is only installed after the model is loaded. The
++            // graceful handshake below would therefore burn the whole stop_timeout and
++            // SIGTERM the child anyway, which reads like a "load timeout" to the
++            // operator — terminate it right away instead (issue #21).
++            {
++                std::lock_guard<std::mutex> lk(this->mutex);
++                auto it = this->mapping.find(name);
++                if (it != this->mapping.end() && it->second.meta.status == SERVER_MODEL_STATUS_LOADING) {
++                    SRV_WRN("model name=%s is still loading, skipping graceful stop timeout\n", name.c_str());
++                    subprocess_terminate(child_proc.get());
++                    return;
++                }
++            }
+             SRV_INF("stopping model instance name=%s\n", name.c_str());
+             // send interrupt to child process
+             fprintf(stdin_file, "%s\n", CMD_ROUTER_TO_CHILD_EXIT);

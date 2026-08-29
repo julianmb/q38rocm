@@ -1,0 +1,41 @@
+name: Verify Release Asset
+
+# Guards against the drift behind issue #20: the pinned SHA in build_engine.sh
+# pointed at the v1.5.0 asset while RELEASE_TARBALL_URL served v1.5.2, so
+# `./build_engine.sh --prebuilt` failed for every user for two releases.
+# The static checks in tests/test_build_engine_flags.sh cannot catch a wrong
+# (but well-formed) digest — only downloading the asset can.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  verify-asset:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify pinned asset digest
+        run: |
+          set -euo pipefail
+          url="$(grep -m1 '^RELEASE_TARBALL_URL=' build_engine.sh | cut -d'"' -f2)"
+          expected="$(grep -m1 '^EXPECTED_TARBALL_SHA=' build_engine.sh | cut -d'"' -f2)"
+          echo "asset:    $url"
+          echo "expected: $expected"
+          curl -fsSL "$url" -o /tmp/engine.tar.gz
+          actual="$(sha256sum /tmp/engine.tar.gz | cut -d' ' -f1)"
+          echo "actual:   $actual"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::EXPECTED_TARBALL_SHA does not match the published asset"
+            exit 1
+          fi
+
+      - name: Verify tarball layout
+        run: |
+          set -euo pipefail
+          # v1.5.1 shipped llama-server at the archive root instead of bin/, which
+          # silently produced an engine/bin without a server binary
+          tar -tzf /tmp/engine.tar.gz | grep -q '/bin/llama-server$'

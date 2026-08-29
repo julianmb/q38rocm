@@ -53,6 +53,8 @@ Depending on your workload characteristics, use the appropriate profile or launc
 ## 4. Engine Pinned Baseline
 
 * **Upstream Engine Repository:** [`charlie12345/ROCmFPX`](https://github.com/charlie12345/ROCmFPX)
-* **Pinned Commit:** `0fc9568e07ccc8553010864cb8db1957e629cbfa` (`v1.5.2`)
+* **Pinned Commit:** `0fc9568e07ccc8553010864cb8db1957e629cbfa` (`llama.cpp` build `244`)
 * **Pre-built Tarball:** `https://github.com/julianmb/q38rocm/releases/download/v1.5.2/strix-halo-rocmfpx-engine-v1.5.2-linux-x86_64.tar.gz`
-* **Verification:** `build_engine.sh --prebuilt` verifies SHA256 checksum `7352ab06dff8a2a346cc20bf25a21d41f86ca490387fea77fce926340f6ce73f`.
+* **Verification:** `build_engine.sh --prebuilt` verifies SHA256 checksum `70d11cec4fd6c148a050f80a0422d563a928c39f849e600d6b59b1d620820aa7`.
+* **⚠️ Prebuilt / pinned-source drift (issue #20):** the `v1.5.2` tarball was built from `12f8b7e` (build `215`), which is **not** an ancestor of the pinned `0fc9568e` (build `244`) and is older than the `v1.5.0` engine (`version: 244 (0fc9568)`). A source build at the pinned commit therefore produces a *newer* engine than the current prebuilt. Until a release is rebuilt from the pinned commit, always report `llama-server --version` when filing engine bugs.
+* **Release-asset guards:** `tests/test_build_engine_flags.sh` asserts that `RELEASE_TARBALL_URL`, the tag inside it, `EXPECTED_TARBALL_SHA` and the `Dockerfile` URL stay in sync; `.github/workflows/verify-release-asset.yml` downloads the published asset and compares its real digest plus archive layout (`/bin/llama-server`). The previous pinned digest (`7352ab06…`) was the **v1.5.0** asset and was never updated, so `--prebuilt` failed its checksum for the whole v1.5.1–v1.5.2 window.

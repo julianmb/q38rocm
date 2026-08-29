@@ -10,7 +10,7 @@ ENGINE_DIR="${SCRIPT_DIR}/engine"
 REPO_URL="https://github.com/charlie12345/ROCmFPX.git"
 PINNED_COMMIT="${PINNED_COMMIT:-0fc9568e07ccc8553010864cb8db1957e629cbfa}"
 RELEASE_TARBALL_URL="https://github.com/julianmb/q38rocm/releases/download/v1.5.2/strix-halo-rocmfpx-engine-v1.5.2-linux-x86_64.tar.gz"
-EXPECTED_TARBALL_SHA="7352ab06dff8a2a346cc20bf25a21d41f86ca490387fea77fce926340f6ce73f"
+EXPECTED_TARBALL_SHA="70d11cec4fd6c148a050f80a0422d563a928c39f849e600d6b59b1d620820aa7"
 LINKAGE="static"
 CLEAN_BUILD=0
 USE_PREBUILT=0
@@ -23,12 +23,20 @@ download_prebuilt() {
     echo " Source: ${RELEASE_TARBALL_URL}"
     echo "================================================================================"
     mkdir -p "${ENGINE_DIR}"
-    TAR_PATH="/tmp/strix-halo-engine-v1.5.0.tar.gz"
+    TAR_PATH="/tmp/strix-halo-engine-v1.5.2.tar.gz"
     
     curl -L "${RELEASE_TARBALL_URL}" -o "${TAR_PATH}" --progress-bar
     
     if command -v sha256sum >/dev/null 2>&1; then
-        echo "${EXPECTED_TARBALL_SHA}  ${TAR_PATH}" | sha256sum -c -
+        if ! echo "${EXPECTED_TARBALL_SHA}  ${TAR_PATH}" | sha256sum -c -; then
+            echo "❌ Checksum mismatch for $(basename "${TAR_PATH}")" >&2
+            echo "   expected: ${EXPECTED_TARBALL_SHA}" >&2
+            echo "   actual:   $(sha256sum "${TAR_PATH}" | cut -d' ' -f1)" >&2
+            echo "   The published asset does not match the pinned digest (see issue #20)." >&2
+            echo "   Either update EXPECTED_TARBALL_SHA after verifying the new digest, or" >&2
+            echo "   re-pin RELEASE_TARBALL_URL to a known-good release." >&2
+            exit 1
+        fi
         echo "✅ Checksum verified!"
     fi
     
@@ -43,6 +51,9 @@ download_prebuilt() {
     rm -rf /tmp/strix-halo-rocmfpx-engine "${TAR_PATH}"
     
     echo "✅ Pre-built engine ready in: ${ENGINE_DIR}/bin"
+    # report the engine build: when triaging server-side bugs (e.g. issue #20) this is
+    # the only way to tell which source revision the binary on disk came from
+    echo "Engine build:  $("${ENGINE_DIR}/bin/llama-server" --version 2>/dev/null | head -1)"
     echo "Verifying available hardware acceleration backends..."
     "${ENGINE_DIR}/bin/llama-server" --list-devices 2>/dev/null || true
     echo "Run: source ./setup_env.sh"

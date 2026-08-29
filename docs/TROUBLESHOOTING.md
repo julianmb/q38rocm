@@ -114,6 +114,25 @@ This checks Linux kernel support, OS-visible RAM, ROCm drivers (`hipcc`, `rocmin
 
 ---
 
+### 10. `File Not Found` on `/v1/embeddings` in router mode (`--models-preset`)
+* **Symptom:** the router loads the embedding child (log shows `n_embd`), but a request returns `{"error":{"message":"File Not Found",...,"code":404}}`.
+* **Root Cause:** `/v1/embeddings` is registered as a **POST-only** route. Anything that issues a `GET` against it — a health probe, a browser address bar, a client that follows a redirect and downgrades `POST` → `GET` — gets a 404 from the HTTP layer. The route itself is proxied correctly for POST (verified on the v1.5.0 and v1.5.2 prebuilts and on a current source build).
+* **Solution:**
+  1. Send a POST (this is what the OpenAI clients do):
+     ```bash
+     curl -X POST http://127.0.0.1:8080/v1/embeddings \
+       -H 'Content-Type: application/json' \
+       -d '{"model":"bge","input":"hi"}'
+     ```
+  2. Confirm which engine you are actually on — a server-side 404 that persists for POST means the binary is not the build you think it is:
+     ```bash
+     ./engine/bin/llama-server --version   # e.g. "version: 215 (12f8b7e)"
+     ```
+  3. If `--prebuilt` aborts with a checksum mismatch, the pinned digest in `build_engine.sh` is stale; see `docs/UPSTREAM_TRACKING.md`.
+* **Not a bug:** unknown or wrong-method paths return `4xx` **without** stopping the router (verified against `/v1/nonexistent`, `/nope`, `GET /v1/embeddings`), and killing a child instance does not bring the router down — the next request to that model returns `500 proxy error: Could not establish connection` and the router keeps serving.
+
+---
+
 ## ❓ Frequently Asked Questions (FAQ)
 
 ### Q: Can I run 262K context window models on a 32 GB system?

@@ -111,14 +111,22 @@ This checks Linux kernel support, OS-visible RAM, ROCm drivers (`hipcc`, `rocmin
 * **Solution:**
   1. This is normal and expected fallback behavior when prompts branch significantly under speculative decoding. The server does not crash or error out; it safely invalidates the divergent slot/checkpoints and pre-fills the new prompt cleanly.
   2. For workloads with frequent divergent multi-turn branching, document switches, or deep prompt caching where maximum cache reuse is priority, run the standard cache profile without MTP: `./run_server.sh --profile cache` (which defaults to `MTP=0`).
+* **Check `-cram` first if the cache never hits at all:** `--profile speed|agent|safe` pass `-cram 0`, so a `--cache-prompt` added on top enables caching with **nowhere to store it** and every prompt is reprocessed. `run_server.sh` now warns about this combination. Use `--profile cache` (sizes `-cram` from installed RAM) or pass `--cache-ram <MiB>`. Confirmed in issue #19: with `-np 1` and two agents alternating, `-cram 32768` let the second agent's follow-up reuse the first agent's 995-token prefix (24 tokens reprocessed instead of 1019), while `-cram 0` reprocessed all 1019.
+* **With MTP, any divergence from the cached entry defeats reuse:** the fork only accepts a cache entry that the new prompt continues *exactly* (`server-context.cpp:933` marks the MTP draft context as non-trimmable, so the bounded-rollback escape hatch is unreachable). Client-side prompt normalization, a re-sent conversation, or an inserted `/btw` all trigger `reason=spec-boundary-mismatch`. Keeping one slot per agent avoids it; so does `MTP=0`.
 
 ---
 
 ### 10. `File Not Found` on `/v1/embeddings` in router mode (`--models-preset`)
 * **Symptom:** the router loads the embedding child (log shows `n_embd`), but a request returns `{"error":{"message":"File Not Found",...,"code":404}}`.
-* **Root Cause:** `/v1/embeddings` is registered as a **POST-only** route. Anything that issues a `GET` against it — a health probe, a browser address bar, a client that follows a redirect and downgrades `POST` → `GET` — gets a 404 from the HTTP layer. The route itself is proxied correctly for POST (verified on the v1.5.0 and v1.5.2 prebuilts and on a current source build).
+* **Root Cause (confirmed in issue #20): another process owns the port, so the requests never reached llama.cpp.** The router fails to bind, prints `couldn't bind HTTP server socket` and exits with `exiting due to HTTP server error`, while whatever *is* listening answers your curl. This is easy to misread because several local inference servers are built on cpp-httplib and return the same `File Not Found (path)` body — in #20 a `whisper-server` had squatted the port for months and even answered `/health` with `{"status":"ok"}`, so both symptoms looked like llama.cpp behaviour.
 * **Solution:**
-  1. Send a POST (this is what the OpenAI clients do):
+  1. **Check who owns the port before anything else:**
+     ```bash
+     ss -ltnp | grep 8080        # look for llama-server, not something else
+     curl -sv --noproxy '*' -X POST http://127.0.0.1:8080/health | head -5   # is "Server: llama.cpp"?
+     ```
+     If the listener is not `llama-server`, or the `Server:` header is not `llama.cpp`, you are talking to the wrong process — start the router on a free port (`--port 8011`) and retest.
+  2. `/v1/embeddings` is also registered **POST-only**, so a `GET` — a health probe, a browser bar, a client that follows a redirect and downgrades `POST` → `GET` — returns the same 404 from the HTTP layer. Send a POST (this is what the OpenAI clients do):
      ```bash
      curl -X POST http://127.0.0.1:8080/v1/embeddings \
        -H 'Content-Type: application/json' \

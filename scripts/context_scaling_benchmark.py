@@ -41,12 +41,12 @@ def generate_context_prompt(target_tokens):
     )
     return prompt
 
-def test_context_depth(host, port, target_tokens):
+def test_context_depth(host, port, target_tokens, model, timeout):
     url = f"http://{host}:{port}/v1/chat/completions"
     prompt = generate_context_prompt(target_tokens)
     
     payload = json.dumps({
-        "model": "qwen38-27b",
+        "model": model,
         "messages": [{"role": "user", "content": prompt}],
         "max_tokens": 64,
         "temperature": 0.0
@@ -56,7 +56,7 @@ def test_context_depth(host, port, target_tokens):
     
     t0 = time.time()
     try:
-        with urllib.request.urlopen(req, timeout=180) as resp:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             elapsed = time.time() - t0
             
@@ -85,17 +85,28 @@ def main():
     parser = argparse.ArgumentParser(description="Strix Halo Long-Context Scaling Benchmark")
     parser.add_argument("--port", type=int, default=8000, help="Server port (default: 8000)")
     parser.add_argument("--host", default="127.0.0.1", help="Server host (default: 127.0.0.1)")
+    parser.add_argument("--model", default="qwen38-27b",
+                        help="Model name/alias as registered by the server. run_server.sh aliases "
+                             "the model by its full path, so pass that here (default: qwen38-27b)")
+    parser.add_argument("--depths", default=",".join(str(d) for d in CONTEXT_DEPTHS),
+                        help="Comma-separated prompt depths to test (default: %(default)s)")
+    parser.add_argument("--timeout", type=int, default=180,
+                        help="Per-request client timeout in seconds. Prompt processing on Strix Halo "
+                             "runs ~150-270 tok/s, so a 128K prefill needs ~15 min (default: 180)")
     parser.add_argument("--export-dir", default=str(BENCHMARK_DIR), help="Directory to save reports")
     args = parser.parse_args()
+
+    # a depth larger than the server's context leaves no room for the answer
+    depths = [int(d) for d in args.depths.split(",") if d.strip()]
 
     print("\n" + "=" * 80)
     print(bold(" 📈 QWEN 3.8 27B LONG-CONTEXT SCALING BENCHMARK (STRIX HALO)"))
     print("=" * 80)
 
     results = []
-    for depth in CONTEXT_DEPTHS:
+    for depth in depths:
         print(f"Testing context depth: {yellow(f'{depth:,} tokens')}...", end="", flush=True)
-        res = test_context_depth(args.host, args.port, depth)
+        res = test_context_depth(args.host, args.port, depth, args.model, args.timeout)
         if res:
             results.append(res)
             ttft_val = res['ttft_ms']

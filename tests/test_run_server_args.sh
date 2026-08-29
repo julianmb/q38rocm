@@ -208,6 +208,19 @@ explicit_profile_wins="$({
 [[ "$explicit_profile_wins" == *"no_cache_prompt_count=1"* ]]
 [[ "$explicit_profile_wins" == *"strict_count=1"* ]]
 
+# issue #19: a cache flag with a non-cache profile forces -cram 0, so nothing is
+# ever stored — the user must be told instead of silently getting a cold server
+[[ "$explicit_profile_wins" == *"forces -cram 0"* ]]
+[[ "$explicit_profile_wins" == *"Use --profile cache"* ]]
+
+cache_profile_no_notice="$({
+    ROCMFPX_BIN_DIR="$TMP_DIR" \
+    MODEL_PATH="$TMP_DIR/model.gguf" \
+    "$ROOT_DIR/run_server.sh" --profile cache --slot-save-path "$TMP_DIR/slots"
+} 2>&1)"
+
+[[ "$cache_profile_no_notice" != *"forces -cram 0"* ]]
+
 cache_mtp_output="$({
     ROCMFPX_BIN_DIR="$TMP_DIR" \
     MODEL_PATH="$TMP_DIR/model.gguf" \

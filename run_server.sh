@@ -23,6 +23,7 @@ PROFILE="${PROFILE:-${CACHE_MODE:-speed}}"
 # the cache profile (issues #12/#13: these flags used to be silently ignored
 # while speed/agent kept prompt caching disabled).
 EXPLICIT_PROFILE=0
+CACHE_FLAGS_SEEN=0
 ARGS=("$@")
 for ((i = 0; i < ${#ARGS[@]}; i++)); do
     case "${ARGS[$i]}" in
@@ -35,6 +36,7 @@ for ((i = 0; i < ${#ARGS[@]}; i++)); do
             EXPLICIT_PROFILE=1
             ;;
         --cache-mode|--cache-prompt|--cache-ram|--ctx-checkpoints|--checkpoint-every|--slot-save-path|--cache-reuse)
+            CACHE_FLAGS_SEEN=1
             if [ "$EXPLICIT_PROFILE" -eq 0 ]; then
                 PROFILE="cache"
             fi
@@ -181,6 +183,16 @@ if [ ! -f "$MODEL_PATH" ]; then
     echo "  ./download_model.sh"
     echo "or specify the path: ./run_server.sh /path/to/model.gguf"
     exit 1
+fi
+
+# Asking for caching without the cache profile is a no-op: the other profiles pass
+# `-cram 0`, so --cache-prompt has nowhere to store a state and every prompt is
+# reprocessed (issue #19: an agent switch on -np 1 then looks like a cache bug).
+if [ "$CACHE_FLAGS_SEEN" = "1" ] && [ "${PROFILE}" != "cache" ]; then
+    echo "⚠️  [NOTICE] --profile ${PROFILE} forces -cram 0, so prompt caching stores nothing." >&2
+    echo "   ${PROFILE} profile + a cache flag = cache enabled in name only." >&2
+    echo "   Use --profile cache, or add --cache-ram <MiB> explicitly." >&2
+    echo "--------------------------------------------------------------------------------" >&2
 fi
 
 # 3. Locate llama-server Binary

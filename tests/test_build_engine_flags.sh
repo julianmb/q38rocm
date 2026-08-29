@@ -32,4 +32,15 @@ engine_tag="${engine_tag%%/*}"
 [[ "$engine_url"  == *"/releases/download/v${engine_tag}/strix-halo-rocmfpx-engine-v${engine_tag}-linux-x86_64.tar.gz\""* ]]
 [[ "$dockerfile_url" == *"/releases/download/v${engine_tag}/"* ]]
 
+# the Dockerfile must verify the same digest, not just download the asset
+engine_sha_val="${engine_sha#EXPECTED_TARBALL_SHA=\"}"
+engine_sha_val="${engine_sha_val%\"}"
+docker_sha="$(grep -m1 '^ARG ENGINE_TARBALL_SHA=' "$ROOT_DIR/Dockerfile")"
+[[ "$docker_sha" == "ARG ENGINE_TARBALL_SHA=${engine_sha_val}" ]]
+
+# engine provenance: the prebuilt must carry an expected `llama-server --version`
+[[ "$script" == *"PREBUILT_ENGINE_BUILD="* ]]
+[[ "$script" == *'write_build_info "prebuilt"'* ]]
+[[ "$script" == *'write_build_info "source"'* ]]
+
 printf '%s\n' "build_engine portability flag tests passed"

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Troubleshooting guide
+    url: https://github.com/julianmb/q38rocm/blob/main/docs/TROUBLESHOOTING.md
+    about: Check here first — most engine, server and install issues are already covered.
+  - name: Upstream tracking & workaround matrix
+    url: https://github.com/julianmb/q38rocm/blob/main/docs/UPSTREAM_TRACKING.md
+    about: Known upstream llama.cpp/ROCmFPX limitations, carried patches and workarounds.

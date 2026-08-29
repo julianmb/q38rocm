@@ -11,11 +11,55 @@ REPO_URL="https://github.com/charlie12345/ROCmFPX.git"
 PINNED_COMMIT="${PINNED_COMMIT:-0fc9568e07ccc8553010864cb8db1957e629cbfa}"
 RELEASE_TARBALL_URL="https://github.com/julianmb/q38rocm/releases/download/v1.5.2/strix-halo-rocmfpx-engine-v1.5.2-linux-x86_64.tar.gz"
 EXPECTED_TARBALL_SHA="70d11cec4fd6c148a050f80a0422d563a928c39f849e600d6b59b1d620820aa7"
+# what `llama-server --version` reports for the pinned prebuilt. Warns when the
+# installed binary does not match the release we think we installed (issues
+# #20/#21 both stalled because a binary could not be mapped to a revision).
+PREBUILT_ENGINE_BUILD="${PREBUILT_ENGINE_BUILD:-version: 215 (12f8b7e)}"
 LINKAGE="static"
 CLEAN_BUILD=0
 USE_PREBUILT=0
 ENABLE_VULKAN=1
 BUILD_WEBUI=0
+
+# record where the engine on disk came from, so a bug report can say which
+# source revision it is actually running (see issues #20/#21)
+write_build_info() {
+    local origin="$1"
+    local engine_build="$2"
+    mkdir -p "${ENGINE_DIR}"
+    {
+        echo "origin:         ${origin}"
+        echo "generated:      $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+        echo "engine build:   ${engine_build}"
+        if [ "${origin}" = "prebuilt" ]; then
+            echo "release url:    ${RELEASE_TARBALL_URL}"
+            echo "tarball sha256: ${EXPECTED_TARBALL_SHA}"
+        else
+            echo "pinned commit:  ${PINNED_COMMIT}"
+            echo "patches:        $(cd "${SCRIPT_DIR}/patches" 2>/dev/null && ls *.patch 2>/dev/null | tr '\n' ' ')"
+        fi
+        echo "binary sha256:  $(sha256sum "${ENGINE_DIR}/bin/llama-server" 2>/dev/null | cut -d' ' -f1)"
+    } > "${ENGINE_DIR}/BUILD_INFO.txt"
+    echo "Provenance:     ${ENGINE_DIR}/BUILD_INFO.txt"
+}
+
+# Print the engine build and, when we know what to expect (prebuilt only), warn on a
+# mismatch. Source builds legitimately report the pinned commit instead, so they pass
+# an empty expectation rather than tripping the check.
+report_engine_build() {
+    local engine_build="$1"
+    local expected="$2"
+    echo "Engine build:   ${engine_build}"
+    if [ -z "${engine_build}" ]; then
+        echo "⚠️  llama-server reported no build string — check the install" >&2
+        return
+    fi
+    if [ -n "${expected}" ] && [[ "${engine_build}" != *"${expected}"* ]]; then
+        echo "⚠️  Expected '${expected}' in the build string, got '${engine_build}'" >&2
+        echo "   Update PREBUILT_ENGINE_BUILD after re-releasing, otherwise bug reports" >&2
+        echo "   will not match the provenance recorded in engine/BUILD_INFO.txt." >&2
+    fi
+}
 
 download_prebuilt() {
     echo "================================================================================"
@@ -60,10 +104,10 @@ download_prebuilt() {
     fi
 
     echo "✅ Pre-built engine ready in: ${ENGINE_DIR}/bin"
-    # report the engine build: when triaging server-side bugs (e.g. issue #20) this is
-    # the only way to tell which source revision the binary on disk came from.
-    # note: --version is emitted through the log system, i.e. on stderr, not stdout
-    echo "Engine build:  $("${ENGINE_DIR}/bin/llama-server" --version 2>&1 | head -1)"
+    local engine_build
+    engine_build="$("${ENGINE_DIR}/bin/llama-server" --version 2>&1 | head -1)"
+    report_engine_build "${engine_build}" "${PREBUILT_ENGINE_BUILD}"
+    write_build_info "prebuilt" "${engine_build}"
     echo "Verifying available hardware acceleration backends..."
     "${ENGINE_DIR}/bin/llama-server" --list-devices 2>/dev/null || true
     echo "Run: source ./setup_env.sh"
@@ -231,6 +275,10 @@ if [ "$LINKAGE" = "shared" ] && [ -d bin ]; then
     # makes the static binary dlopen stale libs at startup and abort
     cp -f bin/*.so* "${ENGINE_DIR}/bin/" 2>/dev/null || true
 fi
+
+engine_build="$("${ENGINE_DIR}/bin/llama-server" --version 2>&1 | head -1)"
+report_engine_build "${engine_build}" ""
+write_build_info "source" "${engine_build}"
 
 echo "================================================================================"
 echo " ✅ Build Complete!"

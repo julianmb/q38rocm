@@ -48,3 +48,21 @@ jobs:
             echo "::error::llama-server --version produced no output"
             exit 1
           fi
+
+      - name: Publish provenance for the release notes
+        run: |
+          set -euo pipefail
+          bin="$(find /tmp -type f -path '*/bin/llama-server' | head -1)"
+          {
+            echo "### Engine provenance"
+            echo ""
+            echo "| field | value |"
+            echo "|---|---|"
+            echo "| engine build | $("$bin" --version 2>&1 | head -1) |"
+            echo "| tarball sha256 | $(sha256sum /tmp/engine.tar.gz | cut -d' ' -f1) |"
+            echo "| binary sha256 | $(sha256sum "$bin" | cut -d' ' -f1) |"
+            echo "| pinned commit | $(grep -m1 '^PINNED_COMMIT=' build_engine.sh | cut -d'"' -f2) |"
+            echo "| patches | $(ls patches/*.patch 2>/dev/null | xargs -n1 basename | tr '\n' ' ') |"
+            echo ""
+            echo "Update \`PREBUILT_ENGINE_BUILD\` in \`build_engine.sh\` if the engine build changed."
+          } >> "$GITHUB_STEP_SUMMARY"

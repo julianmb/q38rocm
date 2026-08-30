@@ -17,7 +17,8 @@ HOST="127.0.0.1"
 REASONING="${REASONING:-auto}"
 REASONING_BUDGET="${REASONING_BUDGET:-4096}"
 HUB_DIR="${HALOFPX_HUB_DIR:-${HOME}/source/halofpx-research}"
-MODEL_FILE="${SCRIPT_DIR}/Qwen3.8-27B-ROCmFP4-FAST.gguf"
+MODEL_FILE="${SCRIPT_DIR}/models/Qwen3.8-27B-ROCmFP4-FAST.gguf"
+LEGACY_MODEL="${SCRIPT_DIR}/Qwen3.8-27B-ROCmFP4-FAST.gguf"
 FALLBACK_MODEL="${HUB_DIR}/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf"
 CACHE_MODE="${CACHE_MODE:-speed}"
 configure_cache_profile
@@ -30,7 +31,9 @@ echo " 🚀 Qwen 3.8 27B ROCmFP4_FAST — Strix Halo 1-Command Quickstart"
 echo "================================================================================"
 
 # 1. Check Model Weights
-if [ ! -f "$MODEL_FILE" ] && [ -f "$FALLBACK_MODEL" ]; then
+if [ ! -f "$MODEL_FILE" ] && [ -f "$LEGACY_MODEL" ]; then
+    MODEL_FILE="$LEGACY_MODEL"
+elif [ ! -f "$MODEL_FILE" ] && [ -f "$FALLBACK_MODEL" ]; then
     MODEL_FILE="$FALLBACK_MODEL"
 fi
 

@@ -32,8 +32,9 @@ bash tests/test_build_engine_flags.sh
    through the halofpx/hub folder. `build_engine.sh --prebuilt` downloads from
    q38rocm's own releases and replaces a symlinked engine/bin with a real copy
    (guards in build_engine.sh). Weights resolve locally first
-   (`download_model.sh`); the `HUB_DIR` paths in quickstart.sh/run_server.sh
-   are optional fallbacks only, skipped when the hub is absent.
+   `download_model.sh` downloads into `models/` — the canonical local store;
+   repo-root ggufs (legacy) and the `HUB_DIR` fallback in quickstart.sh/
+   run_server.sh are checked after it, skipped when absent.
 3. **ROCm requirement:** engine needs ROCm 7.2.x runtime libs; never bundle
    them in the repo (decision from issue #5 — documented, not vendored).
 4. **MTP:** Qwen 3.8 27B is the model where MTP IS a big win (2.4–2.94x).

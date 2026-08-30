@@ -31,7 +31,6 @@ services:
       - video
       - render
     volumes:
-      - ./Qwen3.8-27B-ROCmFP4-FAST.gguf:/app/models/Qwen3.8-27B-ROCmFP4-FAST.gguf:ro
       - ./models:/app/models
       - hf-cache:/root/.cache/huggingface/hub
     ipc: host

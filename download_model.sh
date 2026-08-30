@@ -6,10 +6,12 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TARGET_FILE="${SCRIPT_DIR}/Qwen3.8-27B-ROCmFP4-FAST.gguf"
+TARGET_FILE="${SCRIPT_DIR}/models/Qwen3.8-27B-ROCmFP4-FAST.gguf"
 REPO_ID="julianmb/Qwen-3.8-27B-ROCmFP4-FAST-GGUF"
 FILENAME="Qwen3.8-27B-ROCmFP4-FAST.gguf"
 EXPECTED_SHA256="fb89c78d2be91cdb68eaaaa45b1270710bf34aa721dc1f0b9e3aa7b98d2e1da9"
+
+mkdir -p "${SCRIPT_DIR}/models"
 
 echo "================================================================================"
 echo " 📥 Downloading Qwen 3.8 27B ROCmFP4_FAST (13.55 GiB)"

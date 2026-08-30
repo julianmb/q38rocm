@@ -11,6 +11,7 @@ source "${SCRIPT_DIR}/setup_env.sh"
 source "${SCRIPT_DIR}/scripts/cache_profile.sh"
 
 # 1. Select Profile Defaults, Then Parse Explicit Overrides
+HUB_DIR="${HALOFPX_HUB_DIR:-${HOME}/source/halofpx-research}"
 MODEL_PATH="${MODEL_PATH:-}"
 PORT="${PORT:-8000}"
 HOST="${HOST:-127.0.0.1}"
@@ -169,14 +170,16 @@ esac
 
 # 2. Resolve Model Path
 if [ -z "$MODEL_PATH" ]; then
-    if [ -f "${SCRIPT_DIR}/Qwen3.8-27B-ROCmFP4-FAST.gguf" ]; then
+    if [ -f "${SCRIPT_DIR}/models/Qwen3.8-27B-ROCmFP4-FAST.gguf" ]; then
+        MODEL_PATH="${SCRIPT_DIR}/models/Qwen3.8-27B-ROCmFP4-FAST.gguf"
+    elif [ -f "${SCRIPT_DIR}/models/Qwen3.8-27B-ROCmFP8.gguf" ]; then
+        MODEL_PATH="${SCRIPT_DIR}/models/Qwen3.8-27B-ROCmFP8.gguf"
+    elif [ -f "${SCRIPT_DIR}/Qwen3.8-27B-ROCmFP4-FAST.gguf" ]; then
         MODEL_PATH="${SCRIPT_DIR}/Qwen3.8-27B-ROCmFP4-FAST.gguf"
     elif [ -f "${SCRIPT_DIR}/Qwen3.8-27B-ROCmFP8.gguf" ]; then
         MODEL_PATH="${SCRIPT_DIR}/Qwen3.8-27B-ROCmFP8.gguf"
-    elif [ -f "${SCRIPT_DIR}/models/Qwen3.8-27B-ROCmFP4-FAST.gguf" ]; then
-        MODEL_PATH="${SCRIPT_DIR}/models/Qwen3.8-27B-ROCmFP4-FAST.gguf"
-    elif [ -f "/home/user/source/halofpx-research/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf" ]; then
-        MODEL_PATH="/home/user/source/halofpx-research/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf"
+    elif [ -f "${HUB_DIR:-/nonexistent}/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf" ]; then
+        MODEL_PATH="${HUB_DIR:-/nonexistent}/models/qwen38-27b/Qwen3.8-27B-ROCmFP4-FAST.gguf"
     else
         MODEL_PATH="${SCRIPT_DIR}/Qwen3.8-27B-ROCmFP4-FAST.gguf"
     fi

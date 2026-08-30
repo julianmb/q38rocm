@@ -124,6 +124,7 @@ EOF
 chmod +x "$TMP_DIR/llama-server"
 
 output="$({
+    SKIP_ROCM_CHECK=1 \
     ROCMFPX_BIN_DIR="$TMP_DIR" \
     MODEL_PATH="$TMP_DIR/model.gguf" \
     "$ROOT_DIR/run_server.sh" \
@@ -152,6 +153,7 @@ ctxcp_re='ctxcp=[1-9][0-9]* count=1'
 [[ "$output" == *"cache_prompt_count=1"* ]]
 
 agent_output="$({
+    SKIP_ROCM_CHECK=1 \
     ROCMFPX_BIN_DIR="$TMP_DIR" \
     MODEL_PATH="$TMP_DIR/model.gguf" \
     "$ROOT_DIR/run_server.sh" --profile agent
@@ -165,6 +167,7 @@ agent_output="$({
 [[ "$agent_output" == *"ctxcp=0 count=1"* ]]
 
 safe_output="$({
+    SKIP_ROCM_CHECK=1 \
     ROCMFPX_BIN_DIR="$TMP_DIR" \
     MODEL_PATH="$TMP_DIR/model.gguf" \
     "$ROOT_DIR/run_server.sh" --profile safe
@@ -177,6 +180,7 @@ safe_output="$({
 [[ "$safe_output" == *"strict_count=0"* ]]
 
 cache_output="$({
+    SKIP_ROCM_CHECK=1 \
     ROCMFPX_BIN_DIR="$TMP_DIR" \
     MODEL_PATH="$TMP_DIR/model.gguf" \
     "$ROOT_DIR/run_server.sh" --profile cache --slot-save-path "$TMP_DIR/slots"
@@ -193,6 +197,7 @@ ctxcp_re='ctxcp=[1-9][0-9]* count=1'
 [[ "$cache_output" =~ $ctxcp_re ]]
 
 implied_cache_output="$({
+    SKIP_ROCM_CHECK=1 \
     ROCMFPX_BIN_DIR="$TMP_DIR" \
     MODEL_PATH="$TMP_DIR/model.gguf" \
     "$ROOT_DIR/run_server.sh" --cache-prompt --slot-save-path "$TMP_DIR/slots"
@@ -226,6 +231,7 @@ cache_profile_no_notice="$({
 [[ "$cache_profile_no_notice" != *"forces -cram 0"* ]]
 
 cache_mtp_output="$({
+    SKIP_ROCM_CHECK=1 \
     ROCMFPX_BIN_DIR="$TMP_DIR" \
     MODEL_PATH="$TMP_DIR/model.gguf" \
     MTP=1 \
@@ -237,6 +243,7 @@ cache_mtp_output="$({
 [[ "$cache_mtp_output" == *"MTP + prompt cache needs engine v1.5.0+"* ]]
 
 cache_mtp_flag_output="$({
+    SKIP_ROCM_CHECK=1 \
     ROCMFPX_BIN_DIR="$TMP_DIR" \
     MODEL_PATH="$TMP_DIR/model.gguf" \
     "$ROOT_DIR/run_server.sh" --profile cache --mtp --slot-save-path "$TMP_DIR/slots"
@@ -245,6 +252,7 @@ cache_mtp_flag_output="$({
 [[ "$cache_mtp_flag_output" == *"spec_type_count=1"* ]]
 
 cache_multislot_output="$({
+    SKIP_ROCM_CHECK=1 \
     ROCMFPX_BIN_DIR="$TMP_DIR" \
     MODEL_PATH="$TMP_DIR/model.gguf" \
     "$ROOT_DIR/run_server.sh" --profile cache --slots 4 --slot-save-path "$TMP_DIR/slots"

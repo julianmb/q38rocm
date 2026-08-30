@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
-trap 'echo "=== test failed; captured run_server output: ==="; echo "${output:-<none>}"' ERR
+trap 'echo "=== test failed at line $LINENO: $BASH_COMMAND ==="; for v in output agent_output safe_output cache_output implied_cache_output explicit_profile_wins cache_mtp_output cache_mtp_flag_output; do [ -n "${!v:-}" ] && { echo "--- \$$v ---"; echo "${!v}"; }; done' ERR
 
 touch "$TMP_DIR/model.gguf"
 cat > "$TMP_DIR/llama-server" <<'EOF'

@@ -1,72 +1,30 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# run_inference.sh — Strix Halo Unified Memory Inference Runner
+# run_inference.sh — Legacy wrapper (use ./run_server.sh or ./quickstart.sh)
 # ==============================================================================
-# Usage: ./scripts/run_inference.sh [cli|server] [speed|quality] /path/to/model.gguf
-# Env:   CTX_SIZE (default: cli=8192, server=131072)
 set -euo pipefail
 
-MODE="${1:-cli}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+echo "⚠️  scripts/run_inference.sh is deprecated — use ./run_server.sh or ./quickstart.sh" >&2
+echo "   For CLI chat: ./run_server.sh is for servers; for CLI use the engine directly:" >&2
+echo "     \${SCRIPT_DIR}/engine/bin/llama-cli -m <model> -dev Vulkan0 --jinja" >&2
+
+# Map legacy [cli|server] [speed|quality] args to run_server.sh profiles.
+MODE="${1:-server}"
 VARIANT="${2:-speed}"
 MODEL_PATH="${3:-}"
-
-if [ -z "$MODEL_PATH" ]; then
-    # Default fallbacks if no model path is passed
-    if [ "$VARIANT" == "speed" ]; then
-        MODEL_PATH="Ornith-1.0-35B-ROCmFPX-Speed-StrixHalo.gguf"
-    else
-        MODEL_PATH="Ornith-1.0-35B-ROCmFPX-Quality-StrixHalo.gguf"
-    fi
+PROFILE="speed"
+if [ "${VARIANT}" = "quality" ] || [ "${VARIANT}" = "cache" ]; then
+    PROFILE="cache"
+elif [ "${VARIANT}" = "safe" ]; then
+    PROFILE="safe"
 fi
 
-if [ ! -f "$MODEL_PATH" ]; then
-    echo "Error: Model file ($MODEL_PATH) not found."
-    echo "Usage: $0 [cli|server] [speed|quality] /path/to/model.gguf"
-    exit 1
+shift 3 2>/dev/null || true
+# shellcheck disable=SC2145
+echo "   Delegating to: ./run_server.sh --profile ${PROFILE} ${MODEL_PATH:+\"$MODEL_PATH\"} $*" >&2
+if [ "${MODE}" = "cli" ]; then
+    echo "   Note: CLI mode now runs via llama-cli directly; extra args forwarded to run_server are ignored." >&2
 fi
-
-BIN_DIR="ROCmFPX/build-strix-rocmfp4/bin"
-if [ ! -d "$BIN_DIR" ]; then
-    echo "Error: ROCmFPX binaries not found. Please run ./scripts/build_rocmfpx.sh first."
-    exit 1
-fi
-
-# Required environment variables for AMD Strix Halo / gfx1151
-export HSA_OVERRIDE_GFX_VERSION=11.5.1
-export GGML_HIP_ENABLE_UNIFIED_MEMORY=1
-
-# Context size handling
-if [ -z "${CTX_SIZE:-}" ]; then
-    if [ "$MODE" == "server" ]; then
-        CTX_SIZE=131072
-    else
-        CTX_SIZE=8192
-    fi
-fi
-
-echo "=========================================================="
-echo " Launching ROCmFPX Inference on Strix Halo (gfx1151)"
-echo " Mode: $MODE | Variant: $VARIANT | Context: $CTX_SIZE"
-echo " Model: $MODEL_PATH"
-echo "=========================================================="
-
-COMMON_ARGS=(
-    -m "$MODEL_PATH"
-    -dev ROCm0 -ngl 999 -fa on
-    -c "$CTX_SIZE" -ctk q8_0 -ctv q8_0
-    -b 512 -ub 512 --jinja
-)
-
-shift 3 || true
-EXTRA_ARGS=("$@")
-
-if [ "$MODE" == "cli" ]; then
-    exec "$BIN_DIR/llama-cli" "${COMMON_ARGS[@]}" -i "${EXTRA_ARGS[@]}"
-elif [ "$MODE" == "server" ]; then
-    echo "Starting OpenAI-compatible server at http://127.0.0.1:8080"
-    exec "$BIN_DIR/llama-server" "${COMMON_ARGS[@]}" \
-        --host 127.0.0.1 --port 8080 "${EXTRA_ARGS[@]}"
-else
-    echo "Error: Unknown mode '$MODE'. Use 'cli' or 'server'."
-    exit 1
-fi
+# shellcheck disable=SC2068
+exec "${SCRIPT_DIR}/run_server.sh" --profile "${PROFILE}" ${MODEL_PATH:+"$MODEL_PATH"} $@

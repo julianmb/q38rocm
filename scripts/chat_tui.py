@@ -30,7 +30,6 @@ def stream_chat(host, port, messages, system_prompt=None):
         "model": "strix-model",
         "messages": full_msgs,
         "stream": True,
-        "temperature": 0.7
     }).encode("utf-8")
     
     req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})

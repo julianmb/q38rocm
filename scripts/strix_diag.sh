@@ -2,6 +2,7 @@
 # ==============================================================================
 # strix_diag.sh — Diagnostic & System Verification Tool for Strix Halo (gfx1151)
 # ==============================================================================
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Verifies kernel version, system RAM / UMA BIOS allocation, ROCm toolchain,
 # Vulkan shader compiler (glslc), required environment variables, and ROCmFPX
 # binary builds.
@@ -171,7 +172,7 @@ fi
 # ------------------------------------------------------------------------------
 echo -e "\n${BOLD}6. ROCmFPX Toolchain Build Status:${NC}"
 
-BUILD_BIN_DIR="ROCmFPX/build-strix-rocmfp4/bin"
+BUILD_BIN_DIR="${SCRIPT_DIR}/../engine/bin"
 REQUIRED_BINS=("llama-cli" "llama-server" "llama-quantize" "llama-bench")
 ALL_BINS_EXIST=1
 

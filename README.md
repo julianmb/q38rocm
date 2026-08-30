@@ -313,6 +313,9 @@ pip install -r requirements.txt
 ```bash
 source ./setup_env.sh
 ```
+Fresh machine without ROCm? Let the script install the runtime subset for you:
+```bash
+source ./setup_env.sh --install-rocm   # one-time, ~1.2 GB download (Ubuntu/Fedora)
 
 #### 2. Download Pre-Quantized Weights
 ```bash

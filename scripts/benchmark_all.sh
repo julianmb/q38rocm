@@ -2,6 +2,7 @@
 # ==============================================================================
 # benchmark_all.sh — Automated Throughput & Context Scaling Suite for Strix Halo
 # ==============================================================================
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Runs llama-bench across prompt contexts (512, 4096, 32768, 131072, 262144) and
 # token generation (128 tokens) on AMD Strix Halo (gfx1151).
 #
@@ -47,11 +48,11 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-BENCH_BIN="ROCmFPX/build-strix-rocmfp4/bin/llama-bench"
+BENCH_BIN="${SCRIPT_DIR}/../engine/bin/llama-bench"
 
 if [ ! -f "$BENCH_BIN" ] && [ "$DRY_RUN" -eq 0 ]; then
     echo "Error: llama-bench binary not found at ${BENCH_BIN}." >&2
-    echo "       Run ./scripts/build_rocmfpx.sh first." >&2
+    echo "       Run ./build_engine.sh first (or --prebuilt)." >&2
     exit 1
 fi
 

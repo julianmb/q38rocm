@@ -208,11 +208,16 @@ implied_cache_output="$({
 [[ "$implied_cache_output" == *"cache_prompt_count=1"* ]]
 [[ "$implied_cache_output" == *"no_cache_prompt_count=0"* ]]
 
-explicit_profile_wins="$({
+if ! explicit_profile_wins="$({
+    SKIP_ROCM_CHECK=1 \
     ROCMFPX_BIN_DIR="$TMP_DIR" \
     MODEL_PATH="$TMP_DIR/model.gguf" \
     "$ROOT_DIR/run_server.sh" --cache-prompt --profile agent
-} 2>&1)"
+} 2>&1)"; then
+    echo "=== explicit-profile-wins invocation failed; captured output: ==="
+    echo "$explicit_profile_wins"
+    exit 1
+fi
 
 [[ "$explicit_profile_wins" == *"Profile:        agent"* ]]
 [[ "$explicit_profile_wins" == *"no_cache_prompt_count=1"* ]]
@@ -224,6 +229,7 @@ explicit_profile_wins="$({
 [[ "$explicit_profile_wins" == *"Use --profile cache"* ]]
 
 cache_profile_no_notice="$({
+    SKIP_ROCM_CHECK=1 \
     ROCMFPX_BIN_DIR="$TMP_DIR" \
     MODEL_PATH="$TMP_DIR/model.gguf" \
     "$ROOT_DIR/run_server.sh" --profile cache --slot-save-path "$TMP_DIR/slots"

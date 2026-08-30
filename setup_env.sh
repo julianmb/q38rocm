@@ -81,31 +81,82 @@ check_rocm_runtime() {
 }
 
 if [ -z "${SKIP_ROCM_CHECK:-}" ] && [ "${1:-}" != "--no-rocm-check" ]; then
-    if ! check_rocm_runtime; then
-        rc=$?
+    rocm_rc=0
+    check_rocm_runtime || rocm_rc=$?
+    if [ "$rocm_rc" -ne 0 ]; then
+        rc="$rocm_rc"
         echo ""
         echo "❌ ROCm runtime missing or incomplete (libhipblas.so.3 etc. not found — issue #5)"
         echo ""
         echo "The ROCmFPX engine binaries link against ROCm runtime libraries that are"
-        echo "NOT bundled with this repo. Install ROCm 7.2.x first (one-time setup):"
+        echo "NOT bundled with this repo."
         echo ""
-        if command -v apt-get >/dev/null 2>&1; then
-            echo "  Ubuntu 24.04:"
-            echo "    curl -fsSL https://repo.radeon.com/amdgpu-install/7.2.3/ubuntu/noble/amdgpu-install_7.2.3.70203-1_all.deb -o /tmp/amdgpu.deb"
-            echo "    sudo apt install /tmp/amdgpu.deb && sudo apt-get update"
-            echo "    sudo apt-get install --no-install-recommends \\"
-            echo "        hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr \\"
-            echo "        rocprofiler-register rocsolver roctracer comgr"
-        elif command -v dnf >/dev/null 2>&1; then
-            echo "  Fedora/RHEL:"
-            echo "    sudo dnf install https://repo.radeon.com/amdgpu-install/7.2.3/rhel/9.5/amdgpu-install-7.2.3.70203-1.el9.noarch.rpm"
-            echo "    sudo dnf install rocm-dev hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr"
+        # Interactive self-install: --install-rocm runs the distro commands directly
+        # (issue-class friction: copying 4 install lines was the last manual step)
+        if [ "${1:-}" = "--install-rocm" ]; then
+            if [ "$(id -u)" -eq 0 ]; then
+                SUDO=""
+            elif command -v sudo >/dev/null 2>&1; then
+                SUDO="sudo"
+            else
+                echo "❌ --install-rocm needs root or sudo to install packages." >&2
+                return $rc 2>/dev/null || exit $rc
+            fi
+            if command -v apt-get >/dev/null 2>&1; then
+                echo "🔧 Installing ROCm 7.2.3 runtime subset via apt (this downloads ~1.2 GB)..."
+                curl -fsSL "https://repo.radeon.com/amdgpu-install/7.2.3/ubuntu/noble/amdgpu-install_7.2.3.70203-1_all.deb" -o /tmp/amdgpu.deb || {
+                    echo "❌ Failed to download amdgpu-install package." >&2
+                    return $rc 2>/dev/null || exit $rc
+                }
+                $SUDO apt install -y /tmp/amdgpu.deb && $SUDO apt-get update
+                rm -f /tmp/amdgpu.deb
+                $SUDO apt-get install -y --no-install-recommends \
+                    hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr \
+                    rocprofiler-register rocsolver roctracer comgr
+            elif command -v dnf >/dev/null 2>&1; then
+                echo "🔧 Installing ROCm 7.2.x runtime subset via dnf..."
+                $SUDO dnf install -y "https://repo.radeon.com/amdgpu-install/7.2.3/rhel/9.5/amdgpu-install-7.2.3.70203-1.el9.noarch.rpm"
+                $SUDO dnf install -y rocm-dev hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr
+            else
+                echo "❌ --install-rocm supports apt-get and dnf only." >&2
+                echo "   See: https://rocm.docs.amd.com/en/latest/deploy/linux/install.html" >&2
+                return $rc 2>/dev/null || exit $rc
+            fi
+            echo ""
+            if check_rocm_runtime; then
+                echo "✅ ROCm runtime installed successfully."
+            else
+                echo "❌ ROCm runtime still incomplete after install — reboot may be required" >&2
+                echo "   for the amdgpu driver, or the install failed above." >&2
+                return $rc 2>/dev/null || exit $rc
+            fi
         else
-            echo "  See: https://rocm.docs.amd.com/en/latest/deploy/linux/install.html"
+            echo "Install ROCm 7.2.x first (one-time setup) — or let us do it:"
+            echo ""
+            if command -v apt-get >/dev/null 2>&1; then
+                echo "  Ubuntu 24.04:"
+                echo "    curl -fsSL https://repo.radeon.com/amdgpu-install/7.2.3/ubuntu/noble/amdgpu-install_7.2.3.70203-1_all.deb -o /tmp/amdgpu.deb"
+                echo "    sudo apt install /tmp/amdgpu.deb && sudo apt-get update"
+                echo "    sudo apt-get install --no-install-recommends \\"
+                echo "        hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr \\"
+                echo "        rocprofiler-register rocsolver roctracer comgr"
+                echo ""
+                echo "  One-command alternative:"
+                echo "    source ./setup_env.sh --install-rocm"
+            elif command -v dnf >/dev/null 2>&1; then
+                echo "  Fedora/RHEL:"
+                echo "    sudo dnf install https://repo.radeon.com/amdgpu-install/7.2.3/rhel/9.5/amdgpu-install-7.2.3.70203-1.el9.noarch.rpm"
+                echo "    sudo dnf install rocm-dev hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr"
+                echo ""
+                echo "  One-command alternative:"
+                echo "    source ./setup_env.sh --install-rocm"
+            else
+                echo "  See: https://rocm.docs.amd.com/en/latest/deploy/linux/install.html"
+            fi
+            echo ""
+            echo "  Docker users: the Dockerfile installs ROCm automatically — just run docker compose up."
+            echo ""
         fi
-        echo ""
-        echo "  Docker users: the Dockerfile installs ROCm automatically — just run docker compose up."
-        echo ""
         # Stop launchers (fail fast) but don't kill an interactive shell sourcing this file
         return $rc 2>/dev/null || exit $rc
     fi

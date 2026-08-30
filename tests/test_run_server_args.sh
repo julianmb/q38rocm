@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
+trap 'echo "=== test failed; captured run_server output: ==="; echo "${output:-<none>}"' ERR
 
 touch "$TMP_DIR/model.gguf"
 cat > "$TMP_DIR/llama-server" <<'EOF'

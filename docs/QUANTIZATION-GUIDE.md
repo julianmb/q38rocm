@@ -44,36 +44,36 @@ When quantizing a model for Strix Halo, two primary presets are recommended depe
 You can start from either a Hugging Face **BF16** repository or an **FP8** repository:
 ```bash
 # Example: Download BF16 or FP8 base model
-hf download deepreinforce-ai/Ornith-1.0-35B --local-dir ./Ornith-1.0-35B-bf16
+hf download Qwen/Qwen3.8-27B --local-dir ./Qwen3.8-27B-bf16   # or your FP8 checkpoint
 ```
 
 ### Step 2: Convert to Intermediate GGUF (F16 or FP8)
 Use `convert_hf_to_gguf.py` from the ROCmFPX fork:
 ```bash
-python3 ROCmFPX/convert_hf_to_gguf.py ./Ornith-1.0-35B-bf16 \
-    --outfile ./Ornith-1.0-35B-F16.gguf \
+python3 engine/src/convert_hf_to_gguf.py ./Qwen3.8-27B-bf16 \
+    --outfile ./Qwen3.8-27B-F16.gguf \
     --outtype f16
 ```
 
-> ⚠️ **Memory Tip during Intermediate Conversion:** Converting a 35B BF16 model requires ~70GB of system RAM. If converting on a 32GB or 64GB machine, ensure swap is enabled or convert on a larger build host first.
+> ⚠️ **Memory Tip during Intermediate Conversion:** Converting a 27B BF16 model requires ~55GB of system RAM. If converting on a 32GB or 64GB machine, ensure swap is enabled or convert on a larger build host first.
 
 ### Step 3: Quantize to ROCmFPX GGUF
 Run `llama-quantize` with the custom ROCmFPX preset flags:
 
 #### For Speed (`Q4_0_ROCMFP4_COHERENT`):
 ```bash
-./ROCmFPX/build-strix-rocmfp4/bin/llama-quantize \
-    ./Ornith-1.0-35B-F16.gguf \
-    ./Ornith-1.0-35B-ROCmFPX-Speed-StrixHalo.gguf \
-    Q4_0_ROCMFP4_COHERENT
+./engine/bin/llama-quantize \
+    ./Qwen3.8-27B-F16.gguf \
+    ./Qwen3.8-27B-ROCmFP4-FAST.gguf \
+    Q4_0_ROCMFP4_FAST
 ```
 
 #### For Quality (`Q6_0_ROCMFPX_AGENT`):
 ```bash
-./ROCmFPX/build-strix-rocmfp4/bin/llama-quantize \
-    ./Ornith-1.0-35B-F16.gguf \
-    ./Ornith-1.0-35B-ROCmFPX-Quality-StrixHalo.gguf \
-    Q6_0_ROCMFPX_AGENT
+./engine/bin/llama-quantize \
+    ./Qwen3.8-27B-F16.gguf \
+    ./Qwen3.8-27B-ROCmFP8.gguf \
+    Q8_0_ROCMFPX
 ```
 
 ---
@@ -91,5 +91,5 @@ Run `llama-quantize` with the custom ROCmFPX preset flags:
 3. **Verify SHA256 Checksums:**
    - Always verify weights after quantization to prevent silent corruption:
    ```bash
-   sha256sum ./Ornith-1.0-35B-ROCmFPX-Speed-StrixHalo.gguf > SHA256SUMS
+   sha256sum ./Qwen3.8-27B-ROCmFP4-FAST.gguf > SHA256SUMS
    ```

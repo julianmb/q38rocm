@@ -17,7 +17,7 @@ We use two primary tools for profiling:
 ### Basic 512-Token Prompt & 128-Token Generation Test:
 ```bash
 ROCmFPX/build-strix-rocmfp4/bin/llama-bench \
-    -m ./Ornith-1.0-35B-ROCmFPX-Speed-StrixHalo.gguf \
+    -m ./Qwen3.8-27B-ROCmFP4-FAST.gguf \
     -dev ROCm0 -ngl 999 -fa on \
     -p 512 -n 128 \
     -ctk q8_0 -ctv q8_0 \
@@ -29,7 +29,7 @@ To benchmark prompt-fill speed across context sizes:
 ```bash
 # Test prompt fill at 4096, 16384, 32768, 131072, and 262144 tokens
 ROCmFPX/build-strix-rocmfp4/bin/llama-bench \
-    -m ./Ornith-1.0-35B-ROCmFPX-Speed-StrixHalo.gguf \
+    -m ./Qwen3.8-27B-ROCmFP4-FAST.gguf \
     -dev ROCm0 -ngl 999 -fa on \
     -p 4096,16384,32768,131072,262144 -n 0 \
     -ctk q8_0 -ctv q8_0 \
@@ -58,7 +58,7 @@ To accurately measure peak unified memory usage including KV cache allocation:
 
 ```bash
 /usr/bin/time -v ROCmFPX/build-strix-rocmfp4/bin/llama-cli \
-    -m ./Ornith-1.0-35B-ROCmFPX-Speed-StrixHalo.gguf \
+    -m ./Qwen3.8-27B-ROCmFP4-FAST.gguf \
     -dev ROCm0 -ngl 999 -fa on \
     -c 32768 -ctk q8_0 -ctv q8_0 \
     -p "Test prompt for memory profiling" -n 128

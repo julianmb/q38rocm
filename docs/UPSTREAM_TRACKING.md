@@ -54,7 +54,7 @@ Depending on your workload characteristics, use the appropriate profile or launc
 ## 4. Engine Pinned Baseline
 
 * **Upstream Engine Repository:** [`charlie12345/ROCmFPX`](https://github.com/charlie12345/ROCmFPX)
-* **Pinned Commit:** `0fc9568e07ccc8553010864cb8db1957e629cbfa` (`llama.cpp` build `244`)
+* **Pinned Commit:** `0fc9568e07ccc8553010864cb8db1957e629cbfa` (`llama.cpp` build `244`) — **intentionally held here** (2026-08-29). Upstream `origin/main` (`c49ebdb`) is 13 commits ahead but consists solely of the experimental ROCmI4/IU4 `W4A4` path (`experimental/rocmi4-iu4`, `rocmi4-exact`, `gfx1151-mmq-tuning`). No prompt-cache/MTP or stability fixes are in that window; bumping would pull an unvalidated quantization experiment into the stable Strix Halo release.
 * **Pre-built Tarball:** `https://github.com/julianmb/q38rocm/releases/download/v1.5.2/strix-halo-rocmfpx-engine-v1.5.2-linux-x86_64.tar.gz`
 * **Verification:** `build_engine.sh --prebuilt` verifies SHA256 checksum `70d11cec4fd6c148a050f80a0422d563a928c39f849e600d6b59b1d620820aa7`.
 * **⚠️ Prebuilt / pinned-source drift (issue #20):** the `v1.5.2` tarball was built from `12f8b7e` (build `215`), which is **not** an ancestor of the pinned `0fc9568e` (build `244`) and is older than the `v1.5.0` engine (`version: 244 (0fc9568)`). A source build at the pinned commit therefore produces a *newer* engine than the current prebuilt. Until a release is rebuilt from the pinned commit, always report `llama-server --version` when filing engine bugs.

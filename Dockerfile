@@ -71,7 +71,7 @@ ENV LD_LIBRARY_PATH="/opt/rocm/lib:/app/engine/bin:${LD_LIBRARY_PATH}"
 # be unpacked silently — the failure mode behind issue #20.
 ARG ENGINE_TARBALL_SHA=70d11cec4fd6c148a050f80a0422d563a928c39f849e600d6b59b1d620820aa7
 RUN mkdir -p /app/engine && \
-    curl -L "https://github.com/julianmb/q38rocm/releases/download/v1.5.2/strix-halo-rocmfpx-engine-v1.5.2-linux-x86_64.tar.gz" -o /tmp/engine.tar.gz && \
+    curl -L "https://github.com/julianmb/q38rocm/releases/download/v1.5.3/strix-halo-rocmfpx-engine-v1.5.3-linux-x86_64.tar.gz" -o /tmp/engine.tar.gz && \
     echo "${ENGINE_TARBALL_SHA}  /tmp/engine.tar.gz" | sha256sum -c - && \
     tar -xzf /tmp/engine.tar.gz -C /tmp/ && \
     cp -a /tmp/strix-halo-rocmfpx-engine/* /app/engine/ && \

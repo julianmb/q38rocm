@@ -117,8 +117,14 @@ def main():
 
     results = []
     for target in args.depths:
-        print(f"Building approximately {target:,} tokenizer tokens...", flush=True)
-        document, document_tokens = build_document(base_url, target)
+        # the chat template wraps the document in system/role tokens; building
+        # a doc at the full context size overflows the server ctx (off-by-27
+        # observed). reserve headroom so doc + template always fits.
+        build_target = target - 1024
+        if build_target < 4096:
+            parser.error(f"depth {target} leaves no headroom for the chat template")
+        print(f"Building approximately {build_target:,} tokenizer tokens...", flush=True)
+        document, document_tokens = build_document(base_url, build_target)
         print(f"Document tokens: {document_tokens:,}; running cold retrieval...", flush=True)
         cold = run_request(
             base_url,
@@ -154,6 +160,21 @@ def main():
             "quality": quality,
             "cache_prefill_speedup": speedup,
         })
+
+        # write incrementally: a crash at a later depth must not lose
+        # the completed measurements (a 131K cold prefill is ~13 minutes)
+        output_dir = Path(args.export_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output = output_dir / f"long_context_cache_{timestamp}.json"
+        output.write_text(json.dumps({
+            "timestamp": datetime.now().isoformat(),
+            "server": base_url,
+            "model": args.model,
+            "markers": MARKERS,
+            "results": results,
+        }, indent=2))
+        print(f"Saved partial results to {output}", flush=True)
 
     output_dir = Path(args.export_dir)
     output_dir.mkdir(parents=True, exist_ok=True)

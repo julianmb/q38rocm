@@ -109,6 +109,7 @@ CMD=(
     "--poll" "100"
     "--presence-penalty" "0.0"
     "--repeat-penalty" "1.05"
+    "--temperature" "0.0"
     "--no-mmap"
     "--cont-batching"
     "--kv-unified"

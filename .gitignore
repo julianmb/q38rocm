@@ -5,7 +5,7 @@ __pycache__/
 *.tmp
 .DS_Store
 cache/
-engine/bin
-engine/src
+engine/
 models/
 .omo/
+ROCmFPX/

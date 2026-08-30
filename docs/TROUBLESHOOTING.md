@@ -33,8 +33,8 @@ This checks Linux kernel support, OS-visible RAM, ROCm drivers (`hipcc`, `rocmin
 * **Root Cause:** Model is running on `ROCm0` backend instead of `Vulkan0`, or MTP speculative decoding is disabled.
 * **Solution:**
   1. Ensure `glslc` (Vulkan shader compiler) is installed (`sudo apt install vulkan-tools shaderc`).
-  2. Force Vulkan backend: `DEVICE=Vulkan0 ./scripts/run_inference.sh cli speed /path/to/model.gguf`.
-  3. Enable MTP speculative decoding if running a model with an MTP head: `MTP=1 DEVICE=Vulkan0 ./scripts/run_inference.sh cli speed /path/to/model.gguf`.
+  2. Force Vulkan backend: `DEVICE=Vulkan0 ./run_server.sh --profile speed` or `DEVICE=Vulkan0 ./quickstart.sh` (quickstart now delegates to `run_server.sh` so both share the same profile flags).
+  3. Enable MTP speculative decoding if running a model with an MTP head — the `speed` profile already enables `MTP n_max=4, p_min=0.0` with greedy sampling; for creative sampling use `--temperature 0.8` and expect lower MTP gains (see measured-conditions note in `README.md`).
 
 ---
 
@@ -51,9 +51,10 @@ This checks Linux kernel support, OS-visible RAM, ROCm drivers (`hipcc`, `rocmin
 ### 4. MTP Speculative Decoding giving no speedup or throwing `X < Y` position check errors
 * **Root Cause:** Using a stale `llama.cpp` build that predates the M-RoPE batch fix for MTP (`src/llama-batch.cpp`).
 * **Solution:**
-  Rebuild the ROCmFPX toolchain from latest `origin/main`:
+  Rebuild the ROCmFPX toolchain at the pinned commit (applies `patches/*.patch`):
   ```bash
-  ./scripts/build_rocmfpx.sh
+  ./build_engine.sh
+  # legacy wrapper (now delegates): ./scripts/build_rocmfpx.sh
   ```
 
 ---

@@ -79,7 +79,7 @@ if curl -s "http://${HOST}:${PORT}/health" 2>/dev/null | grep -q "ok"; then
     exit 0
 fi
 
-# 5. Start Background Server
+# 5. Start Background Server (delegates to run_server.sh — single source of profile flags)
 SERVER_LOG="${SCRIPT_DIR}/server.log"
 echo "Starting ROCmFPX llama-server in background..."
 echo "  • Backend:       ${DEVICE}"
@@ -95,55 +95,13 @@ echo "  • Reasoning:     ${REASONING} (Budget cap: ${REASONING_BUDGET} tokens)
 echo "  • Logs:          ${SERVER_LOG}"
 echo "--------------------------------------------------------------------------------"
 
-CMD=(
-    "${LLAMA_SERVER_BIN}"
-    "-m" "${MODEL_FILE}"
-    "-dev" "${DEVICE}"
-    "-ngl" "99"
-    "-fa" "on"
-    "-np" "${SLOTS}"
-    "-c" "131072"
-    "-b" "2048"
-    "-ub" "1024"
-    "-t" "16"
-    "--poll" "100"
-    "--presence-penalty" "0.0"
-    "--repeat-penalty" "1.05"
-    "--temperature" "0.0"
-    "--no-mmap"
-    "--cont-batching"
-    "--kv-unified"
-    "--port" "${PORT}"
-    "--host" "${HOST}"
-)
-
-if [ "${CACHE_MODE}" = "cache" ]; then
-    CMD+=(
-        "-ctk" "q8_0" "-ctv" "q8_0"
-        "-ctxcp" "${CTX_CHECKPOINTS}" "-cpent" "${CHECKPOINT_EVERY}" "-cram" "${CACHE_RAM_MIB}"
-        "--cache-prompt" "--cache-reuse" "${CACHE_REUSE}" "--slot-save-path" "${SLOT_SAVE_PATH}"
-    )
-else
-    # speed mode: MTP + prompt caching + TurboQuant KV (v1.5.0+ engines)
-    CMD+=(
-        "-ctk" "q8_0" "-ctv" "turbo4"
-        "-ctxcp" "${CTX_CHECKPOINTS}" "-cpent" "${CHECKPOINT_EVERY}" "-cram" "${CACHE_RAM_MIB}"
-        "--cache-prompt" "--slot-save-path" "${SLOT_SAVE_PATH}"
-        "--spec-type" "draft-mtp" "--spec-draft-n-max" "4" "--spec-draft-p-min" "0.0"
-    )
-fi
-
-if [ "${MLOCK}" = "1" ]; then
-    CMD+=("--mlock")
-fi
-
-if [ "$REASONING" == "off" ]; then
-    CMD+=("--reasoning" "off")
-elif [ -n "$REASONING_BUDGET" ]; then
-    CMD+=("--reasoning-budget" "${REASONING_BUDGET}")
-fi
-
-"${CMD[@]}" > "${SERVER_LOG}" 2>&1 &
+# Delegate flag assembly to run_server.sh so quickstart and production share one
+# codepath. quickstart only supplies the model, device, and port; run_server
+# derives batch/cache/MTP/KV defaults from PROFILE (via CACHE_MODE).
+export DEVICE
+export CACHE_MODE
+# shellcheck disable=SC3030
+"${SCRIPT_DIR}/run_server.sh" --port "${PORT}" --host "${HOST}" "${MODEL_FILE}" > "${SERVER_LOG}" 2>&1 &
 SERVER_PID=$!
 
 cleanup() {

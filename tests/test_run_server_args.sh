@@ -133,7 +133,8 @@ output="$({
         --presence-penalty 0.25 \
         --repeat-penalty 1.02 \
         --temperature 0 \
-        --no-mtp
+        --no-mtp \
+        --slot-save-path "$TMP_DIR/slots"
 } 2>&1)"
 
 [[ "$output" == *"Model:          model.gguf"* ]]
@@ -143,9 +144,12 @@ output="$({
 [[ "$output" == *"presence=0.25 count=1"* ]]
 [[ "$output" == *"repeat=1.02 count=1"* ]]
 [[ "$output" == *"temperature=0 count=1"* ]]
-[[ "$output" == *"ctxcp=0 count=1"* ]]
-[[ "$output" == *"cram=0 count=1"* ]]
-[[ "$output" == *"no_cache_prompt_count=1"* ]]
+cram_re='cram=[1-9][0-9]* count=1'
+[[ "$output" =~ $cram_re ]]
+ctxcp_re='ctxcp=[1-9][0-9]* count=1'
+[[ "$output" =~ $ctxcp_re ]]
+[[ "$output" == *"no_cache_prompt_count=0"* ]]
+[[ "$output" == *"cache_prompt_count=1"* ]]
 
 agent_output="$({
     ROCMFPX_BIN_DIR="$TMP_DIR" \
@@ -230,7 +234,7 @@ cache_mtp_output="$({
 
 [[ "$cache_mtp_output" == *"Profile:        cache"* ]]
 [[ "$cache_mtp_output" == *"spec_type_count=1"* ]]
-[[ "$cache_mtp_output" == *"MTP + prompt cache needs a patched engine"* ]]
+[[ "$cache_mtp_output" == *"MTP + prompt cache needs engine v1.5.0+"* ]]
 
 cache_mtp_flag_output="$({
     ROCMFPX_BIN_DIR="$TMP_DIR" \

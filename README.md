@@ -339,9 +339,9 @@ Choose one explicit runtime profile:
 
 | Profile | Context | MTP | Prompt Checkpoints | Intended Workload |
 |---|---:|---|---|---|
-| `speed` | 128K | K=4, non-strict | Disabled | Interactive generation and maximum decode throughput |
+| `speed` | 128K | K=4, non-strict | RAM-aware (TurboQuant KV) | Interactive generation and maximum decode throughput (greedy default) |
 | `agent` | 64K | K=4, strict | Disabled | Pi and other long-running tool agents |
-| `cache` | 128K | Disabled | RAM-aware | Repeated long documents and stable shared prefixes |
+| `cache` | 128K | Opt-in (`--mtp`) | RAM-aware (q8_0 KV) | Repeated long documents and stable shared prefixes |
 | `safe` | 64K | Disabled | Disabled | Diagnosis and conservative agent execution |
 
 ```bash
@@ -350,7 +350,9 @@ Choose one explicit runtime profile:
 ./run_server.sh --profile safe
 ```
 
-Non-cache profiles explicitly pass zero context checkpoints and zero prompt-cache RAM. This matters because ROCmFPX otherwise enables checkpoints and RAM caching by default even when the launcher does not request them.
+The `speed` profile is the fast default: greedy sampling with MTP delivers the measured 33.8 tok/s sustained decode, and RAM checkpoints now reuse long shared prefixes between turns (measured on v1.5.2: a divergent-tail follow-up on a 9K-token document completed in 4–5 s instead of a ~33 s cold prefill, with TurboQuant KV keeping the cache footprint small). Creative-chat users who want sampling diversity can restore the old behavior with `--temperature 0.8` (expect decode closer to ~21 tok/s — see the measured-conditions note above).
+
+The `agent` and `safe` profiles explicitly pass zero context checkpoints and zero prompt-cache RAM for conservative isolation.
 
 Server endpoints available:
 - **Chat Completions:** `POST http://localhost:8000/v1/chat/completions`

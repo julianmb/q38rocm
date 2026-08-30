@@ -89,7 +89,7 @@ if [ "${CACHE_MODE}" = "cache" ]; then
     echo "  • Prompt Cache:  ${CACHE_PROFILE} profile (${CACHE_RAM_MIB} MiB, ${CTX_CHECKPOINTS} checkpoints)"
 else
     echo "  • Speculation:   MTP Speculative Decoding (n_max=4, p_min=0.0)"
-    echo "  • Prompt Cache:  disabled in MTP speed mode"
+    echo "  • Prompt Cache:  ${CACHE_PROFILE} profile — warm-turn prefill reuse with MTP"
 fi
 echo "  • Reasoning:     ${REASONING} (Budget cap: ${REASONING_BUDGET} tokens)"
 echo "  • Logs:          ${SERVER_LOG}"
@@ -123,9 +123,11 @@ if [ "${CACHE_MODE}" = "cache" ]; then
         "--cache-prompt" "--cache-reuse" "${CACHE_REUSE}" "--slot-save-path" "${SLOT_SAVE_PATH}"
     )
 else
+    # speed mode: MTP + prompt caching + TurboQuant KV (v1.5.0+ engines)
     CMD+=(
         "-ctk" "q8_0" "-ctv" "turbo4"
-        "-ctxcp" "0" "-cram" "0" "--no-cache-prompt" "--no-cache-idle-slots"
+        "-ctxcp" "${CTX_CHECKPOINTS}" "-cpent" "${CHECKPOINT_EVERY}" "-cram" "${CACHE_RAM_MIB}"
+        "--cache-prompt" "--slot-save-path" "${SLOT_SAVE_PATH}"
         "--spec-type" "draft-mtp" "--spec-draft-n-max" "4" "--spec-draft-p-min" "0.0"
     )
 fi

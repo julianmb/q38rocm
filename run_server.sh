@@ -54,7 +54,7 @@ case "${PROFILE}" in
         REASONING="${REASONING:-auto}"
         BATCH_SIZE="${BATCH_SIZE:-2048}"
         UBATCH_SIZE="${UBATCH_SIZE:-1024}"
-        TEMPERATURE="${TEMPERATURE:-${TEMP:-0.8}}"
+        TEMPERATURE="${TEMPERATURE:-${TEMP:-0.0}}"
         REPEAT_PENALTY="${REPEAT_PENALTY:-1.05}"
         ;;
     agent)
@@ -150,13 +150,22 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# cache profile keeps q8_0/q8_0 KV (TurboQuant rotation is incompatible with
-# checkpoint restore). MTP stays off unless explicitly opted in via MTP=1 or
-# --mtp: coexistence requires the patched engine (patches/mtp-prompt-cache-fix.patch).
+# cache profile keeps q8_0/q8_0 KV (measured safest for arbitrary branching).
+# MTP in the cache profile stays off unless explicitly opted in via MTP=1 or
+# --mtp. The speed profile combines MTP + prompt caching + TurboQuant KV —
+# validated on v1.5.2+: divergent-tail turns restore from checkpoints instead
+# of cold-refilling (7.6x faster warm turns, decode unchanged).
 if [ "${PROFILE}" = "cache" ]; then
     KV_K="q8_0"
     KV_V="q8_0"
 fi
+
+# speed and cache profiles both enable prompt caching (RAM checkpoints);
+# agent/safe keep caching fully disabled for conservative isolation.
+USE_CACHE=0
+case "${PROFILE}" in
+    speed|cache) USE_CACHE=1 ;;
+esac
 
 # 2. Resolve Model Path
 if [ -z "$MODEL_PATH" ]; then
@@ -173,7 +182,7 @@ if [ -z "$MODEL_PATH" ]; then
     fi
 fi
 
-if [ "${PROFILE}" = "cache" ]; then
+if [ "${USE_CACHE}" = "1" ]; then
     mkdir -p "${SLOT_SAVE_PATH}"
 fi
 
@@ -251,15 +260,17 @@ CMD=(
     "--host" "${HOST}"
 )
 
-if [ "${PROFILE}" = "cache" ]; then
+if [ "${USE_CACHE}" = "1" ]; then
     CMD+=(
         "-ctxcp" "${CTX_CHECKPOINTS}"
         "-cpent" "${CHECKPOINT_EVERY}"
         "-cram" "${CACHE_RAM_MIB}"
         "--cache-prompt"
-        "--cache-reuse" "${CACHE_REUSE}"
         "--slot-save-path" "${SLOT_SAVE_PATH}"
     )
+    if [ "${PROFILE}" = "cache" ]; then
+        CMD+=("--cache-reuse" "${CACHE_REUSE}")
+    fi
 else
     CMD+=("-ctxcp" "0" "-cram" "0" "--no-cache-prompt" "--no-cache-idle-slots")
 fi
@@ -292,12 +303,11 @@ echo " Model:          $(basename "$MODEL_PATH")"
 echo " Profile:        ${PROFILE}"
 echo " Device Backend: ${DEVICE}"
 echo " Context:        ${CTX} tokens (KV: K=${KV_K}, V=${KV_V})"
-if [ "${PROFILE}" = "cache" ]; then
-    echo " Prompt Cache:   ${CACHE_PROFILE} profile (${CACHE_RAM_MIB} MiB, ${CTX_CHECKPOINTS} checkpoints, reuse ${CACHE_REUSE})"
+if [ "${USE_CACHE}" = "1" ]; then
+    echo " Prompt Cache:   ${CACHE_PROFILE} profile (${CACHE_RAM_MIB} MiB, ${CTX_CHECKPOINTS} checkpoints)"
     if [ "${MTP}" = "1" ]; then
-        echo " ⚠️  MTP + prompt cache needs a patched engine (built with"
-        echo "     patches/mtp-prompt-cache-fix.patch, release v1.5.0+). Divergent prompt"
-        echo "     tails will gracefully fall back to cold prefill via spec-boundary-mismatch."
+        echo " ⚠️  MTP + prompt cache needs engine v1.5.0+ (current release is fine)."
+        echo "     Older engines gracefully fall back to cold prefill on divergent tails."
     fi
 else
     echo " Prompt Cache:   disabled explicitly (checkpoints=0, RAM cache=0)"

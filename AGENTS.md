@@ -38,6 +38,9 @@ bash tests/test_build_engine_flags.sh
    them in the repo (decision from issue #5 — documented, not vendored).
 4. **MTP:** Qwen 3.8 27B is the model where MTP IS a big win (2.4–2.94x).
    Keep strict-greedy (`--spec-mtp-strict-qwen`) available for agents.
+   Speed profile (v1.5.2+) combines MTP + prompt caching + TurboQuant KV —
+   measured 7.6x faster warm turns, do NOT revert speed to `--no-cache-prompt`
+   based on the old turbo4/checkpoint incompatibility belief (disproven 2026-08-30).
 5. Speech pipeline: NPU Whisper + pyannote work formerly staged in the
    `q38rocmDf2` sibling clone now lives in `npuhalo-speech`
    (github.com/julianmb/npuhalo-speech). The duplicate clone has been retired.

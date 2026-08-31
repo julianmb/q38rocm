@@ -1,0 +1,68 @@
+{
+  "timestamp": "2026-08-31T11:47:40.022402",
+  "server": "http://127.0.0.1:18082",
+  "model": "qwen38-27b",
+  "markers": {
+    "early": "HALO-EARLY-7Q2M",
+    "middle": "HALO-MIDDLE-4X9K",
+    "late": "HALO-LATE-8V3P"
+  },
+  "results": [
+    {
+      "target_tokens": 65536,
+      "document_tokens": 64463,
+      "cold": {
+        "wall_seconds": 326.298,
+        "prompt_tokens": 64530,
+        "prompt_ms": 321084.292,
+        "prompt_tps": 200.97526290697522,
+        "completion_tokens": 96,
+        "decode_tps": 18.671851736161287,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "User asks to return only the three retrieval marker values in early, middle, late order. Need extract from given text. I see markers:\nEARLY RETRIEVAL MARKER: HALO-EARLY-7Q2M\nMIDDLE RETRIEVAL MARKER: HALO-MIDDLE-4X9K\nLATE RETRIEVAL MARKER: HALO-LATE-8V3P\nNeed output only values in order, likely each"
+      },
+      "cached": {
+        "wall_seconds": 12.757,
+        "prompt_tokens": 1030,
+        "prompt_ms": 7328.104,
+        "prompt_tps": 140.55477378596154,
+        "completion_tokens": 96,
+        "decode_tps": 17.91876193300884,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "We need answer user's request: \"List the exact early, middle, and late retrieval marker values. Do not explain.\"\n\nNeed identify markers in provided text. There are lines:\nEARLY RETRIEVAL MARKER: HALO-EARLY-7Q2M\nMIDDLE RETRIEVAL MARKER: HALO-MIDDLE-4X9K\nLATE RETRIEVAL MARKER: HALO-LATE-8V3P\n\n"
+      },
+      "quality": {
+        "wall_seconds": 36.328,
+        "prompt_tokens": 1038,
+        "prompt_ms": 7593.147,
+        "prompt_tps": 136.7022131930279,
+        "completion_tokens": 384,
+        "decode_tps": 13.401177258523262,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0529,
+        "content": "We need answer user's request. Need produce final with five concise, non-repetitive bullet points explaining what this document tests, then list all three exact marker values once.\n\nNeed understand document: It is a long repeated neutral benchmark record about AMD Strix Halo, cache reuse, deterministic retrieval, context checkpoints, memory-bandwidth-bound inference. Contains markers: EARLY RETRIEVAL MARKER: HALO-EARLY-7Q2M; MIDDLE RETRIEVAL MARKER: HALO-MIDDLE-4X9K; LATE RETRIEVAL MARKER: HALO-LATE-8V3P. User asks: \"Write five concise, non-repetitive bullet points explaining what this document tests, then list all three exact marker values once.\"\n\nNeed likely explain what the document tests: It appears to be a benchmark record for long-context retrieval / needle-in-haystack? It contains repeated filler and markers at early/middle/late positions. Tests ability to locate exact markers in long repetitive context, maintain attention across long context, deterministic retrieval, cache reuse/context checkpoints, memory-bandwidth-bound inference maybe. Need five concise non-repetitive bullets. Then list marker values once: HALO-EARLY-7Q2M, HALO-MIDDLE-4X9K, HALO-LATE-8V3P.\n\nNeed ensure exact marker values once. Could format:\n- It tests long-context retrieval by embedding unique markers at early, middle, and late positions amid repetitive filler.\n- It evaluates whether a model can preserve and report exact strings without paraphrase or omission.\n- It probes attention stability across a large, highly repetitive document where similar lines could cause confusion.\n- It reflects cache-reuse/context-checkpoint behavior by requiring retention of sparse anchors through repeated records.\n- It is a neutral benchmark record, not an instruction"
+      },
+      "cache_prefill_speedup": 43.82
+    }
+  ]
+}

@@ -195,6 +195,18 @@ Measured live on AMD Ryzen AI Max+ 395 (Radeon 8060S / Mesa RADV STRIX_HALO) usi
 | **16,384 tokens** | **1.23 GiB** | **266.57 tok/s** *(Vulkan)*<br>**329.86 tok/s** *(ROCm)* | 49.66 s | **13.85 tok/s** | **28.02 tok/s** |
 | **32,768 tokens** | **2.45 GiB** | **~245.0 tok/s** | ~130 s | **13.62 tok/s** | **26.85 tok/s** |
 
+### Long-Context Prompt-Cache Reuse — MTP + Checkpoints Coexistence *(Measured 2026-08-31)*
+
+The `speed` profile now combines **MTP speculation with prompt caching** (RAM checkpoints + TurboQuant KV). Repeated retrieval over a shared long document was measured on Ryzen AI Max+ 395 (ROCm0 backend for prefill stability; `v1.5.3` engine, `--cache-ram 16384`):
+
+| Document Depth | Cold Prefill | Cached Re-Prefill | **Cache Speedup** | Retrieval Quality |
+|---|---:|---:|---:|---|
+| **32 K tokens** | 199.1 s (159.7 tok/s) | **9.35 s** | 🔥 **21.3×** | 3/3 markers, coherent |
+| **64 K tokens** | 321.1 s (201.0 tok/s) | **7.33 s** | 🔥 **43.8×** | 3/3 markers, coherent |
+| **130 K tokens** | 905.8 s (143.6 tok/s) | **11.49 s** | 🔥 **78.9×** | 3/3 markers, coherent |
+
+Every turn after the first pays **seconds, not minutes** — and MTP speculative decoding stays enabled throughout (no `spec-boundary-mismatch` fallbacks, zero cold resets). Raw artifacts: `benchmarks/long_context_cache_20260831_*.json`. Backend note: prefill numbers on ROCm0 (stable under concurrent desktop iGPU load); decode on Vulkan0 reaches the 30+ tok/s MTP rates in the tables above when the iGPU is otherwise idle.
+
 ### Memory Scaling Across Context Depths
 
 Thanks to **Asymmetric TurboQuant KV cache** (`-ctk q8_0 -ctv turbo4`) and Qwen 3.8's **hybrid linear-attention layers** (48 linear + 16 full attention layers), memory growth is sub-linear:

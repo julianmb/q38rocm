@@ -284,17 +284,17 @@ See [`docs/NPU_INTEGRATION.md`](docs/NPU_INTEGRATION.md) for the complete setup,
 
 ## 🚀 Quick Start
 
-> ### ⚠️ Prerequisites: ROCm 7.2.3 Runtime Required
+> ### ⚠️ Prerequisites: ROCm 10.0 Runtime Required (also compatible with 7.2.x)
 > The ROCmFPX engine binaries are dynamically linked against ROCm runtime libraries
-> (`libhipblas.so.3`, `librocblas.so.5`, `libamdhip64.so.7`, `libhipblaslt.so.1`, `libhsa-runtime64.so.1`,
-> `librocprofiler-register.so.0`). **ROCm is NOT bundled.** Install it first, otherwise the
+> (`libhipblas.so`, `librocblas.so`, `libamdhip64.so`, `libhipblaslt.so`, `libhsa-runtime64.so`,
+> `librocprofiler-register.so`). **ROCm is NOT bundled.** Install it first, otherwise the
 > server will fail with `error while loading shared libraries: libhipblas.so.3` (see
 > [issue #5](https://github.com/julianmb/q38rocm/issues/5)). `./setup_env.sh` and
-> Docker now auto-detect this and show install instructions.
+> Docker now auto-detect this and show install instructions (supports both ROCm 10.0 and 7.2.x).
 >
 > **Ubuntu 24.04 (one-time):**
 > ```bash
-> curl -fsSL https://repo.radeon.com/amdgpu-install/7.2.3/ubuntu/noble/amdgpu-install_7.2.3.70203-1_all.deb -o /tmp/amdgpu.deb
+> curl -fsSL https://repo.radeon.com/amdgpu-install/10.0/ubuntu/noble/amdgpu-install_10.0.0-1_all.deb -o /tmp/amdgpu.deb
 > sudo apt install /tmp/amdgpu.deb && sudo apt-get update
 > sudo apt-get install --no-install-recommends \
 >     hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr \
@@ -302,7 +302,7 @@ See [`docs/NPU_INTEGRATION.md`](docs/NPU_INTEGRATION.md) for the complete setup,
 > ```
 > **Fedora/RHEL (one-time):**
 > ```bash
-> sudo dnf install https://repo.radeon.com/amdgpu-install/7.2.3/rhel/9.5/amdgpu-install-7.2.3.70203-1.el9.noarch.rpm
+> sudo dnf install https://repo.radeon.com/amdgpu-install/10.0/rhel/9.5/amdgpu-install-10.0.0-1.el9.noarch.rpm
 > sudo dnf install rocm-dev hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr
 > ```
 > **Docker:** The included `Dockerfile` installs the ROCm runtime automatically — no host setup needed.

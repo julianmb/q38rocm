@@ -40,7 +40,7 @@ ROCmFPX/build-strix-rocmfp4/bin/llama-bench \
 
 ## 📈 Real-World Benchmark Results Summary
 
-Measured on **Ubuntu 24.04, ROCm 7.2.3, FlashAttention Enabled**:
+Measured on **Ubuntu 24.04, ROCm 10.0 (also compatible with 7.2.3), FlashAttention Enabled**:
 
 | Context Depth | Speed (`Q4_0_ROCMFP4_COHERENT`) | Quality (`Q6_0_ROCMFPX_AGENT`) | Primary Workload Profile |
 |---|---:|---:|---|

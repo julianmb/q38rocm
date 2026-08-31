@@ -133,7 +133,7 @@ if command -v hipcc >/dev/null 2>&1 || [ -x /opt/rocm/bin/hipcc ]; then
     HIPCC_BIN=$(command -v hipcc 2>/dev/null || echo "/opt/rocm/bin/hipcc")
     pass "HIP compiler found: ${HIPCC_BIN}"
 else
-    fail "hipcc compiler not found. ROCm 7.2.x HIP SDK is required."
+    fail "hipcc compiler not found. ROCm 10.0 HIP SDK is required (also supports 7.2.x)."
 fi
 
 if command -v rocminfo >/dev/null 2>&1 || [ -x /opt/rocm/bin/rocminfo ]; then
@@ -142,7 +142,7 @@ if command -v rocminfo >/dev/null 2>&1 || [ -x /opt/rocm/bin/rocminfo ]; then
     if "${ROCMINFO_BIN}" 2>/dev/null | grep -E "gfx1151|gfx1150|gfx1100" >/dev/null; then
         pass "RDNA 3.5 APU graphics target (gfx1151) detected in rocminfo."
     else
-        warn "gfx1151 target not explicitly listed in rocminfo output (verify ROCm 7.2 driver installation)."
+        warn "gfx1151 target not explicitly listed in rocminfo output (verify ROCm 10.0 driver installation)."
     fi
 else
     warn "rocminfo not found in PATH or /opt/rocm/bin."

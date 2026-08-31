@@ -40,11 +40,11 @@ RUN groupadd render && apt-get update && apt-get install -y --no-install-recomme
     findutils \
     && rm -rf /var/lib/apt/lists/*
 
-# Install ROCm 7.2.3 runtime libraries (required by ROCmFPX engine binaries, issue #5).
-# ROCmFPX links against libhipblas.so.3 / librocblas.so.5 / libamdhip64.so.7 etc.,
-# which are NOT part of a base Ubuntu image. Install only the runtime subset
+# Install ROCm 10.0 runtime libraries (required by ROCmFPX engine binaries, issue #5).
+# Supports both ROCm 10.0 and 7.2.x libs (libhipblas.so.3/so.4, librocblas.so.5, libamdhip64.so.7).
+# ROCm libs are NOT part of a base Ubuntu image. Install only the runtime subset
 # (~1.2 GB) instead of the full ~4 GB ROCm toolchain.
-RUN curl -fsSL "https://repo.radeon.com/amdgpu-install/7.2.3/ubuntu/noble/amdgpu-install_7.2.3.70203-1_all.deb" -o /tmp/amdgpu-install.deb \
+RUN curl -fsSL "https://repo.radeon.com/amdgpu-install/10.0/ubuntu/noble/amdgpu-install_10.0.0-1_all.deb" -o /tmp/amdgpu-install.deb \
     && apt-get update \
     && apt-get install -y --no-install-recommends /tmp/amdgpu-install.deb \
     && rm -f /tmp/amdgpu-install.deb \

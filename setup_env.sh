@@ -50,30 +50,33 @@ done
 
 # 3. ROCm Runtime Preflight Check (issue #5: libhipblas.so.3 not found)
 # The ROCmFPX engine binaries link against ROCm runtime libraries.
+# Supports both ROCm 7.2.x (libhipblas.so.3) and ROCm 10.0+ (libhipblas.so.4).
 check_rocm_runtime() {
-    local needed=(libhipblas.so.3 librocblas.so.5 libamdhip64.so.7)
+    local needed_patterns=(libhipblas.so librocblas.so libamdhip64.so)
     local missing=0
     local rocm_home=""
-    for d in /opt/rocm-* /opt/rocm-7.2.3 /opt/rocm; do
-        if [ -e "${d}/lib/libamdhip64.so.7" ] || [ -e "${d}/lib/libamdhip64.so" ]; then
+    for d in /opt/rocm-10.0* /opt/rocm-10.0 /opt/rocm-7.2.3 /opt/rocm-* /opt/rocm; do
+        if [ -e "${d}/lib/libamdhip64.so" ] || [ -e "${d}/lib/libamdhip64.so.7" ] || [ -e "${d}/lib/libamdhip64.so.4" ]; then
             rocm_home="$d"
             break
         fi
     done
 
     if [ -z "$rocm_home" ]; then
-        # Probe ldconfig cache instead
-        if ! ldconfig -p 2>/dev/null | grep -q "libamdhip64.so.7"; then
-            return 2  # ROCm not installed at all
+        # Probe ldconfig cache instead (support both 7.2 and 10.0 sonames)
+        if ! ldconfig -p 2>/dev/null | grep -qE "libamdhip64\.so(\.7|\.4)? "; then
+            if ! ldconfig -p 2>/dev/null | grep -q "libamdhip64.so"; then
+                return 2  # ROCm not installed at all
+            fi
         fi
         return 0
     fi
 
     export LD_LIBRARY_PATH="${rocm_home}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 
-    for lib in "${needed[@]}"; do
-        if [ -z "$(find "${rocm_home}/lib" -maxdepth 1 -name "${lib}*" 2>/dev/null | head -1)" ]; then
-            echo "❌ Missing ROCm library: ${lib}"
+    for pat in "${needed_patterns[@]}"; do
+        if [ -z "$(find "${rocm_home}/lib" -maxdepth 1 -name "${pat}*" 2>/dev/null | head -1)" ]; then
+            echo "❌ Missing ROCm library: ${pat}"
             missing=1
         fi
     done
@@ -86,7 +89,7 @@ if [ -z "${SKIP_ROCM_CHECK:-}" ] && [ "${1:-}" != "--no-rocm-check" ]; then
     if [ "$rocm_rc" -ne 0 ]; then
         rc="$rocm_rc"
         echo ""
-        echo "❌ ROCm runtime missing or incomplete (libhipblas.so.3 etc. not found — issue #5)"
+        echo "❌ ROCm runtime missing or incomplete (ROCm libs not found — issue #5, supports 7.2.x and 10.0)"
         echo ""
         echo "The ROCmFPX engine binaries link against ROCm runtime libraries that are"
         echo "NOT bundled with this repo."
@@ -103,8 +106,8 @@ if [ -z "${SKIP_ROCM_CHECK:-}" ] && [ "${1:-}" != "--no-rocm-check" ]; then
                 return $rc 2>/dev/null || exit $rc
             fi
             if command -v apt-get >/dev/null 2>&1; then
-                echo "🔧 Installing ROCm 7.2.3 runtime subset via apt (this downloads ~1.2 GB)..."
-                curl -fsSL "https://repo.radeon.com/amdgpu-install/7.2.3/ubuntu/noble/amdgpu-install_7.2.3.70203-1_all.deb" -o /tmp/amdgpu.deb || {
+                echo "🔧 Installing ROCm 10.0 runtime subset via apt (this downloads ~1.2 GB)..."
+                curl -fsSL "https://repo.radeon.com/amdgpu-install/10.0/ubuntu/noble/amdgpu-install_10.0.0-1_all.deb" -o /tmp/amdgpu.deb || {
                     echo "❌ Failed to download amdgpu-install package." >&2
                     return $rc 2>/dev/null || exit $rc
                 }
@@ -114,8 +117,8 @@ if [ -z "${SKIP_ROCM_CHECK:-}" ] && [ "${1:-}" != "--no-rocm-check" ]; then
                     hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr \
                     rocprofiler-register rocsolver roctracer comgr
             elif command -v dnf >/dev/null 2>&1; then
-                echo "🔧 Installing ROCm 7.2.x runtime subset via dnf..."
-                $SUDO dnf install -y "https://repo.radeon.com/amdgpu-install/7.2.3/rhel/9.5/amdgpu-install-7.2.3.70203-1.el9.noarch.rpm"
+                echo "🔧 Installing ROCm 10.0 runtime subset via dnf..."
+                $SUDO dnf install -y "https://repo.radeon.com/amdgpu-install/10.0/rhel/9.5/amdgpu-install-10.0.0-1.el9.noarch.rpm"
                 $SUDO dnf install -y rocm-dev hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr
             else
                 echo "❌ --install-rocm supports apt-get and dnf only." >&2
@@ -131,11 +134,11 @@ if [ -z "${SKIP_ROCM_CHECK:-}" ] && [ "${1:-}" != "--no-rocm-check" ]; then
                 return $rc 2>/dev/null || exit $rc
             fi
         else
-            echo "Install ROCm 7.2.x first (one-time setup) — or let us do it:"
+            echo "Install ROCm 10.0 first (one-time setup) — or let us do it:"
             echo ""
             if command -v apt-get >/dev/null 2>&1; then
                 echo "  Ubuntu 24.04:"
-                echo "    curl -fsSL https://repo.radeon.com/amdgpu-install/7.2.3/ubuntu/noble/amdgpu-install_7.2.3.70203-1_all.deb -o /tmp/amdgpu.deb"
+                echo "    curl -fsSL https://repo.radeon.com/amdgpu-install/10.0/ubuntu/noble/amdgpu-install_10.0.0-1_all.deb -o /tmp/amdgpu.deb"
                 echo "    sudo apt install /tmp/amdgpu.deb && sudo apt-get update"
                 echo "    sudo apt-get install --no-install-recommends \\"
                 echo "        hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr \\"
@@ -143,9 +146,10 @@ if [ -z "${SKIP_ROCM_CHECK:-}" ] && [ "${1:-}" != "--no-rocm-check" ]; then
                 echo ""
                 echo "  One-command alternative:"
                 echo "    source ./setup_env.sh --install-rocm"
+                echo "  (Also supports ROCm 7.2.x — same libs, older URL: replace 10.0 with 7.2.3)"
             elif command -v dnf >/dev/null 2>&1; then
                 echo "  Fedora/RHEL:"
-                echo "    sudo dnf install https://repo.radeon.com/amdgpu-install/7.2.3/rhel/9.5/amdgpu-install-7.2.3.70203-1.el9.noarch.rpm"
+                echo "    sudo dnf install https://repo.radeon.com/amdgpu-install/10.0/rhel/9.5/amdgpu-install-10.0.0-1.el9.noarch.rpm"
                 echo "    sudo dnf install rocm-dev hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr"
                 echo ""
                 echo "  One-command alternative:"

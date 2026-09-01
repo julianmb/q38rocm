@@ -20,9 +20,13 @@
       }
     },
     "speculation": {
-      "n_max": 7,
-      "p_min": 0.35,
-      "temperature": 0.0
+      "profile": "speed",
+      "type": "draft-mtp",
+      "n_max": 4,
+      "p_min": 0.0,
+      "strict": false,
+      "temperature": 0.0,
+      "note": "Long-context cache rows measured with this config (speed profile). Optimization Stages table rows label their own n/p settings."
     },
     "cache_profile": {
       "name": "TurboQuant KV",
@@ -47,11 +51,46 @@
         "TTFT (Prompt Eval) *(Measured)*"
       ],
       "rows": [
-        ["**Stock `Q4_K_M` (Baseline)**", "32K / FP16 KV", "12.27 tok/s", "N/A", "1.00×", "526.7 ms"],
-        ["**`ROCmFP4_FAST`**", "32K / TurboQuant KV", "14.02 tok/s", "N/A", "1.14×", "468.3 ms"],
-        ["**`ROCmFP4_FAST` + Strict Greedy MTP**", "32K / TurboQuant KV", "14.02 tok/s", "**34.82 tok/s**", "**2.84×**", "442.8 ms"],
-        ["**`ROCmFP4_FAST` + MTP (`n6/p0.60`)**", "32K / TurboQuant KV", "14.02 tok/s", "**30.56 – 34.82 tok/s**", "**2.50× – 2.84×**", "439.4 ms"],
-        ["**`ROCmFP4_FAST` + Deep Spec (`n7/p0.35`)**", "32K / TurboQuant KV", "14.02 tok/s", "🔥 **36.04 tok/s** *(JSON/Code)*", "🔥 **2.94×**", "445.8 ms"]
+        [
+          "**Stock `Q4_K_M` (Baseline)**",
+          "32K / FP16 KV",
+          "12.27 tok/s",
+          "N/A",
+          "1.00\u00d7",
+          "526.7 ms"
+        ],
+        [
+          "**`ROCmFP4_FAST`**",
+          "32K / TurboQuant KV",
+          "14.02 tok/s",
+          "N/A",
+          "1.14\u00d7",
+          "468.3 ms"
+        ],
+        [
+          "**`ROCmFP4_FAST` + Strict Greedy MTP**",
+          "32K / TurboQuant KV",
+          "14.02 tok/s",
+          "**34.82 tok/s**",
+          "**2.84\u00d7**",
+          "442.8 ms"
+        ],
+        [
+          "**`ROCmFP4_FAST` + MTP (`n6/p0.60`)**",
+          "32K / TurboQuant KV",
+          "14.02 tok/s",
+          "**30.56 \u2013 34.82 tok/s**",
+          "**2.50\u00d7 \u2013 2.84\u00d7**",
+          "439.4 ms"
+        ],
+        [
+          "**`ROCmFP4_FAST` + Deep Spec (`n7/p0.35`)**",
+          "32K / TurboQuant KV",
+          "14.02 tok/s",
+          "\ud83d\udd25 **36.04 tok/s** *(JSON/Code)*",
+          "\ud83d\udd25 **2.94\u00d7**",
+          "445.8 ms"
+        ]
       ]
     },
     {
@@ -64,10 +103,34 @@
         "Peak Speedup"
       ],
       "rows": [
-        ["**Code Generation (Binary Search Tree)**", "14.02 tok/s", "**34.82 tok/s**", "82.6%", "**2.48×**"],
-        ["**Reasoning & Math Problem Solving**", "14.02 tok/s", "**30.56 tok/s**", "71.4%", "**2.18×**"],
-        ["**Structured JSON Data Extraction**", "14.02 tok/s", "**35.79 tok/s**", "88.0%", "**2.55×**"],
-        ["**Technical System Explanation**", "14.02 tok/s", "**32.40 tok/s**", "76.2%", "**2.31×**"]
+        [
+          "**Code Generation (Binary Search Tree)**",
+          "14.02 tok/s",
+          "**34.82 tok/s**",
+          "82.6%",
+          "**2.48\u00d7**"
+        ],
+        [
+          "**Reasoning & Math Problem Solving**",
+          "14.02 tok/s",
+          "**30.56 tok/s**",
+          "71.4%",
+          "**2.18\u00d7**"
+        ],
+        [
+          "**Structured JSON Data Extraction**",
+          "14.02 tok/s",
+          "**35.79 tok/s**",
+          "88.0%",
+          "**2.55\u00d7**"
+        ],
+        [
+          "**Technical System Explanation**",
+          "14.02 tok/s",
+          "**32.40 tok/s**",
+          "76.2%",
+          "**2.31\u00d7**"
+        ]
       ]
     },
     {
@@ -81,16 +144,58 @@
         "MTP Speculative Decode *(Measured)*"
       ],
       "rows": [
-        ["**512 tokens**", "**0.04 GiB**", "**382.21 tok/s**", "1.34 s", "**14.06 tok/s**", "🔥 **34.82 – 36.04 tok/s**"],
-        ["**2,048 tokens**", "**0.15 GiB**", "**356.85 tok/s**", "5.74 s", "**14.04 tok/s**", "**32.40 – 34.82 tok/s**"],
-        ["**4,096 tokens**", "**0.31 GiB**", "**339.73 tok/s**", "12.05 s", "**14.01 tok/s**", "**30.56 – 32.24 tok/s**"],
-        ["**8,192 tokens**", "**0.62 GiB**", "**311.76 tok/s**", "26.27 s", "**13.98 tok/s**", "**29.73 tok/s**"],
-        ["**16,384 tokens**", "**1.23 GiB**", "**266.57 tok/s** *(Vulkan)*<br>**329.86 tok/s** *(ROCm)*", "49.66 s", "**13.85 tok/s**", "**28.02 tok/s**"],
-        ["**32,768 tokens**", "**2.45 GiB**", "**~245.0 tok/s**", "~130 s", "**13.62 tok/s**", "**26.85 tok/s**"]
+        [
+          "**512 tokens**",
+          "**0.04 GiB**",
+          "**382.21 tok/s**",
+          "1.34 s",
+          "**14.06 tok/s**",
+          "\ud83d\udd25 **34.82 \u2013 36.04 tok/s**"
+        ],
+        [
+          "**2,048 tokens**",
+          "**0.15 GiB**",
+          "**356.85 tok/s**",
+          "5.74 s",
+          "**14.04 tok/s**",
+          "**32.40 \u2013 34.82 tok/s**"
+        ],
+        [
+          "**4,096 tokens**",
+          "**0.31 GiB**",
+          "**339.73 tok/s**",
+          "12.05 s",
+          "**14.01 tok/s**",
+          "**30.56 \u2013 32.24 tok/s**"
+        ],
+        [
+          "**8,192 tokens**",
+          "**0.62 GiB**",
+          "**311.76 tok/s**",
+          "26.27 s",
+          "**13.98 tok/s**",
+          "**29.73 tok/s**"
+        ],
+        [
+          "**16,384 tokens**",
+          "**1.23 GiB**",
+          "**266.57 tok/s** *(Vulkan)*<br>**329.86 tok/s** *(ROCm)*",
+          "49.66 s",
+          "**13.85 tok/s**",
+          "**28.02 tok/s**"
+        ],
+        [
+          "**32,768 tokens**",
+          "**2.45 GiB**",
+          "**~245.0 tok/s**",
+          "~130 s",
+          "**13.62 tok/s**",
+          "**26.85 tok/s**"
+        ]
       ]
     },
     {
-      "heading": "Long-Context Prompt-Cache Reuse — MTP + Checkpoints Coexistence *(Measured 2026-08-31)*",
+      "heading": "Long-Context Prompt-Cache Reuse \u2014 MTP + Checkpoints Coexistence *(Measured 2026-08-31)*",
       "columns": [
         "Document Depth",
         "Cold Prefill",
@@ -99,9 +204,27 @@
         "Retrieval Quality"
       ],
       "rows": [
-        ["**32 K tokens**", "118.9 s (267.4 tok/s)", "**5.11 s**", "🔥 **23.3×**", "3/3 markers, coherent"],
-        ["**64 K tokens**", "321.1 s (201.0 tok/s)", "**7.33 s**", "🔥 **43.8×**", "3/3 markers, coherent"],
-        ["**130 K tokens**", "905.8 s (143.6 tok/s)", "**11.49 s**", "🔥 **78.9×**", "3/3 markers, coherent"]
+        [
+          "**32 K tokens**",
+          "118.9 s (267.4 tok/s)",
+          "**5.11 s**",
+          "\ud83d\udd25 **23.3\u00d7**",
+          "3/3 markers, coherent"
+        ],
+        [
+          "**64 K tokens**",
+          "321.1 s (201.0 tok/s)",
+          "**7.33 s**",
+          "\ud83d\udd25 **43.8\u00d7**",
+          "3/3 markers, coherent"
+        ],
+        [
+          "**130 K tokens**",
+          "905.8 s (143.6 tok/s)",
+          "**11.49 s**",
+          "\ud83d\udd25 **78.9\u00d7**",
+          "3/3 markers, coherent"
+        ]
       ]
     }
   ]

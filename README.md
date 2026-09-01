@@ -201,7 +201,7 @@ The `speed` profile now combines **MTP speculation with prompt caching** (RAM ch
 
 | Document Depth | Cold Prefill | Cached Re-Prefill | **Cache Speedup** | Retrieval Quality |
 |---|---:|---:|---:|---|
-| **32 K tokens** | 118.9 s (267.1 tok/s) | **5.11 s** | 🔥 **23.3×** | 3/3 markers, coherent |
+| **32 K tokens** | 118.9 s (267.4 tok/s) | **5.11 s** | 🔥 **23.3×** | 3/3 markers, coherent |
 | **64 K tokens** | 321.1 s (201.0 tok/s) | **7.33 s** | 🔥 **43.8×** | 3/3 markers, coherent |
 | **130 K tokens** | 905.8 s (143.6 tok/s) | **11.49 s** | 🔥 **78.9×** | 3/3 markers, coherent |
 

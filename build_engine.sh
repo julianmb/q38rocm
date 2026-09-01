@@ -8,13 +8,13 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENGINE_DIR="${SCRIPT_DIR}/engine"
 REPO_URL="https://github.com/charlie12345/ROCmFPX.git"
-PINNED_COMMIT="${PINNED_COMMIT:-0fc9568e07ccc8553010864cb8db1957e629cbfa}"
+PINNED_COMMIT="${PINNED_COMMIT:-998d0cad8c0fc822c26935cb772e28d376da2d96}"
 RELEASE_TARBALL_URL="https://github.com/julianmb/q38rocm/releases/download/v1.5.3/strix-halo-rocmfpx-engine-v1.5.3-linux-x86_64.tar.gz"
 EXPECTED_TARBALL_SHA="10f060aa19ce9976f8807ecdacda8f708a13209cad0aa7c3111293ebe0ca5ad7"
 # what `llama-server --version` reports for the pinned prebuilt. Warns when the
 # installed binary does not match the release we think we installed (issues
 # #20/#21 both stalled because a binary could not be mapped to a revision).
-PREBUILT_ENGINE_BUILD="${PREBUILT_ENGINE_BUILD:-version: 244 (0fc9568)}"
+PREBUILT_ENGINE_BUILD="${PREBUILT_ENGINE_BUILD:-version: 246 (998d0ca)}"
 LINKAGE="static"
 CLEAN_BUILD=0
 USE_PREBUILT=0

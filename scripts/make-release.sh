@@ -56,7 +56,7 @@ else
 fi
 
 # 2. Verify provenance: the binary must report the pinned commit
-EXPECTED_BUILD="$(sed -n 's/^PINNED_COMMIT=//p' build_engine.sh | head -1 | cut -c1-8)"
+EXPECTED_BUILD="$(grep -oE '[0-9a-f]{40}' build_engine.sh | head -1 | cut -c1-7)"
 REPORTED="$(./engine/bin/llama-server --version 2>&1 | head -1)"
 echo "[2/6] Provenance: ${REPORTED}"
 if [[ "${REPORTED}" != *"${EXPECTED_BUILD}"* ]]; then

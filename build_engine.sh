@@ -61,6 +61,37 @@ report_engine_build() {
     fi
 }
 
+show_status() {
+    echo "Pinned commit:             ${PINNED_COMMIT}"
+    echo "Expected prebuilt build:   ${PREBUILT_ENGINE_BUILD}"
+    echo "Applied patches:"
+    local patch_found=0
+    local patch_file
+    for patch_file in "${SCRIPT_DIR}/patches/"*.patch; do
+        if [ -f "${patch_file}" ]; then
+            echo "  - $(basename "${patch_file}")"
+            patch_found=1
+        fi
+    done
+    if [ "${patch_found}" -eq 0 ]; then
+        echo "  (none)"
+    fi
+
+    echo "BUILD_INFO.txt:"
+    if [ -f "${ENGINE_DIR}/BUILD_INFO.txt" ]; then
+        cat "${ENGINE_DIR}/BUILD_INFO.txt"
+    else
+        echo "  (not present)"
+    fi
+
+    echo "llama-server --version:"
+    if [ -x "${ENGINE_DIR}/bin/llama-server" ]; then
+        "${ENGINE_DIR}/bin/llama-server" --version 2>&1 || true
+    else
+        echo "  (not present)"
+    fi
+}
+
 download_prebuilt() {
     echo "================================================================================"
     echo " 📥 Downloading Pre-Compiled ROCmFPX Engine (v1.5.3) for AMD Strix Halo"
@@ -117,6 +148,7 @@ download_prebuilt() {
 # Parse build mode before dependency checks.
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --status) show_status; exit 0 ;;
         --prebuilt|--download) USE_PREBUILT=1; shift ;;
         --static) LINKAGE="static"; shift ;;
         --shared) LINKAGE="shared"; shift ;;

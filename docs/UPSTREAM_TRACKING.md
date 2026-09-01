@@ -60,3 +60,11 @@ Depending on your workload characteristics, use the appropriate profile or launc
 * **Drift resolved (v1.5.3):** the tarball is now built from the pinned commit — `llama-server --version` reports `version: 244 (0fc9568)`, matching source builds. The earlier v1.5.2 tarball (from `12f8b7e`, build 215, a non-ancestor lineage) is superseded; keep reporting `llama-server --version` / `engine/BUILD_INFO.txt` in bug reports anyway.
 * **Engine provenance:** both install paths write `engine/BUILD_INFO.txt` (origin, engine build, pinned commit or release URL, tarball/binary digest, applied patches), and `--prebuilt` warns when the binary does not report `PREBUILT_ENGINE_BUILD`. **Include that file in bug reports** — issues #20 and #21 both stalled because a binary could not be mapped back to a source revision.
 * **Release-asset guards:** `tests/test_build_engine_flags.sh` asserts that `RELEASE_TARBALL_URL`, the tag inside it, `EXPECTED_TARBALL_SHA` and the `Dockerfile` URL stay in sync; `.github/workflows/verify-release-asset.yml` downloads the published asset and compares its real digest plus archive layout (`/bin/llama-server`). The previous pinned digest (`7352ab06…`) was the **v1.5.0** asset and was never updated, so `--prebuilt` failed its checksum for the whole v1.5.1–v1.5.2 window.
+
+| Compatibility Item | Status | Notes |
+|---|---|---|
+| **Mesa RADV 26.0** | ✅ Tested | Vulkan Wave64 cooperative-matrix baseline for Strix Halo. |
+| **ROCm 7.2.3** | ✅ Compatible | Supported through the engine's backward-compatible ROCm runtime linkage. |
+| **ROCm 10.0** | ✅ Recommended | Current runtime baseline; the complete `libhipblas.so.3` dependency closure must be installed. |
+| **Kernel IOMMU flags** | ✅ Compatible | Use `iommu=pt` when enabling optional XDNA/NPU support; do not boot with `amd_iommu=off`. |
+| **Upstream revision** | ⏸️ Intentional hold | Pinned at `0fc9568`; `c49ebdb` is 13 commits ahead solely for the unvalidated ROCmI4 experiment. |

@@ -26,6 +26,9 @@ jobs:
         run: |
           python3 -m py_compile scripts/*.py
 
+      - name: Benchmark table drift check
+        run: python3 scripts/check_benchmark_drift.py
+
       - name: Python tests (hybrid pipeline)
         run: python3 -m unittest discover -s tests -p "test_*.py" -v
 

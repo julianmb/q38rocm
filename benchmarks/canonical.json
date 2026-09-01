@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "replay_contract": {
+    "hardware": {
+      "apu": "AMD Ryzen AI Max+ 395",
+      "gpu": "Radeon 8060S (gfx1151, 40 CU @ 2.9 GHz)",
+      "memory": "128 GB 256-bit LPDDR5X"
+    },
+    "software": {
+      "kernel": "Linux 7.0",
+      "mesa": "Mesa 26.0 RADV"
+    },
+    "governor": "high",
+    "prompt_set": {
+      "source": "scripts/benchmark.py:BENCHMARK_PROMPTS",
+      "workloads": {
+        "prose": "UMA vs Discrete Architecture",
+        "code": "Binary Search Tree (Python)",
+        "json": "JSON Entity Extractor"
+      }
+    },
+    "speculation": {
+      "n_max": 7,
+      "p_min": 0.35,
+      "temperature": 0.0
+    },
+    "cache_profile": {
+      "name": "TurboQuant KV",
+      "prompt_cache": "enabled",
+      "key_type": "q8_0",
+      "value_type": "turbo4"
+    },
+    "model": {
+      "gguf": "Qwen3.8-27B-ROCmFP4-FAST.gguf",
+      "sha256": "fb89c78d2be91cdb68eaaaa45b1270710bf34aa721dc1f0b9e3aa7b98d2e1da9"
+    }
+  },
+  "measured_tables": [
+    {
+      "heading": "Optimization Stages (Qwen 3.8 27B)",
+      "columns": [
+        "Optimization Level",
+        "Context / Precision",
+        "Unassisted Decode *(Measured)*",
+        "MTP Speculative Decode *(Measured)*",
+        "Speedup vs Baseline",
+        "TTFT (Prompt Eval) *(Measured)*"
+      ],
+      "rows": [
+        ["**Stock `Q4_K_M` (Baseline)**", "32K / FP16 KV", "12.27 tok/s", "N/A", "1.00×", "526.7 ms"],
+        ["**`ROCmFP4_FAST`**", "32K / TurboQuant KV", "14.02 tok/s", "N/A", "1.14×", "468.3 ms"],
+        ["**`ROCmFP4_FAST` + Strict Greedy MTP**", "32K / TurboQuant KV", "14.02 tok/s", "**34.82 tok/s**", "**2.84×**", "442.8 ms"],
+        ["**`ROCmFP4_FAST` + MTP (`n6/p0.60`)**", "32K / TurboQuant KV", "14.02 tok/s", "**30.56 – 34.82 tok/s**", "**2.50× – 2.84×**", "439.4 ms"],
+        ["**`ROCmFP4_FAST` + Deep Spec (`n7/p0.35`)**", "32K / TurboQuant KV", "14.02 tok/s", "🔥 **36.04 tok/s** *(JSON/Code)*", "🔥 **2.94×**", "445.8 ms"]
+      ]
+    },
+    {
+      "heading": "Task-Specific Speculative Speedup",
+      "columns": [
+        "Benchmark Task",
+        "Unassisted *(Measured)*",
+        "MTP Speculative *(Measured)*",
+        "Draft Acceptance Rate",
+        "Peak Speedup"
+      ],
+      "rows": [
+        ["**Code Generation (Binary Search Tree)**", "14.02 tok/s", "**34.82 tok/s**", "82.6%", "**2.48×**"],
+        ["**Reasoning & Math Problem Solving**", "14.02 tok/s", "**30.56 tok/s**", "71.4%", "**2.18×**"],
+        ["**Structured JSON Data Extraction**", "14.02 tok/s", "**35.79 tok/s**", "88.0%", "**2.55×**"],
+        ["**Technical System Explanation**", "14.02 tok/s", "**32.40 tok/s**", "76.2%", "**2.31×**"]
+      ]
+    },
+    {
+      "heading": "Context Window vs Prefill & Decode Throughput *(Measured)*",
+      "columns": [
+        "Context Window",
+        "KV Cache RAM",
+        "Prefill Speed (`pp`) *(Measured)*",
+        "TTFT (Prompt Eval)",
+        "Raw Decode (`tg`) *(Measured)*",
+        "MTP Speculative Decode *(Measured)*"
+      ],
+      "rows": [
+        ["**512 tokens**", "**0.04 GiB**", "**382.21 tok/s**", "1.34 s", "**14.06 tok/s**", "🔥 **34.82 – 36.04 tok/s**"],
+        ["**2,048 tokens**", "**0.15 GiB**", "**356.85 tok/s**", "5.74 s", "**14.04 tok/s**", "**32.40 – 34.82 tok/s**"],
+        ["**4,096 tokens**", "**0.31 GiB**", "**339.73 tok/s**", "12.05 s", "**14.01 tok/s**", "**30.56 – 32.24 tok/s**"],
+        ["**8,192 tokens**", "**0.62 GiB**", "**311.76 tok/s**", "26.27 s", "**13.98 tok/s**", "**29.73 tok/s**"],
+        ["**16,384 tokens**", "**1.23 GiB**", "**266.57 tok/s** *(Vulkan)*<br>**329.86 tok/s** *(ROCm)*", "49.66 s", "**13.85 tok/s**", "**28.02 tok/s**"],
+        ["**32,768 tokens**", "**2.45 GiB**", "**~245.0 tok/s**", "~130 s", "**13.62 tok/s**", "**26.85 tok/s**"]
+      ]
+    }
+  ]
+}

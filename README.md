@@ -229,9 +229,8 @@ Thanks to **Asymmetric TurboQuant KV cache** (`-ctk q8_0 -ctv turbo4`) and Qwen 
 ## 🧪 Experimental / Optional: AMD XDNA 2 NPU Acceleration
 
 > ⚠️ **Status: Experimental / Research Only**
-> NPU acceleration and the hybrid pipeline are **purely experimental research features** from exploratory prototyping.
-> For production deployments, **do not use the NPU** — the recommended and supported path is the standalone **iGPU (Vulkan0/ROCm0) + Embedded MTP**, which delivers superior stability and 34–36 tok/s decode with zero DRAM contention.
-> See the complete empirical research report in [`docs/NPU_INTEGRATION.md`](docs/NPU_INTEGRATION.md).
+> **Embedded MTP on the iGPU is the practical sustained-decode ceiling.** The NPU is useful only for the measured **1.8× TTFT burst on long prompts** and **~2 W intent routing**; it is not a supported decode or drafting path.
+> For production deployments, use the standalone **iGPU (Vulkan0/ROCm0) + Embedded MTP**. See the complete empirical research report in [`docs/NPU_INTEGRATION.md`](docs/NPU_INTEGRATION.md).
 
 ### Measured Findings
 

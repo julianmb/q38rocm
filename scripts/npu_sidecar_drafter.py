@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# =============================================================================
+# RESEARCH ONLY — not a supported decode path; see docs/NPU_INTEGRATION.md
+# =============================================================================
 """
 npu_sidecar_drafter.py — AMD XDNA 2 NPU (/dev/accel/accel0) Speculative Sidecar Drafter & Topology Orchestrator for Strix Halo (Ryzen AI Max+ 395)
 """

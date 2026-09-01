@@ -55,12 +55,16 @@ check_rocm_runtime() {
     local needed_patterns=(libhipblas.so librocblas.so libamdhip64.so)
     local missing=0
     local rocm_home=""
-    for d in /opt/rocm-10.0* /opt/rocm-10.0 /opt/rocm-7.2.3 /opt/rocm-* /opt/rocm; do
+    for d in /opt/rocm/core-10.0 /opt/rocm-10.0* /opt/rocm-10.0 /opt/rocm-7.2.3 /opt/rocm-* /opt/rocm; do
         if [ -e "${d}/lib/libamdhip64.so" ] || [ -e "${d}/lib/libamdhip64.so.7" ] || [ -e "${d}/lib/libamdhip64.so.4" ]; then
             rocm_home="$d"
             break
         fi
     done
+    # Fallback: also check via ROCM_PATH/HIP_PATH if set (ROCm 10.0 style)
+    if [ -z "$rocm_home" ] && [ -n "${ROCM_PATH:-}" ] && [ -e "${ROCM_PATH}/lib/libamdhip64.so" ]; then
+        rocm_home="$ROCM_PATH"
+    fi
 
     if [ -z "$rocm_home" ]; then
         # Probe ldconfig cache instead (support both 7.2 and 10.0 sonames)
@@ -107,21 +111,25 @@ if [ -z "${SKIP_ROCM_CHECK:-}" ] && [ "${1:-}" != "--no-rocm-check" ]; then
             fi
             if command -v apt-get >/dev/null 2>&1; then
                 echo "🔧 Installing ROCm 10.0 runtime subset via apt (this downloads ~1.2 GB)..."
-                # AMD maps ROCm releases to distribution codenames (e.g., noble for Ubuntu 24.04).
-                # The amdgpu-install package sets up the correct noble dist entry internally
-                # (https://repo.radeon.com/rocm/apt/<VERSION> noble main), so we fetch the
-                # release-specific deb rather than hitting .../rocm/apt/10.0/ directly (404).
-                # For ROCm 10.0, the stable repo is https://stable.repo.amd.com/rocm/ if needed.
-                curl -fsSL "https://repo.radeon.com/amdgpu-install/10.0/ubuntu/noble/amdgpu-install_10.0.0-1_all.deb" -o /tmp/amdgpu.deb || {
-                    echo "❌ Failed to download amdgpu-install package." >&2
-                    echo "   For ROCm 10.0, also try: https://stable.repo.amd.com/rocm/apt/10.0 noble main" >&2
+                # ROCm 10.0 moved to stable.repo.amd.com with version-prefixed packages
+                # (amdrocm10.0-*) and installs to /opt/rocm/core-10.0/. The old
+                # repo.radeon.com flat version folders (e.g., .../rocm/apt/10.0/) 404.
+                # Setup for Ubuntu 24.04 (noble):
+                $SUDO mkdir -p --mode=0755 /etc/apt/keyrings
+                curl -fsSL https://stable.repo.amd.com/rocm/gpg/packages.gpg | gpg --dearmor | $SUDO tee /etc/apt/keyrings/amdrocm.gpg > /dev/null || {
+                    echo "❌ Failed to fetch ROCm GPG key from stable.repo.amd.com" >&2
                     return $rc 2>/dev/null || exit $rc
                 }
-                $SUDO apt install -y /tmp/amdgpu.deb && $SUDO apt-get update
-                rm -f /tmp/amdgpu.deb
+                echo -e "X-Repo-Id: amdrocm-stable\nTypes: deb\nURIs: https://stable.repo.amd.com/\nSuites: noble\nComponents: main\nSigned-By: /etc/apt/keyrings/amdrocm.gpg" | $SUDO tee /etc/apt/sources.list.d/amdrocm-stable.sources > /dev/null
+                $SUDO apt-get update
                 $SUDO apt-get install -y --no-install-recommends \
-                    hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr \
+                    amdrocm-core-dev10.0-gfx1151 hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr \
                     rocprofiler-register rocsolver roctracer comgr
+                # Export new ROCm 10.0 paths for this shell
+                export ROCM_PATH=/opt/rocm/core-10.0
+                export HIP_PATH="$ROCM_PATH"
+                export PATH="$ROCM_PATH/bin:$ROCM_PATH/lib/llvm/bin:$PATH"
+                export LD_LIBRARY_PATH="$ROCM_PATH/lib:${LD_LIBRARY_PATH:-}"
             elif command -v dnf >/dev/null 2>&1; then
                 echo "🔧 Installing ROCm 10.0 runtime subset via dnf..."
                 $SUDO dnf install -y "https://repo.radeon.com/amdgpu-install/10.0/rhel/9.5/amdgpu-install-10.0.0-1.el9.noarch.rpm"
@@ -143,18 +151,18 @@ if [ -z "${SKIP_ROCM_CHECK:-}" ] && [ "${1:-}" != "--no-rocm-check" ]; then
             echo "Install ROCm 10.0 first (one-time setup) — or let us do it:"
             echo ""
             if command -v apt-get >/dev/null 2>&1; then
-                echo "  Ubuntu 24.04:"
-                echo "    curl -fsSL https://repo.radeon.com/amdgpu-install/10.0/ubuntu/noble/amdgpu-install_10.0.0-1_all.deb -o /tmp/amdgpu.deb"
-                echo "    sudo apt install /tmp/amdgpu.deb && sudo apt-get update"
-                echo "    sudo apt-get install --no-install-recommends \\"
-                echo "        hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr \\"
-                echo "        rocprofiler-register rocsolver roctracer comgr"
+                echo "  Ubuntu 24.04 (ROCm 10.0 — stable repo):"
+                echo "    sudo mkdir -p --mode=0755 /etc/apt/keyrings"
+                echo "    wget https://stable.repo.amd.com/rocm/gpg/packages.gpg -O - | gpg --dearmor | sudo tee /etc/apt/keyrings/amdrocm.gpg > /dev/null"
+                echo "    echo -e \"X-Repo-Id: amdrocm-stable\\nTypes: deb\\nURIs: https://stable.repo.amd.com/\\nSuites: noble\\nComponents: main\\nSigned-By: /etc/apt/keyrings/amdrocm.gpg\" | sudo tee /etc/apt/sources.list.d/amdrocm-stable.sources"
+                echo "    sudo apt-get update && sudo apt-get install -y amdrocm-core-dev10.0-gfx1151 hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr rocprofiler-register rocsolver roctracer comgr"
+                echo "    export ROCM_PATH=/opt/rocm/core-10.0; export HIP_PATH=\$ROCM_PATH"
                 echo ""
                 echo "  One-command alternative:"
                 echo "    source ./setup_env.sh --install-rocm"
-                echo "  (Also supports ROCm 7.2.x — same libs, older URL: replace 10.0 with 7.2.3)"
+                echo "  (Also supports ROCm 7.2.x — legacy repo.radeon.com/amdgpu-install/7.2.3)"
             elif command -v dnf >/dev/null 2>&1; then
-                echo "  Fedora/RHEL:"
+                echo "  Fedora/RHEL (ROCm 10.0):"
                 echo "    sudo dnf install https://repo.radeon.com/amdgpu-install/10.0/rhel/9.5/amdgpu-install-10.0.0-1.el9.noarch.rpm"
                 echo "    sudo dnf install rocm-dev hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr"
                 echo ""

@@ -291,13 +291,13 @@ See [`docs/NPU_INTEGRATION.md`](docs/NPU_INTEGRATION.md) for the complete setup,
 > [issue #5](https://github.com/julianmb/q38rocm/issues/5)). `./setup_env.sh` and
 > Docker now auto-detect this and show install instructions (supports both ROCm 10.0 and 7.2.x).
 >
-> **Ubuntu 24.04 (one-time):**
+> **Ubuntu 24.04 (one-time, ROCm 10.0 — stable repo):**
 > ```bash
-> curl -fsSL https://repo.radeon.com/amdgpu-install/10.0/ubuntu/noble/amdgpu-install_10.0.0-1_all.deb -o /tmp/amdgpu.deb
-> sudo apt install /tmp/amdgpu.deb && sudo apt-get update
-> sudo apt-get install --no-install-recommends \
->     hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr \
->     rocprofiler-register rocsolver roctracer comgr
+> sudo mkdir -p --mode=0755 /etc/apt/keyrings
+> wget https://stable.repo.amd.com/rocm/gpg/packages.gpg -O - | gpg --dearmor | sudo tee /etc/apt/keyrings/amdrocm.gpg > /dev/null
+> echo -e "X-Repo-Id: amdrocm-stable\nTypes: deb\nURIs: https://stable.repo.amd.com/\nSuites: noble\nComponents: main\nSigned-By: /etc/apt/keyrings/amdrocm.gpg" | sudo tee /etc/apt/sources.list.d/amdrocm-stable.sources
+> sudo apt-get update && sudo apt-get install -y amdrocm-core-dev10.0-gfx1151 hip-runtime-amd hipblas rocblas hipblaslt hsa-rocr rocprofiler-register rocsolver roctracer comgr
+> export ROCM_PATH=/opt/rocm/core-10.0; export HIP_PATH=$ROCM_PATH
 > ```
 > **Fedora/RHEL (one-time):**
 > ```bash

@@ -41,15 +41,16 @@ RUN groupadd render && apt-get update && apt-get install -y --no-install-recomme
     && rm -rf /var/lib/apt/lists/*
 
 # Install ROCm 10.0 runtime libraries (required by ROCmFPX engine binaries, issue #5).
-# Supports both ROCm 10.0 and 7.2.x libs (libhipblas.so.3/so.4, librocblas.so.5, libamdhip64.so.7).
+# ROCm 10.0 moved to stable.repo.amd.com with version-prefixed packages
+# (amdrocm10.0-*) installed to /opt/rocm/core-10.0/. Also supports 7.2.x libs.
 # ROCm libs are NOT part of a base Ubuntu image. Install only the runtime subset
 # (~1.2 GB) instead of the full ~4 GB ROCm toolchain.
-RUN curl -fsSL "https://repo.radeon.com/amdgpu-install/10.0/ubuntu/noble/amdgpu-install_10.0.0-1_all.deb" -o /tmp/amdgpu-install.deb \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends /tmp/amdgpu-install.deb \
-    && rm -f /tmp/amdgpu-install.deb \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
+RUN mkdir -p --mode=0755 /etc/apt/keyrings && \
+    curl -fsSL https://stable.repo.amd.com/rocm/gpg/packages.gpg | gpg --dearmor -o /etc/apt/keyrings/amdrocm.gpg && \
+    echo "X-Repo-Id: amdrocm-stable\nTypes: deb\nURIs: https://stable.repo.amd.com/\nSuites: noble\nComponents: main\nSigned-By: /etc/apt/keyrings/amdrocm.gpg" > /etc/apt/sources.list.d/amdrocm-stable.sources && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        amdrocm-core-dev10.0-gfx1151 \
         hip-runtime-amd \
         hipblas \
         rocblas \
@@ -62,8 +63,8 @@ RUN curl -fsSL "https://repo.radeon.com/amdgpu-install/10.0/ubuntu/noble/amdgpu-
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-ENV ROCM_HOME=/opt/rocm
-ENV LD_LIBRARY_PATH="/opt/rocm/lib:/app/engine/bin:${LD_LIBRARY_PATH}"
+ENV ROCM_HOME=/opt/rocm/core-10.0
+ENV LD_LIBRARY_PATH="/opt/rocm/core-10.0/lib:/opt/rocm/lib:/app/engine/bin:${LD_LIBRARY_PATH}"
 
 # Download and install pre-built ROCmFPX engine binaries.
 # ENGINE_TARBALL_SHA must stay equal to EXPECTED_TARBALL_SHA in build_engine.sh

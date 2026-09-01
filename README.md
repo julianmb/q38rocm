@@ -541,7 +541,7 @@ Qwen 3.8 defaults to high reasoning depth. If an open-ended query produces thous
 ---
 
 ## 🔒 Limitations & Safety
-- **Custom Backend:** Requires the [ROCmFPX toolchain](https://github.com/julianmb/q38rocm) build `e87d53e (213)`.
+- **Custom Backend:** Requires the [ROCmFPX toolchain](https://github.com/julianmb/q38rocm) build `0fc9568 (244)`.
 - **Hardware Target:** Optimized specifically for AMD Strix Halo (RDNA 3.5 / gfx1151).
 - **Base Alignment:** Inherits base safety characteristics and knowledge capabilities of Qwen 3.8 27B.
 

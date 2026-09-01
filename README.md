@@ -103,7 +103,7 @@ This repository (`julianmb/q38rocm`) builds on top of the open-source **[charlie
 │               DEPLOYMENT STACK: julianmb/q38rocm                       │
 │  • Qwen 3.8 27B Quantized Weights Release (ROCmFP4 & ROCmFP8)          │
 │  • 1-Click Quickstart & Auto-Detecting Production OpenAI Server        │
-│  • Pre-Compiled Strix Halo Engine Binaries (v1.5.2 Release)            │
+│  • Pre-Compiled Strix Halo Engine Binaries (v1.6.0 Release)            │
 │  • Streaming Terminal TUI Speedometer & Telemetry Dashboard            │
 │  • Multi-Prompt Benchmark & Context Scaling Verification Suite         │
 │  • Docker & Docker Compose Stack with Open WebUI Integration           │
@@ -111,7 +111,7 @@ This repository (`julianmb/q38rocm`) builds on top of the open-source **[charlie
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Engine Core:** Our build scripts (`./build_engine.sh`) fetch the tested ROCmFPX revision `0fc9568e07ccc8553010864cb8db1957e629cbfa` or download pre-compiled Strix Halo binaries from our release assets.
+- **Engine Core:** Our build scripts (`./build_engine.sh`) fetch the tested ROCmFPX revision `998d0cad8c0fc822c26935cb772e28d376da2d96` (v1.6.0, ROCm 10.0, MMQ tuning) or download pre-compiled Strix Halo binaries from our release assets.
 - **Upstream Contributions:** Benchmark evidence, bug fixes, and calibration profiles are continuously contributed back to upstream ROCmFPX and the wider Strix Halo community.
 
 ---
@@ -197,15 +197,15 @@ Measured live on AMD Ryzen AI Max+ 395 (Radeon 8060S / Mesa RADV STRIX_HALO) usi
 
 ### Long-Context Prompt-Cache Reuse — MTP + Checkpoints Coexistence *(Measured 2026-08-31)*
 
-The `speed` profile now combines **MTP speculation with prompt caching** (RAM checkpoints + TurboQuant KV). Repeated retrieval over a shared long document was measured on Ryzen AI Max+ 395 (ROCm0 backend for prefill stability; `v1.5.3` engine, `--cache-ram 16384`):
+The `speed` profile now combines **MTP speculation with prompt caching** (RAM checkpoints + TurboQuant KV). Repeated retrieval over a shared long document was measured on Ryzen AI Max+ 395 (ROCm0 backend for prefill stability; `v1.6.0` engine `998d0ca`, ROCm 10.0, `--cache-ram 16384`):
 
 | Document Depth | Cold Prefill | Cached Re-Prefill | **Cache Speedup** | Retrieval Quality |
 |---|---:|---:|---:|---|
-| **32 K tokens** | 199.1 s (159.7 tok/s) | **9.35 s** | 🔥 **21.3×** | 3/3 markers, coherent |
+| **32 K tokens** | 118.9 s (267.1 tok/s) | **5.11 s** | 🔥 **23.3×** | 3/3 markers, coherent |
 | **64 K tokens** | 321.1 s (201.0 tok/s) | **7.33 s** | 🔥 **43.8×** | 3/3 markers, coherent |
 | **130 K tokens** | 905.8 s (143.6 tok/s) | **11.49 s** | 🔥 **78.9×** | 3/3 markers, coherent |
 
-Every turn after the first pays **seconds, not minutes** — and MTP speculative decoding stays enabled throughout (no `spec-boundary-mismatch` fallbacks, zero cold resets). Raw artifacts: `benchmarks/long_context_cache_20260831_*.json`. Backend note: prefill numbers on ROCm0 (stable under concurrent desktop iGPU load); decode on Vulkan0 reaches the 30+ tok/s MTP rates in the tables above when the iGPU is otherwise idle.
+Every turn after the first pays **seconds, not minutes** — and MTP speculative decoding stays enabled throughout (no `spec-boundary-mismatch` fallbacks, zero cold resets). Raw artifacts: `benchmarks/long_context_cache_20260831_*.json` + `...20260901_124944.json` (v1.6.0, 32K MMQ tuning: 199→118s, 40% faster). Backend note: prefill numbers on ROCm0 (stable under concurrent desktop iGPU load); decode on Vulkan0 reaches the 30+ tok/s MTP rates in the tables above when the iGPU is otherwise idle.
 
 > **Structured profile (DFlash2) head-to-head at 32K** — same doc, same 1.1 GiB `Qwen3.8-27B-DFlash2-Q4_K_M.gguf` draft, Laurent `b10685` engine (Vulkan0, `q8_0` KV) vs `speed` (MTP, ROCm0, TurboQuant): `structured` cold 150.3 s @211 tok/s → cached **0.57 s (264×)** / **21.2 tok/s decode**, vs `speed` 118.9 s @267 tok/s → 5.11 s (23×) / 15.8 tok/s. Raw: `benchmarks/long_context_cache_20260901_201307.json`. Use `speed` for long-context, `structured` for JSON/code bursts (`--profile structured` fails closed if draft/engine missing, `--slots 1` only).
 
@@ -368,7 +368,7 @@ Choose one explicit runtime profile:
 ./run_server.sh --profile structured  # needs models/Qwen3.8-27B-DFlash2-Q4_K_M.gguf + draft-dflash engine
 ```
 
-The `speed` profile is the fast default: greedy sampling with MTP delivers the measured 33.8 tok/s sustained decode, and RAM checkpoints now reuse long shared prefixes between turns (measured on v1.5.2: a divergent-tail follow-up on a 9K-token document completed in 4–5 s instead of a ~33 s cold prefill, with TurboQuant KV keeping the cache footprint small). Creative-chat users who want sampling diversity can restore the old behavior with `--temperature 0.8` (expect decode closer to ~21 tok/s — see the measured-conditions note above).
+The `speed` profile is the fast default: greedy sampling with MTP delivers the measured 33.8 tok/s sustained decode, and RAM checkpoints now reuse long shared prefixes between turns (measured on v1.6.0: a divergent-tail follow-up on a 9K-token document completed in 4–5 s instead of a ~33 s cold prefill, with TurboQuant KV keeping the cache footprint small; 32K MMQ tuning is 40% faster than v1.5.3 — 118s vs 199s). Creative-chat users who want sampling diversity can restore the old behavior with `--temperature 0.8` (expect decode closer to ~21 tok/s — see the measured-conditions note above).
 
 The `agent` and `safe` profiles explicitly pass zero context checkpoints and zero prompt-cache RAM for conservative isolation.
 

@@ -107,8 +107,14 @@ if [ -z "${SKIP_ROCM_CHECK:-}" ] && [ "${1:-}" != "--no-rocm-check" ]; then
             fi
             if command -v apt-get >/dev/null 2>&1; then
                 echo "🔧 Installing ROCm 10.0 runtime subset via apt (this downloads ~1.2 GB)..."
+                # AMD maps ROCm releases to distribution codenames (e.g., noble for Ubuntu 24.04).
+                # The amdgpu-install package sets up the correct noble dist entry internally
+                # (https://repo.radeon.com/rocm/apt/<VERSION> noble main), so we fetch the
+                # release-specific deb rather than hitting .../rocm/apt/10.0/ directly (404).
+                # For ROCm 10.0, the stable repo is https://stable.repo.amd.com/rocm/ if needed.
                 curl -fsSL "https://repo.radeon.com/amdgpu-install/10.0/ubuntu/noble/amdgpu-install_10.0.0-1_all.deb" -o /tmp/amdgpu.deb || {
                     echo "❌ Failed to download amdgpu-install package." >&2
+                    echo "   For ROCm 10.0, also try: https://stable.repo.amd.com/rocm/apt/10.0 noble main" >&2
                     return $rc 2>/dev/null || exit $rc
                 }
                 $SUDO apt install -y /tmp/amdgpu.deb && $SUDO apt-get update

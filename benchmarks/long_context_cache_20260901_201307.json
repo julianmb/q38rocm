@@ -1,0 +1,68 @@
+{
+  "timestamp": "2026-09-01T20:13:07.789924",
+  "server": "http://127.0.0.1:18084",
+  "model": "qwen38-27b",
+  "markers": {
+    "early": "HALO-EARLY-7Q2M",
+    "middle": "HALO-MIDDLE-4X9K",
+    "late": "HALO-LATE-8V3P"
+  },
+  "results": [
+    {
+      "target_tokens": 32768,
+      "document_tokens": 31738,
+      "cold": {
+        "wall_seconds": 151.646,
+        "prompt_tokens": 31769,
+        "prompt_ms": 150343.83,
+        "prompt_tps": 211.30897091021296,
+        "completion_tokens": 31,
+        "decode_tps": 23.64792962376144,
+        "finish_reason": "stop",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "HALO-EARLY-7Q2M\nHALO-MIDDLE-4X9K\nHALO-LATE-8V3P"
+      },
+      "cached": {
+        "wall_seconds": 2.787,
+        "prompt_tokens": 29,
+        "prompt_ms": 568.758,
+        "prompt_tps": 50.98829379103238,
+        "completion_tokens": 58,
+        "decode_tps": 26.125121917235614,
+        "finish_reason": "stop",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "EARLY RETRIEVAL MARKER: HALO-EARLY-7Q2M\nMIDDLE RETRIEVAL MARKER: HALO-MIDDLE-4X9K\nLATE RETRIEVAL MARKER: HALO-LATE-8V3P"
+      },
+      "quality": {
+        "wall_seconds": 11.804,
+        "prompt_tokens": 37,
+        "prompt_ms": 645.394,
+        "prompt_tps": 57.32932131380211,
+        "completion_tokens": 237,
+        "decode_tps": 21.221742934553404,
+        "finish_reason": "stop",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "*   **Long-Context Retrieval:** The document evaluates the model's ability to locate and extract specific data points from a massive, repetitive text stream, testing attention mechanisms over long sequences.\n*   **Noise Resistance:** By surrounding key markers with hundreds of identical, neutral benchmark records, the test measures the model's capacity to filter out irrelevant context and avoid hallucinations or confusion.\n*   **Deterministic Extraction:** The task requires precise, verbatim retrieval of unique alphanumeric codes, assessing the model's accuracy in handling exact string matching without paraphrasing.\n*   **Instruction Adherence:** The prompt demands a specific output format (five concise, non-repetitive bullet points followed by a list of markers), testing the model's ability to follow complex structural constraints.\n*   **Context Checkpointing:** The placement of markers at the beginning, middle, and end of the text serves as a checkpoint for evaluating how well the model retains information across different positions in the context window.\n\n*   HALO-EARLY-7Q2M\n*   HALO-MIDDLE-4X9K\n*   HALO-LATE-8V3P"
+      },
+      "cache_prefill_speedup": 264.34
+    }
+  ]
+}

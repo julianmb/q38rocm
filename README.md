@@ -207,6 +207,8 @@ The `speed` profile now combines **MTP speculation with prompt caching** (RAM ch
 
 Every turn after the first pays **seconds, not minutes** — and MTP speculative decoding stays enabled throughout (no `spec-boundary-mismatch` fallbacks, zero cold resets). Raw artifacts: `benchmarks/long_context_cache_20260831_*.json`. Backend note: prefill numbers on ROCm0 (stable under concurrent desktop iGPU load); decode on Vulkan0 reaches the 30+ tok/s MTP rates in the tables above when the iGPU is otherwise idle.
 
+> **Structured profile (DFlash2) head-to-head at 32K** — same doc, same 1.1 GiB `Qwen3.8-27B-DFlash2-Q4_K_M.gguf` draft, Laurent `b10685` engine (Vulkan0, `q8_0` KV) vs `speed` (MTP, ROCm0, TurboQuant): `structured` cold 150.3 s @211 tok/s → cached **0.57 s (264×)** / **21.2 tok/s decode**, vs `speed` 118.9 s @267 tok/s → 5.11 s (23×) / 15.8 tok/s. Raw: `benchmarks/long_context_cache_20260901_201307.json`. Use `speed` for long-context, `structured` for JSON/code bursts (`--profile structured` fails closed if draft/engine missing, `--slots 1` only).
+
 ### Memory Scaling Across Context Depths
 
 Thanks to **Asymmetric TurboQuant KV cache** (`-ctk q8_0 -ctv turbo4`) and Qwen 3.8's **hybrid linear-attention layers** (48 linear + 16 full attention layers), memory growth is sub-linear:

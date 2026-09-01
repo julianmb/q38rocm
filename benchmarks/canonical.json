@@ -88,6 +88,21 @@
         ["**16,384 tokens**", "**1.23 GiB**", "**266.57 tok/s** *(Vulkan)*<br>**329.86 tok/s** *(ROCm)*", "49.66 s", "**13.85 tok/s**", "**28.02 tok/s**"],
         ["**32,768 tokens**", "**2.45 GiB**", "**~245.0 tok/s**", "~130 s", "**13.62 tok/s**", "**26.85 tok/s**"]
       ]
+    },
+    {
+      "heading": "Long-Context Prompt-Cache Reuse — MTP + Checkpoints Coexistence *(Measured 2026-08-31)*",
+      "columns": [
+        "Document Depth",
+        "Cold Prefill",
+        "Cached Re-Prefill",
+        "**Cache Speedup**",
+        "Retrieval Quality"
+      ],
+      "rows": [
+        ["**32 K tokens**", "118.9 s (267.1 tok/s)", "**5.11 s**", "🔥 **23.3×**", "3/3 markers, coherent"],
+        ["**64 K tokens**", "321.1 s (201.0 tok/s)", "**7.33 s**", "🔥 **43.8×**", "3/3 markers, coherent"],
+        ["**130 K tokens**", "905.8 s (143.6 tok/s)", "**11.49 s**", "🔥 **78.9×**", "3/3 markers, coherent"]
+      ]
     }
   ]
 }

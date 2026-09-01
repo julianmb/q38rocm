@@ -82,7 +82,7 @@ sed -i "s|^EXPECTED_TARBALL_SHA=.*|EXPECTED_TARBALL_SHA=\"${SHA}\"|" build_engin
 sed -i "s|^ARG ENGINE_TARBALL_SHA=.*|ARG ENGINE_TARBALL_SHA=${SHA}|" Dockerfile
 sed -i "s|^ARG ENGINE_RELEASE=.*|ARG ENGINE_RELEASE=${VERSION}|" Dockerfile
 sed -i "s|PREBUILT_ENGINE_BUILD=\"\${PREBUILT_ENGINE_BUILD:-[^\"]*}\"|PREBUILT_ENGINE_BUILD=\"\${PREBUILT_ENGINE_BUILD:-${REPORTED}}\"|" build_engine.sh
-sed -i "s|ROCmFPX Engine (v[^)]*)|ROCmFPX Engine (${VERSION})|; s|strix-halo-engine-v[^.]*\.tar\.gz|strix-halo-engine-${VERSION}.tar.gz|" build_engine.sh
+sed -i "s|ROCmFPX Engine (v[^)]*)|ROCmFPX Engine (${VERSION})|; s|strix-halo-engine-[^\"']*\.tar\.gz|strix-halo-engine-${VERSION}.tar.gz|" build_engine.sh
 
 # 5. Consistency gates — the same tests that caught manual-bump drift
 echo "[5/6] Running consistency tests..."

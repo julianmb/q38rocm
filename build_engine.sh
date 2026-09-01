@@ -98,7 +98,7 @@ download_prebuilt() {
     echo " Source: ${RELEASE_TARBALL_URL}"
     echo "================================================================================"
     mkdir -p "${ENGINE_DIR}"
-    TAR_PATH="/tmp/strix-halo-engine-v1.5.3.tar.gz"
+    TAR_PATH="/tmp/strix-halo-engine-v1.6.0.tar.gz"
     
     curl -L "${RELEASE_TARBALL_URL}" -o "${TAR_PATH}" --progress-bar
     

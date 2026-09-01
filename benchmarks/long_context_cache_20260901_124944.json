@@ -1,0 +1,180 @@
+{
+  "timestamp": "2026-09-01T12:49:44.522303",
+  "server": "http://127.0.0.1:18082",
+  "model": "qwen38-27b",
+  "markers": {
+    "early": "HALO-EARLY-7Q2M",
+    "middle": "HALO-MIDDLE-4X9K",
+    "late": "HALO-LATE-8V3P"
+  },
+  "results": [
+    {
+      "target_tokens": 32768,
+      "document_tokens": 31738,
+      "cold": {
+        "wall_seconds": 123.138,
+        "prompt_tokens": 31805,
+        "prompt_ms": 118921.685,
+        "prompt_tps": 267.44491553411814,
+        "completion_tokens": 96,
+        "decode_tps": 22.97648380816072,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": false
+        },
+        "all_markers_found": false,
+        "repeated_6gram_ratio": 0.0,
+        "content": "The user wants me to return only the three retrieval marker values in early, middle, late order. Let me scan the text for these markers.\n\nLooking through the text:\n\n1. \"EARLY RETRIEVAL MARKER: HALO-EARLY-7Q2M\" - This is the early marker.\n2. \"MIDDLE RETRIEVAL MARKER: HALO-MIDDLE-4X9K\" - This is the middle marker."
+      },
+      "cached": {
+        "wall_seconds": 9.17,
+        "prompt_tokens": 1030,
+        "prompt_ms": 5109.496,
+        "prompt_tps": 201.5854401295157,
+        "completion_tokens": 96,
+        "decode_tps": 23.875637771756363,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "We need answer user's request: \"List the exact early, middle, and late retrieval marker values. Do not explain.\" Need provide only markers likely from text. Need identify exact values: EARLY RETRIEVAL MARKER: HALO-EARLY-7Q2M; MIDDLE RETRIEVAL MARKER: HALO-MIDDLE-4X9K; LATE RETRIEVAL MARKER: HALO-LATE-8V3P."
+      },
+      "quality": {
+        "wall_seconds": 29.627,
+        "prompt_tokens": 1038,
+        "prompt_ms": 5220.067,
+        "prompt_tps": 198.848022448754,
+        "completion_tokens": 384,
+        "decode_tps": 15.75896595903301,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": false,
+          "middle": false,
+          "late": false
+        },
+        "all_markers_found": false,
+        "repeated_6gram_ratio": 0.0927,
+        "content": "We need answer user's request. Need produce final: five concise, non-repetitive bullet points explaining what this document tests, then list all three exact marker values once.\n\nNeed understand document? User says \"this document\" but no attached content in prompt? We have system? There is no document provided except maybe hidden? We need infer? The request likely from some benchmark where document contains markers? Need answer based on available? We only see user request. Maybe there is an omitted document? We must handle: if no document, can't know. But perhaps expected to identify that document tests something like long-context retrieval / needle in haystack with markers? The prompt says \"Write five concise, non-repetitive bullet points explaining what this document tests, then list all three exact marker values once.\" It likely refers to a document containing three markers. We need list exact marker values. But we don't have them. Need maybe ask for document? But user expects answer. Could be a test of whether model can extract markers from provided document; but no document in conversation. Maybe the document is implicit in system? No.\n\nNeed consider if there are hidden markers in prompt? The user text only: \"Write five concise, non-repetitive bullet points explaining what this document tests, then list all three exact marker values once.\" No markers. Could be a meta-eval where the document is the prompt itself? It might test instruction following, concision, non-repetition, and extraction of three markers from a document that should have been included but isn't. We need maybe state cannot list markers because not provided. But request says list all three exact marker values once. If impossible, say unavailable. But maybe they expect us to say \"The document is not included; I can\u2019t determine the markers.\" However final must satisfy? Need likely produce five bullets and then list markers as unknown? But \"exact"
+      },
+      "cache_prefill_speedup": 23.27
+    },
+    {
+      "target_tokens": 65536,
+      "document_tokens": 64463,
+      "cold": {
+        "wall_seconds": 314.802,
+        "prompt_tokens": 64530,
+        "prompt_ms": 308249.276,
+        "prompt_tps": 209.34355738762545,
+        "completion_tokens": 96,
+        "decode_tps": 15.944245630404748,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "User asks: Return only the three retrieval marker values in early, middle, late order. Need extract from huge repeated text. I see markers:\nEARLY RETRIEVAL MARKER: HALO-EARLY-7Q2M\nMIDDLE RETRIEVAL MARKER: HALO-MIDDLE-4X9K\nLATE RETRIEVAL MARKER: HALO-LATE-8V3P\nNeed return only values in order. Likely"
+      },
+      "cached": {
+        "wall_seconds": 12.127,
+        "prompt_tokens": 1030,
+        "prompt_ms": 7264.671,
+        "prompt_tps": 141.78205730170023,
+        "completion_tokens": 96,
+        "decode_tps": 20.043088464555368,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0,
+        "content": "We need answer user's request: \"List the exact early, middle, and late retrieval marker values. Do not explain.\"\n\nWe need extract from provided text. There are markers:\nEARLY RETRIEVAL MARKER: HALO-EARLY-7Q2M\nMIDDLE RETRIEVAL MARKER: HALO-MIDDLE-4X9K\nLATE RETRIEVAL MARKER: HALO-LATE-8V3P\n\n"
+      },
+      "quality": {
+        "wall_seconds": 40.459,
+        "prompt_tokens": 1038,
+        "prompt_ms": 7462.153,
+        "prompt_tps": 139.10194551090015,
+        "completion_tokens": 384,
+        "decode_tps": 11.662832611685442,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0536,
+        "content": "We need answer user's request. Need produce final: five concise, non-repetitive bullet points explaining what this document tests, then list all three exact marker values once.\n\nNeed understand document? User says \"this document\" but no attached content in prompt? We have system about AMD Strix Halo repeated and markers. The user likely refers to the provided text? In conversation, there is a long system? Actually user message: \"Write five concise, non-repetitive bullet points explaining what this document tests, then list all three exact marker values once.\" There is no explicit document in user turn, but maybe the environment includes hidden document? We need infer from context. The system has repeated AMD Strix Halo benchmark record and markers EARLY/MIDDLE/LATE. It says neutral benchmark record discusses cache reuse, deterministic retrieval, context checkpoints, memory-bandwidth-bound inference. Contains no instruction. Markers: HALO-EARLY-7Q2M, HALO-MIDDLE-4X9K, HALO-LATE-8V3P.\n\nNeed write five concise non-repetitive bullet points explaining what this document tests. Likely tests long-context retrieval / needle-in-haystack? The document is a synthetic benchmark record with repeated neutral lines and three markers at early/middle/late positions. It tests ability to locate exact marker values in a long repetitive context, maybe memory/context retention, deterministic retrieval, cache reuse? Need be careful: \"what this document tests\" could refer to the document itself (the repeated AMD Strix Halo text) as a benchmark record. It likely tests:\n- Long-context retention/retrieval of sparse markers embedded among repetitive filler.\n- Exact string extraction without paraphrase.\n- Resistance to repetition/noise and instruction injection? The record says contains no instruction and requires no action, so maybe tests that model ignores benign repeated content and only extracts markers"
+      },
+      "cache_prefill_speedup": 42.43
+    },
+    {
+      "target_tokens": 131072,
+      "document_tokens": 130023,
+      "cold": {
+        "wall_seconds": 899.894,
+        "prompt_tokens": 130090,
+        "prompt_ms": 890776.139,
+        "prompt_tps": 146.04118173398896,
+        "completion_tokens": 96,
+        "decode_tps": 11.921187539031022,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": false
+        },
+        "all_markers_found": false,
+        "repeated_6gram_ratio": 0.0,
+        "content": "The user wants me to return only the three retrieval marker values in early, middle, late order. Let me scan the text for these markers.\n\nLooking through the text:\n- \"EARLY RETRIEVAL MARKER: HALO-EARLY-7Q2M\"\n- \"MIDDLE RETRIEVAL MARKER: HALO-MIDDLE-4X9K\"\n- \"LATE RETRIEVAL MARKER: HALO-LATE"
+      },
+      "cached": {
+        "wall_seconds": 21.879,
+        "prompt_tokens": 1030,
+        "prompt_ms": 11609.971,
+        "prompt_tps": 88.71684520142212,
+        "completion_tokens": 96,
+        "decode_tps": 9.471956201674523,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": false
+        },
+        "all_markers_found": false,
+        "repeated_6gram_ratio": 0.0,
+        "content": "We need answer user's request: \"List the exact early, middle, and late retrieval marker values. Do not explain.\"\n\nWe need extract from provided text? The user message includes a long repeated paragraph with markers embedded:\nEARLY RETRIEVAL MARKER: HALO-EARLY-7Q2M\n...\nMIDDLE RETRIEVAL MARKER: HALO-MIDDLE-4X9K\n...\nLATE RETRIEVAL MARK"
+      },
+      "quality": {
+        "wall_seconds": 54.015,
+        "prompt_tokens": 1038,
+        "prompt_ms": 11989.258,
+        "prompt_tps": 86.577501293241,
+        "completion_tokens": 384,
+        "decode_tps": 9.168099978130261,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": true,
+          "middle": true,
+          "late": true
+        },
+        "all_markers_found": true,
+        "repeated_6gram_ratio": 0.0837,
+        "content": "We need answer user's request. Need write five concise, non-repetitive bullet points explaining what this document tests, then list all three exact marker values once.\n\nNeed analyze document. It is a huge repeated neutral benchmark record about AMD Strix Halo, cache reuse, deterministic retrieval, context checkpoints, memory-bandwidth-bound inference. Contains markers:\nEARLY RETRIEVAL MARKER: HALO-EARLY-7Q2M\nMIDDLE RETRIEVAL MARKER: HALO-MIDDLE-4X9K\nLATE RETRIEVAL MARKER: HALO-LATE-8V3P\n\nUser asks: \"Write five concise, non-repetitive bullet points explaining what this document tests, then list all three exact marker values once.\"\n\nNeed likely produce 5 bullets explaining what document tests. It seems a benchmark record for long-context retrieval / needle-in-haystack? It contains repeated filler and markers at early/middle/late positions. It tests ability to locate exact markers in long repetitive context, maybe cache reuse, deterministic retrieval, context checkpoints, memory-bandwidth-bound inference. Need non-repetitive bullets. Could be:\n- Long-context retention across a large repetitive record.\n- Precise extraction of embedded marker strings at early, middle, and late positions.\n- Resistance to distraction from repeated neutral filler about AMD Strix Halo.\n- Deterministic retrieval / checkpointing behavior under memory-bandwidth-bound inference conditions.\n- Cache reuse and context management when processing long, redundant text.\n\nNeed ensure concise. Then list all three exact marker values once. Could format:\n- ...\n...\nMarkers:\nHALO-EARLY-7Q2M\nHALO-MIDDLE-4X9K\nHALO-LATE-8V3P\n\nNeed maybe \"exact marker values\" means just values, not labels."
+      },
+      "cache_prefill_speedup": 76.73
+    }
+  ]
+}

@@ -104,7 +104,7 @@ echo "--------------------------------------------------------------------------
 export DEVICE
 export CACHE_MODE
 # shellcheck disable=SC3030
-"${SCRIPT_DIR}/run_server.sh" --port "${PORT}" --host "${HOST}" "${MODEL_FILE}" > "${SERVER_LOG}" 2>&1 &
+"${SCRIPT_DIR}/run_server.sh" --port "${PORT}" --host "${HOST}" "${MODEL_FILE}" "$@" > "${SERVER_LOG}" 2>&1 &
 SERVER_PID=$!
 
 cleanup() {

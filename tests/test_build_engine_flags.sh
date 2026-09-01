@@ -31,6 +31,7 @@ engine_tag="${engine_tag%%/*}"
 [[ "$engine_tag" == [0-9]* ]]
 [[ "$engine_url"  == *"/releases/download/v${engine_tag}/strix-halo-rocmfpx-engine-v${engine_tag}-linux-x86_64.tar.gz\""* ]]
 [[ "$dockerfile_url" == *"/releases/download/v${engine_tag}/"* ]]
+[[ "$script" == *"TAR_PATH=\"/tmp/strix-halo-engine-v${engine_tag}.tar.gz\""* ]]
 
 # the Dockerfile must verify the same digest, not just download the asset
 engine_sha_val="${engine_sha#EXPECTED_TARBALL_SHA=\"}"

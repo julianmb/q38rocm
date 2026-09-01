@@ -94,14 +94,31 @@ case "${PROFILE}" in
         TEMPERATURE="${TEMPERATURE:-${TEMP:-0.0}}"
         REPEAT_PENALTY="${REPEAT_PENALTY:-1.0}"
         ;;
+    structured)
+        CTX="${CTX:-65536}"
+        MTP=0
+        STRICT_MTP=0
+        KV_K="${KV_K:-q8_0}"
+        KV_V="${KV_V:-q8_0}"
+        REASONING="${REASONING:-off}"
+        BATCH_SIZE="${BATCH_SIZE:-2048}"
+        UBATCH_SIZE="${UBATCH_SIZE:-2048}"
+        TEMPERATURE="${TEMPERATURE:-${TEMP:-0.0}}"
+        REPEAT_PENALTY="${REPEAT_PENALTY:-1.0}"
+        DRAFT_N_MIN="${DRAFT_N_MIN:-3}"
+        DRAFT_N_MAX="${DRAFT_N_MAX:-7}"
+        DRAFT_ADAPTIVE=1
+        ;;
     *)
-        echo "Unknown profile '${PROFILE}'. Expected: speed, agent, cache, safe" >&2
+        echo "Unknown profile '${PROFILE}'. Expected: speed, agent, cache, safe, structured" >&2
         exit 2
         ;;
 esac
 
 DRAFT_N="${DRAFT_N:-4}"
 DRAFT_P="${DRAFT_P:-0.0}"
+DRAFT_N_MIN="${DRAFT_N_MIN:-3}"
+DRAFT_N_MAX="${DRAFT_N_MAX:-7}"
 PRESENCE_PENALTY="${PRESENCE_PENALTY:-0.0}"
 CACHE_MODE="$([ "${PROFILE}" = "cache" ] && printf cache || printf disabled)"
 configure_cache_profile
@@ -161,12 +178,21 @@ if [ "${PROFILE}" = "cache" ]; then
     KV_V="q8_0"
 fi
 
-# speed and cache profiles both enable prompt caching (RAM checkpoints);
+# speed, cache and structured profiles enable prompt caching (RAM checkpoints);
 # agent/safe keep caching fully disabled for conservative isolation.
 USE_CACHE=0
 case "${PROFILE}" in
-    speed|cache) USE_CACHE=1 ;;
+    speed|cache|structured) USE_CACHE=1 ;;
 esac
+
+# structured profile guards: fail closed if engine lacks draft-dflash,
+# and warn on unsafe parallel slots (cross-request leakage on Strix Halo).
+if [ "${PROFILE}" = "structured" ]; then
+    if [ "${SLOTS:-1}" != "1" ] && [ "${SLOTS:-1}" != "" ]; then
+        echo "❌ --profile structured requires --slots 1 (parallel slots leak on gfx1151, see docs). Use speed or cache for -np>1." >&2
+        exit 2
+    fi
+fi
 
 # 2. Resolve Model Path
 if [ -z "$MODEL_PATH" ]; then
@@ -282,7 +308,24 @@ if [ "${MLOCK}" = "1" ]; then
     CMD+=("--mlock")
 fi
 
-if [ "${MTP}" = "1" ]; then
+if [ "${PROFILE}" = "structured" ]; then
+    DRAFT_MODEL="${DRAFT_MODEL:-${SCRIPT_DIR}/models/Qwen3.8-27B-DFlash2-Q4_K_M.gguf}"
+    if [ ! -f "${DRAFT_MODEL}" ] && [ -f "${SCRIPT_DIR}/Qwen3.8-27B-DFlash2-Q4_K_M.gguf" ]; then
+        DRAFT_MODEL="${SCRIPT_DIR}/Qwen3.8-27B-DFlash2-Q4_K_M.gguf"
+    fi
+    if [ ! -f "${DRAFT_MODEL}" ]; then
+        echo "❌ --profile structured requires a DFlash2 draft model." >&2
+        echo "   Expected: ${SCRIPT_DIR}/models/Qwen3.8-27B-DFlash2-Q4_K_M.gguf" >&2
+        echo "   Download: huggingface-cli download incoai/Qwen3.8-27B-DFlash2-GGUF Qwen3.8-27B-DFlash2-Q4_K_M.gguf --local-dir ${SCRIPT_DIR}/models" >&2
+        exit 1
+    fi
+    if ! "${LLAMA_SERVER_BIN}" --help 2>&1 | grep -q "draft-dflash"; then
+        echo "❌ Engine does not support --spec-type draft-dflash (need LaurentZuijdwijk/llama.cpp or ROCmFPX with DFlash2)." >&2
+        exit 1
+    fi
+    CMD+=("--spec-type" "draft-dflash" "--spec-draft-n-min" "${DRAFT_N_MIN}" "--spec-draft-n-max" "${DRAFT_N_MAX}" "--spec-draft-p-min" "0.0" "--spec-draft-adaptive")
+    CMD+=("-md" "${DRAFT_MODEL}" "-ngld" "99" "--device-draft" "${DEVICE}")
+elif [ "${MTP}" = "1" ]; then
     CMD+=("--spec-type" "draft-mtp" "--spec-draft-n-max" "${DRAFT_N}" "--spec-draft-p-min" "${DRAFT_P}")
     if [ "${STRICT_MTP}" = "1" ]; then
         CMD+=("--spec-mtp-strict-qwen")
@@ -318,7 +361,7 @@ fi
 echo " Concurrency:    ${SLOTS} slot(s), continuous batching, unified KV"
 echo " Batching:       logical=${BATCH_SIZE}, physical=${UBATCH_SIZE}"
 echo " Sampling:       temperature=${TEMPERATURE}, presence=${PRESENCE_PENALTY}, repeat=${REPEAT_PENALTY}"
-echo " Speculation:    $([ "${MTP}" = "1" ] && printf 'MTP n_max=%s, p_min=%s, strict=%s' "${DRAFT_N}" "${DRAFT_P}" "${STRICT_MTP}" || printf 'disabled')"
+echo " Speculation:    $([ "${PROFILE}" = "structured" ] && printf 'DFlash2 n_min=%s n_max=%s adaptive' "${DRAFT_N_MIN}" "${DRAFT_N_MAX}" || ([ "${MTP}" = "1" ] && printf 'MTP n_max=%s, p_min=%s, strict=%s' "${DRAFT_N}" "${DRAFT_P}" "${STRICT_MTP}" || printf 'disabled'))"
 echo " Reasoning:      ${REASONING} (Budget: ${REASONING_BUDGET:-unlimited} tokens)"
 echo " API Endpoint:   http://${HOST}:${PORT}/v1"
 echo "================================================================================"

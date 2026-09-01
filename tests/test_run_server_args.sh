@@ -16,6 +16,11 @@ if [ "${1:-}" = "--list-devices" ]; then
     exit 0
 fi
 
+if [ "${1:-}" = "--help" ]; then
+    printf '%s\n' "--spec-type draft-dflash"
+    exit 0
+fi
+
 batch=""
 ubatch=""
 presence=""
@@ -267,5 +272,30 @@ cache_multislot_output="$({
 
 [[ "$cache_multislot_output" == *"Concurrency:    4 slot(s)"* ]]
 [[ "$cache_multislot_output" == *"Profile:        cache"* ]]
+
+touch "$TMP_DIR/Qwen3.8-27B-DFlash2-Q4_K_M.gguf"
+structured_output="$({
+    SKIP_ROCM_CHECK=1 \
+    ROCMFPX_BIN_DIR="$TMP_DIR" \
+    MODEL_PATH="$TMP_DIR/model.gguf" \
+    DRAFT_MODEL="$TMP_DIR/Qwen3.8-27B-DFlash2-Q4_K_M.gguf" \
+    "$ROOT_DIR/run_server.sh" --profile structured --slot-save-path "$TMP_DIR/slots"
+} 2>&1)"
+
+[[ "$structured_output" == *"Profile:        structured"* ]]
+[[ "$structured_output" == *"DFlash2 n_min=3 n_max=7 adaptive"* ]]
+[[ "$structured_output" == *"spec_type_count=1"* ]]
+
+if structured_fail="$({
+    SKIP_ROCM_CHECK=1 \
+    ROCMFPX_BIN_DIR="$TMP_DIR" \
+    MODEL_PATH="$TMP_DIR/model.gguf" \
+    DRAFT_MODEL="$TMP_DIR/Qwen3.8-27B-DFlash2-Q4_K_M.gguf" \
+    "$ROOT_DIR/run_server.sh" --profile structured --slots 2 2>&1
+} )"; then
+    echo "structured --slots 2 should have failed"
+    exit 1
+fi
+[[ "$structured_fail" == *"requires --slots 1"* ]]
 
 printf '%s\n' "run_server argument tests passed"

@@ -357,11 +357,13 @@ Choose one explicit runtime profile:
 | `agent` | 64K | K=4, strict | Disabled | Pi and other long-running tool agents |
 | `cache` | 128K | Opt-in (`--mtp`) | RAM-aware (q8_0 KV) | Repeated long documents and stable shared prefixes |
 | `safe` | 64K | Disabled | Disabled | Diagnosis and conservative agent execution |
+| `structured` | 64K | DFlash2 adaptive (3–7) | RAM-aware (q8_0 KV) | JSON/code structured output (requires DFlash2 draft + Vulkan0; fails closed if unsupported; `--slots 1` only) |
 
 ```bash
 ./run_server.sh --profile agent
 ./run_server.sh --profile cache
 ./run_server.sh --profile safe
+./run_server.sh --profile structured  # needs models/Qwen3.8-27B-DFlash2-Q4_K_M.gguf + draft-dflash engine
 ```
 
 The `speed` profile is the fast default: greedy sampling with MTP delivers the measured 33.8 tok/s sustained decode, and RAM checkpoints now reuse long shared prefixes between turns (measured on v1.5.2: a divergent-tail follow-up on a 9K-token document completed in 4–5 s instead of a ~33 s cold prefill, with TurboQuant KV keeping the cache footprint small). Creative-chat users who want sampling diversity can restore the old behavior with `--temperature 0.8` (expect decode closer to ~21 tok/s — see the measured-conditions note above).

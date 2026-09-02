@@ -9,12 +9,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENGINE_DIR="${SCRIPT_DIR}/engine"
 REPO_URL="https://github.com/ROCmFPX/ROCmFPX.git"
 PINNED_COMMIT="${PINNED_COMMIT:-75e67a92b2d230849aec2d6c1f7b1d1fd624e0e0}"
-RELEASE_TARBALL_URL="https://github.com/julianmb/q38rocm/releases/download/v1.6.0/strix-halo-rocmfpx-engine-v1.6.0-linux-x86_64.tar.gz"
-EXPECTED_TARBALL_SHA="4fef9aa9ba58c92d02f3bb08cfd9508b1607d22d3aaffcc87d3fe8d1a4757eab"
+RELEASE_TARBALL_URL="https://github.com/julianmb/q38rocm/releases/download/v1.7.0/strix-halo-rocmfpx-engine-v1.7.0-linux-x86_64.tar.gz"
+EXPECTED_TARBALL_SHA="19deedcaac6c13548be417dfaf5368c4b5eb8a9b3cdac3c9b4405b0f0e55d367"
 # what `llama-server --version` reports for the pinned prebuilt. Warns when the
 # installed binary does not match the release we think we installed (issues
 # #20/#21 both stalled because a binary could not be mapped to a revision).
-PREBUILT_ENGINE_BUILD="${PREBUILT_ENGINE_BUILD:-version: 246 (998d0ca)}"
+PREBUILT_ENGINE_BUILD="${PREBUILT_ENGINE_BUILD:-version: 0.3.0-dev (build 11474, commit 75e67a92b)}"
 LINKAGE="static"
 CLEAN_BUILD=0
 USE_PREBUILT=0
@@ -94,11 +94,11 @@ show_status() {
 
 download_prebuilt() {
     echo "================================================================================"
-    echo " 📥 Downloading Pre-Compiled ROCmFPX Engine (v1.6.0) for AMD Strix Halo"
+    echo " 📥 Downloading Pre-Compiled ROCmFPX Engine (v1.7.0) for AMD Strix Halo"
     echo " Source: ${RELEASE_TARBALL_URL}"
     echo "================================================================================"
     mkdir -p "${ENGINE_DIR}"
-    TAR_PATH="/tmp/strix-halo-engine-v1.6.0.tar.gz"
+    TAR_PATH="/tmp/strix-halo-engine-v1.7.0.tar.gz"
     
     curl -L "${RELEASE_TARBALL_URL}" -o "${TAR_PATH}" --progress-bar
     

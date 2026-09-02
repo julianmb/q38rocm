@@ -70,9 +70,9 @@ ENV LD_LIBRARY_PATH="/opt/rocm/core-10.0/lib:/opt/rocm/lib:/app/engine/bin:${LD_
 # ENGINE_TARBALL_SHA must stay equal to EXPECTED_TARBALL_SHA in build_engine.sh
 # (tests/test_build_engine_flags.sh asserts it); without it a changed asset would
 # be unpacked silently — the failure mode behind issue #20.
-ARG ENGINE_TARBALL_SHA=4fef9aa9ba58c92d02f3bb08cfd9508b1607d22d3aaffcc87d3fe8d1a4757eab
+ARG ENGINE_TARBALL_SHA=19deedcaac6c13548be417dfaf5368c4b5eb8a9b3cdac3c9b4405b0f0e55d367
 RUN mkdir -p /app/engine && \
-    curl -L "https://github.com/julianmb/q38rocm/releases/download/v1.6.0/strix-halo-rocmfpx-engine-v1.6.0-linux-x86_64.tar.gz" -o /tmp/engine.tar.gz && \
+    curl -L "https://github.com/julianmb/q38rocm/releases/download/v1.7.0/strix-halo-rocmfpx-engine-v1.7.0-linux-x86_64.tar.gz" -o /tmp/engine.tar.gz && \
     echo "${ENGINE_TARBALL_SHA}  /tmp/engine.tar.gz" | sha256sum -c - && \
     tar -xzf /tmp/engine.tar.gz -C /tmp/ && \
     cp -a /tmp/strix-halo-rocmfpx-engine/* /app/engine/ && \

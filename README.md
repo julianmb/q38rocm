@@ -103,7 +103,7 @@ This repository (`julianmb/q38rocm`) builds on top of the open-source **[charlie
 │               DEPLOYMENT STACK: julianmb/q38rocm                       │
 │  • Qwen 3.8 27B Quantized Weights Release (ROCmFP4 & ROCmFP8)          │
 │  • 1-Click Quickstart & Auto-Detecting Production OpenAI Server        │
-│  • Pre-Compiled Strix Halo Engine Binaries (v1.6.0 Release)            │
+│  • Pre-Compiled Strix Halo Engine Binaries (v1.7.0 Release)            │
 │  • Streaming Terminal TUI Speedometer & Telemetry Dashboard            │
 │  • Multi-Prompt Benchmark & Context Scaling Verification Suite         │
 │  • Docker & Docker Compose Stack with Open WebUI Integration           │

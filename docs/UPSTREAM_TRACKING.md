@@ -108,3 +108,5 @@ Charlie moved ROCmFPX development to the [`ROCmFPX/ROCmFPX`](https://github.com/
 ### Result
 
 `75e67a9` is now the production pin. Both blockers landed upstream as `0ef57fb8` + `8aee61ec` (credited to @julianmb), verified byte-identical strict-MTP and checkpoint-restore. Local `patches/` retired — build is clean from the org repo.
+
+> **2026-09-02 update:** upstream PR #12 (strict-qwen for `qwen4exp`) was closed as superseded — the same change landed via PR #16 as `9201af4d` (authored by @julianmb, adapted onto vanilla). `main` @ `22496778e` carries it. No action needed on our side; q38rocm's 27B (qwen35 family) was already covered by #11.

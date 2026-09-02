@@ -29,6 +29,7 @@ WORKDIR /app
 RUN groupadd render && apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
+    gnupg \
     vulkan-tools \
     mesa-vulkan-drivers \
     libvulkan1 \

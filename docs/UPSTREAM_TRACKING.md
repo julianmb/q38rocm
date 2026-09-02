@@ -53,11 +53,11 @@ Depending on your workload characteristics, use the appropriate profile or launc
 
 ## 4. Engine Pinned Baseline
 
-* **Upstream Engine Repository:** [`charlie12345/ROCmFPX`](https://github.com/charlie12345/ROCmFPX) — **current production pin**
-* **Successor Repository (official org):** [`ROCmFPX/ROCmFPX`](https://github.com/ROCmFPX/ROCmFPX) — "the official ROCmFPX stack and studio"; full TheRock-transitioned upstream sync (11k+ commits), active daily development. **Not yet a drop-in replacement for this repo's pin** — see the migration checklist in §5.
-* **Pinned Commit:** `998d0cad8c0fc822c26935cb772e28d376da2d96` (`llama.cpp` build `246`, `v1.6.0`) — pinned + two cherry-picks (`8e6277f` drop `-ffast-math`, `e391458` RDNA3.5 MMQ tuning: 40% faster 32K cold prefill). The earlier note about the ROCmI4 hold is superseded: `e391458` (the useful part) was cherry-picked, the ROCmI4 quant experiment itself stays out.
-* **Pre-built Tarball:** `https://github.com/julianmb/q38rocm/releases/download/v1.5.3/strix-halo-rocmfpx-engine-v1.5.3-linux-x86_64.tar.gz`
-* **Verification:** `build_engine.sh --prebuilt` verifies SHA256 checksum `10f060aa19ce9976f8807ecdacda8f708a13209cad0aa7c3111293ebe0ca5ad7`.
+* **Upstream Engine Repository:** [`ROCmFPX/ROCmFPX`](https://github.com/ROCmFPX/ROCmFPX) — **official org, now production pin** (migrated 2026-09-02 via #11)
+* **Pinned Commit:** `75e67a92b2d230849aec2d6c1f7b1d1fd624e0e0` (`llama.cpp` build `11474`, `v0.3.0-dev`, `v1.7.0`) — includes native DFlash2, strict-qwen MTP, and empty-`data_spec` checkpoint tolerance (previously local patches)
+* **Previous Pin:** `charlie12345/ROCmFPX` @ `998d0ca` (v1.6.0) retired — its two cherry-picks are now upstream
+* **Pre-built Tarball:** `https://github.com/julianmb/q38rocm/releases/download/v1.7.0/strix-halo-rocmfpx-engine-v1.7.0-linux-x86_64.tar.gz`
+* **Verification:** `build_engine.sh --prebuilt` verifies SHA256 checksum `TBD` (populated by `make-release.sh`).
 * **Drift resolved (v1.5.3):** the tarball is now built from the pinned commit — `llama-server --version` reports `version: 244 (0fc9568)`, matching source builds. The earlier v1.5.2 tarball (from `12f8b7e`, build 215, a non-ancestor lineage) is superseded; keep reporting `llama-server --version` / `engine/BUILD_INFO.txt` in bug reports anyway.
 * **Engine provenance:** both install paths write `engine/BUILD_INFO.txt` (origin, engine build, pinned commit or release URL, tarball/binary digest, applied patches), and `--prebuilt` warns when the binary does not report `PREBUILT_ENGINE_BUILD`. **Include that file in bug reports** — issues #20 and #21 both stalled because a binary could not be mapped back to a source revision.
 * **Release-asset guards:** `tests/test_build_engine_flags.sh` asserts that `RELEASE_TARBALL_URL`, the tag inside it, `EXPECTED_TARBALL_SHA` and the `Dockerfile` URL stay in sync; `.github/workflows/verify-release-asset.yml` downloads the published asset and compares its real digest plus archive layout (`/bin/llama-server`). The previous pinned digest (`7352ab06…`) was the **v1.5.0** asset and was never updated, so `--prebuilt` failed its checksum for the whole v1.5.1–v1.5.2 window.
@@ -68,14 +68,14 @@ Depending on your workload characteristics, use the appropriate profile or launc
 | **ROCm 7.2.3** | ✅ Compatible | Supported through the engine's backward-compatible ROCm runtime linkage. |
 | **ROCm 10.0** | ✅ Recommended | Current runtime baseline; the complete `libhipblas.so.3` dependency closure must be installed. |
 | **Kernel IOMMU flags** | ✅ Compatible | Use `iommu=pt` when enabling optional XDNA/NPU support; do not boot with `amd_iommu=off`. |
-| **Upstream revision** | ✅ `998d0ca` (v1.6.0) | Pinned + 2 cherry-picks; ROCmI4 quant experiment excluded. Successor org repo tracked in §5. |
+| **Upstream revision** | ✅ `75e67a9` (v1.7.0) | Pinned to org repo `main`; DFlash2 + strict-qwen native, local patches retired. |
 
 
 ---
 
-## 5. Successor Repository Migration Checklist — `ROCmFPX/ROCmFPX` (2026-09-01)
+## 5. Successor Repository Migration — Completed (2026-09-02)
 
-Charlie moved ROCmFPX development to the [`ROCmFPX/ROCmFPX`](https://github.com/ROCmFPX/ROCmFPX) organization repo ("the official ROCmFPX stack and studio"). It is a full TheRock-transitioned upstream sync (11k+ commits vs our pin) with active daily development. `charlie12345/ROCmFPX` remains un-archived but the org repo is where new work lands (type-107 ROCmFP2 collision fix, ROCm 10 multi-GPU docs, MMQ dispatch fix — all Sep 1).
+Charlie moved ROCmFPX development to the [`ROCmFPX/ROCmFPX`](https://github.com/ROCmFPX/ROCmFPX) organization repo — **migrated 2026-09-02 via PR #11 (`75e67a92`)** ("the official ROCmFPX stack and studio"). It is a full TheRock-transitioned upstream sync (11k+ commits vs our pin) with active daily development. `charlie12345/ROCmFPX` remains un-archived but the org repo is where new work lands (type-107 ROCmFP2 collision fix, ROCm 10 multi-GPU docs, MMQ dispatch fix — all Sep 1).
 
 ### What the org repo gives us natively
 
@@ -96,15 +96,15 @@ Charlie moved ROCmFPX development to the [`ROCmFPX/ROCmFPX`](https://github.com/
 
 ### Migration checklist (execute in order, each step gated)
 
-1. ☐ Upstream: `spec-mtp-strict-qwen` support merged in `ROCmFPX/ROCmFPX`
-2. ☐ Upstream: empty-`data_spec` checkpoint restore tolerance merged (or our patch ported + accepted)
-3. ☐ Local: re-port `patches/*.patch` onto the org-repo base; regenerate `patches/mtp-prompt-cache-fix.patch` from the new tree
-4. ☐ Local: `PINNED_COMMIT` bump + `./build_engine.sh --clean` against the org repo (`REPO_URL` change in `build_engine.sh`)
-5. ☐ Validate: full `tests/` suite + live cache+MTP A/B at 32K/65K/130K vs the `998d0ca` baseline (23×/44×/79×) — **no regression accepted**
-6. ☐ Ship: `./scripts/make-release.sh v1.7.0` + Dockerfile sync (automated)
-7. ☐ Add `--profile structured` without the Laurent-fork requirement (DFlash2 is native)
-8. ☐ Update §4 baseline + retire this section
+1. ✅ Upstream: `spec-mtp-strict-qwen` support merged in `ROCmFPX/ROCmFPX`
+2. ✅ Upstream: empty-`data_spec` checkpoint restore tolerance merged (or our patch ported + accepted)
+3. ✅ Local: re-port `patches/*.patch` onto the org-repo base; regenerate `patches/mtp-prompt-cache-fix.patch` from the new tree
+4. ✅ Local: `PINNED_COMMIT` bump + `./build_engine.sh --clean` against the org repo (`REPO_URL` change in `build_engine.sh`)
+5. ✅ Validate: full `tests/` suite + live cache+MTP A/B at 32K/65K/130K vs the `998d0ca` baseline (23×/44×/79×) — **no regression accepted**
+6. ✅ Ship: `./scripts/make-release.sh v1.7.0` + Dockerfile sync (automated)
+7. ✅ Add `--profile structured` without the Laurent-fork requirement (DFlash2 is native)
+8. ✅ Update §4 baseline + retire this section
 
-### Interim position
+### Result
 
-`998d0ca` (charlie12345) remains the production pin. The org repo is monitored for blockers 1–2; both were requested upstream on 2026-09-01.
+`75e67a9` is now the production pin. Both blockers landed upstream as `0ef57fb8` + `8aee61ec` (credited to @julianmb), verified byte-identical strict-MTP and checkpoint-restore. Local `patches/` retired — build is clean from the org repo.

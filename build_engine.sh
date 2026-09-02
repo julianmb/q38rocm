@@ -7,8 +7,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENGINE_DIR="${SCRIPT_DIR}/engine"
-REPO_URL="https://github.com/charlie12345/ROCmFPX.git"
-PINNED_COMMIT="${PINNED_COMMIT:-998d0cad8c0fc822c26935cb772e28d376da2d96}"
+REPO_URL="https://github.com/ROCmFPX/ROCmFPX.git"
+PINNED_COMMIT="${PINNED_COMMIT:-75e67a92b2d230849aec2d6c1f7b1d1fd624e0e0}"
 RELEASE_TARBALL_URL="https://github.com/julianmb/q38rocm/releases/download/v1.6.0/strix-halo-rocmfpx-engine-v1.6.0-linux-x86_64.tar.gz"
 EXPECTED_TARBALL_SHA="4fef9aa9ba58c92d02f3bb08cfd9508b1607d22d3aaffcc87d3fe8d1a4757eab"
 # what `llama-server --version` reports for the pinned prebuilt. Warns when the

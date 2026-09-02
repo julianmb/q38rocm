@@ -111,7 +111,7 @@ This repository (`julianmb/q38rocm`) builds on top of the open-source **[charlie
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Engine Core:** Our build scripts (`./build_engine.sh`) fetch the tested ROCmFPX revision `998d0cad8c0fc822c26935cb772e28d376da2d96` (v1.6.0, ROCm 10.0, MMQ tuning) or download pre-compiled Strix Halo binaries from our release assets.
+- **Engine Core:** Our build scripts (`./build_engine.sh`) fetch the tested ROCmFPX revision `75e67a92b2d230849aec2d6c1f7b1d1fd624e0e0` (v1.7.0, ROCm 10.0, native DFlash2 + strict-qwen) or download pre-compiled Strix Halo binaries from our release assets.
 - **Upstream Contributions:** Benchmark evidence, bug fixes, and calibration profiles are continuously contributed back to upstream ROCmFPX and the wider Strix Halo community.
 
 ---

@@ -74,6 +74,7 @@ def run_request(base_url, model, system_content, user_content, max_tokens):
             {"role": "user", "content": user_content},
         ],
         "temperature": 0.0,
+        "reasoning_effort": "low",
         "max_tokens": max_tokens,
         "stream": False,
     }
@@ -131,7 +132,7 @@ def main():
             args.model,
             document,
             "Return only the three retrieval marker values in early, middle, late order.",
-            96,
+            256,
         )
         print(f"Cold prompt: {cold['prompt_ms']} ms; running cached retrieval...", flush=True)
         cached = run_request(
@@ -139,7 +140,7 @@ def main():
             args.model,
             document,
             "List the exact early, middle, and late retrieval marker values. Do not explain.",
-            96,
+            256,
         )
         print(f"Cached prompt: {cached['prompt_ms']} ms; checking longer output...", flush=True)
         quality = run_request(
@@ -147,7 +148,7 @@ def main():
             args.model,
             document,
             "Write five concise, non-repetitive bullet points explaining what this document tests, then list all three exact marker values once.",
-            384,
+            512,
         )
         speedup = None
         if cold.get("prompt_ms") and cached.get("prompt_ms"):

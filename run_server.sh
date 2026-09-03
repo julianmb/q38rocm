@@ -289,10 +289,17 @@ CMD=(
     "--host" "${HOST}"
 )
 
+# v1.7.0 engine renamed -cpent to -cms (checkpoint-min-step); probe once
+# and emit whichever the binary accepts so both engines work.
+if "${LLAMA_SERVER_BIN}" --help 2>&1 | grep -q -- "-cpent"; then
+    CKPT_EVERY_FLAG="-cpent"
+else
+    CKPT_EVERY_FLAG="-cms"
+fi
 if [ "${USE_CACHE}" = "1" ]; then
     CMD+=(
         "-ctxcp" "${CTX_CHECKPOINTS}"
-        "-cpent" "${CHECKPOINT_EVERY}"
+        "${CKPT_EVERY_FLAG}" "${CHECKPOINT_EVERY}"
         "-cram" "${CACHE_RAM_MIB}"
         "--cache-prompt"
         "--slot-save-path" "${SLOT_SAVE_PATH}"

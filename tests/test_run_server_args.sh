@@ -18,6 +18,9 @@ fi
 
 if [ "${1:-}" = "--help" ]; then
     printf '%s\n' "--spec-type draft-dflash"
+    if [ "${MOCK_OLD_ENGINE:-0}" = "1" ]; then
+        printf '%s\n' "-cpent, --checkpoint-every-n-tokens N"
+    fi
     exit 0
 fi
 
@@ -33,6 +36,8 @@ strict=""
 no_cache_prompt=""
 cache_prompt=""
 spec_type=""
+cms=""
+cpent=""
 
 batch_count=0
 ubatch_count=0
@@ -47,6 +52,8 @@ cache_prompt_count=0
 strict_count=0
 ctx_count=0
 spec_type_count=0
+cms_count=0
+cpent_count=0
 while [ "$#" -gt 0 ]; do
     case "$1" in
         -b)
@@ -109,6 +116,16 @@ while [ "$#" -gt 0 ]; do
             spec_type_count=$((spec_type_count + 1))
             shift
             ;;
+        -cms)
+            cms_count=$((cms_count + 1))
+            cms="$2"
+            shift 2
+            ;;
+        -cpent)
+            cpent_count=$((cpent_count + 1))
+            cpent="$2"
+            shift 2
+            ;;
         *) shift ;;
     esac
 done
@@ -126,6 +143,8 @@ printf 'no_cache_prompt_count=%s\n' "$no_cache_prompt_count"
 printf 'cache_prompt_count=%s\n' "$cache_prompt_count"
 printf 'strict_count=%s\n' "$strict_count"
 printf 'spec_type_count=%s\n' "$spec_type_count"
+printf 'cms_count=%s\n' "$cms_count"
+printf 'cpent_count=%s\n' "$cpent_count"
 EOF
 chmod +x "$TMP_DIR/llama-server"
 
@@ -262,6 +281,25 @@ cache_mtp_flag_output="$({
 } 2>&1)"
 
 [[ "$cache_mtp_flag_output" == *"spec_type_count=1"* ]]
+
+new_engine_ckpt="$({
+    SKIP_ROCM_CHECK=1 \
+    ROCMFPX_BIN_DIR="$TMP_DIR" \
+    MODEL_PATH="$TMP_DIR/model.gguf" \
+    "$ROOT_DIR/run_server.sh" --profile cache --slot-save-path "$TMP_DIR/slots"
+} 2>&1)"
+[[ "$new_engine_ckpt" == *"cms_count=1"* ]]
+[[ "$new_engine_ckpt" == *"cpent_count=0"* ]]
+
+old_engine_ckpt="$({
+    SKIP_ROCM_CHECK=1 \
+    MOCK_OLD_ENGINE=1 \
+    ROCMFPX_BIN_DIR="$TMP_DIR" \
+    MODEL_PATH="$TMP_DIR/model.gguf" \
+    "$ROOT_DIR/run_server.sh" --profile cache --slot-save-path "$TMP_DIR/slots"
+} 2>&1)"
+[[ "$old_engine_ckpt" == *"cpent_count=1"* ]]
+[[ "$old_engine_ckpt" == *"cms_count=0"* ]]
 
 cache_multislot_output="$({
     SKIP_ROCM_CHECK=1 \

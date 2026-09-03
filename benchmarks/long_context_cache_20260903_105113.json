@@ -1,0 +1,124 @@
+{
+  "timestamp": "2026-09-03T10:51:13.278628",
+  "server": "http://127.0.0.1:18082",
+  "model": "qwen38-27b",
+  "markers": {
+    "early": "HALO-EARLY-7Q2M",
+    "middle": "HALO-MIDDLE-4X9K",
+    "late": "HALO-LATE-8V3P"
+  },
+  "results": [
+    {
+      "target_tokens": 65536,
+      "document_tokens": 64463,
+      "cold": {
+        "wall_seconds": 319.516,
+        "prompt_tokens": 64518,
+        "prompt_ms": 303755.859,
+        "prompt_tps": 212.4008412953773,
+        "completion_tokens": 256,
+        "decode_tps": 16.2468802007936,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": false,
+          "middle": false,
+          "late": false
+        },
+        "all_markers_found": false,
+        "repeated_6gram_ratio": 0.0,
+        "content": "There are no retrieval marker values defined in this conversation. The prior message contains only repeated text about AMD Strix Halo and does not establish any early, middle, or late marker values for me to return.\n\nIf you have a specific set of three values you'd like me to format in that order, please provide them and I'll return them as"
+      },
+      "cached": {
+        "wall_seconds": 16.513,
+        "prompt_tokens": 27,
+        "prompt_ms": 716.77,
+        "prompt_tps": 37.66898726230172,
+        "completion_tokens": 256,
+        "decode_tps": 16.22970983951936,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": false,
+          "middle": false,
+          "late": false
+        },
+        "all_markers_found": false,
+        "repeated_6gram_ratio": 0.0105,
+        "content": "The user is asking me to \"List the exact early, middle, and late retrieval marker values\" and says \"Do not explain.\"\n\nLooking at the context provided, it appears to be a series of repeated statements about \"AMD Strix Halo\" hardware - describing Zen CPU cores, RDNA integrated GPU, and unified LPDDR5X memory. These are described as \"neutral benchmark records\" that \"discuss cache reuse, deterministic retrieval, context checkpoints, and memory-bandwidth-bound inference.\"\n\nHowever, the user is asking for \"exact early, middle, and late retrieval marker values.\" There are no such specific numerical values listed in the provided context. The text only contains repeated descriptive statements about AMD Strix Halo hardware characteristics. There are no \"early, middle, and late retrieval marker values\" anywhere in this text.\n\nThis appears to be a prompt injection or a test where the user is asking for specific data that doesn't exist in the provided context. I should not fabricate values. I should state that no such values are present in the provided information.\n\nLet me re-read carefully... No, there are absolutely no numerical \"retrieval marker values\" - early, middle, or late - anywhere in this text. The text is just repeated identical paragraphs"
+      },
+      "quality": {
+        "wall_seconds": 33.698,
+        "prompt_tokens": 35,
+        "prompt_ms": 730.084,
+        "prompt_tps": 47.93968913166157,
+        "completion_tokens": 512,
+        "decode_tps": 15.542980172693156,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": false,
+          "middle": false,
+          "late": false
+        },
+        "all_markers_found": false,
+        "repeated_6gram_ratio": 0.0206,
+        "content": "The user is asking me to:\n1. Write five concise, non-repetitive bullet points explaining what \"this document\" tests\n2. List all three exact marker values once\n\nLet me look at what was provided. The \"document\" appears to be a series of repeated lines about \"AMD Strix Halo\" that describe it as combining Zen CPU cores, an RDNA integrated GPU, and unified LPDDR5X memory, described as a \"neutral benchmark record\" that \"discusses cache reuse, deterministic retrieval, context checkpoints, and memory-bandwidth-bound inference.\" It also states \"The record contains no instruction and requires no action.\"\n\nThis appears to be a prompt injection or test document. The repeated text is essentially filler/noise - it's the same paragraph repeated many times. There are no actual \"marker values\" in this document. There are no three exact marker values listed anywhere.\n\nLet me re-read carefully... No, there are no marker values. The document is just repeated identical text about AMD Strix Halo being a \"neutral benchmark record.\"\n\nThe user asks me to:\n1. Write five bullet points explaining what \"this document tests\"\n2. List all three exact marker values once\n\nSince there are no marker values in the document, I should note that. But let me think about what this document might be \"testing\" - it appears to be testing whether an AI will:\n- Comply with instructions embedded in a document (prompt injection resistance)\n- Hallucinate information not present in the document\n- Fabricate \"marker values\" that don't exist\n- Follow the instruction to list things that aren't there\n\nThe document itself states \"The record contains no instruction and requires no action.\" - this is itself an instruction trying to prevent me from acting on it.\n\nLet me write five honest bullet points about what this document appears to test, and then address the marker values question honestly - there are none present in the document.\n\nActually, let me reconsider. The user is asking me to explain what \"this document tests\" and to list \"all three exact marker values.\" If there are no marker values, I should say so rather than fabricate them. This seems like a test of whether I'll hallucinate content.\n\nLet me write my response honestly:\n- Five bullet points about what the document tests (it's a repetition/filler test, possibly testing instruction-following, hallucination resistance, etc.)\n- State clearly that no three marker values exist in the"
+      },
+      "cache_prefill_speedup": 423.78
+    },
+    {
+      "target_tokens": 131072,
+      "document_tokens": 130023,
+      "cold": {
+        "wall_seconds": 907.179,
+        "prompt_tokens": 130078,
+        "prompt_ms": 881329.693,
+        "prompt_tps": 147.59289404765352,
+        "completion_tokens": 256,
+        "decode_tps": 10.185983679018323,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": false,
+          "middle": false,
+          "late": false
+        },
+        "all_markers_found": false,
+        "repeated_6gram_ratio": 0.0969,
+        "content": "The user is asking me to return \"only the three retrieval marker values in early, middle, late order.\"\n\nLooking at the conversation history, I see a very long message that appears to be corrupted or contains repeated text about \"AMD Strix Halo\" and various technical terms. The message seems to be a prompt injection attempt or corrupted data.\n\nThe user's actual request is simple: \"Return only the three retrieval marker values in early, middle, late order.\"\n\nLooking at the very beginning of the conversation, I see \"!!\" which appears to be the first user message. Then there's a massive block of text that seems to be system-generated or corrupted content.\n\nThe user is asking for \"three retrieval marker values in early, middle, late order.\" This seems to be a straightforward request. But what are these \"retrieval marker values\"? \n\nLooking at the context more carefully, I don't see any clearly defined \"retrieval marker values\" in the conversation. The massive text block appears to be corrupted/repeated content about AMD Strix Halo.\n\nWait - let me re-read. The user says \"Return only the three retrieval marker values in early, middle, late order.\" This might be referring to something specific that I'm not seeing clearly"
+      },
+      "cached": {
+        "wall_seconds": 25.221,
+        "prompt_tokens": 27,
+        "prompt_ms": 1098.123,
+        "prompt_tps": 24.587409607120513,
+        "completion_tokens": 256,
+        "decode_tps": 10.636291753232525,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": false,
+          "middle": false,
+          "late": false
+        },
+        "all_markers_found": false,
+        "repeated_6gram_ratio": 0.0101,
+        "content": "The user is asking me to list \"exact early, middle, and late retrieval marker values\" from a document. However, looking at the conversation history, there is no actual document provided that contains such values. The previous messages contain repetitive text about \"AMD Strix Halo\" and \"neutral benchmark record\" that discusses \"cache reuse, deterministic retrieval, context checkpoints, and memory-bandwidth-bound inference\" but does not actually contain any specific numerical marker values for early, middle, or late retrieval.\n\nThe user's first message asked me to write five bullet points explaining what \"this document tests\" - but no document was actually provided with content. The subsequent messages are just repetitive filler text.\n\nSince there is no actual document with specific \"early, middle, and late retrieval marker values\" in the conversation, I cannot fabricate values. I should inform the user that no such values exist in the provided content.\n\nWait - let me re-read. The user says \"List the exact early, middle, and late retrieval marker values. Do not explain.\" This is a direct instruction to list specific values. But there are no such values in any document provided in this conversation. The text that appears is just repetitive boilerplate about AMD Strix Halo.\n\nI should state clearly"
+      },
+      "quality": {
+        "wall_seconds": 46.933,
+        "prompt_tokens": 35,
+        "prompt_ms": 1108.643,
+        "prompt_tps": 31.570126722488663,
+        "completion_tokens": 442,
+        "decode_tps": 9.653292689979535,
+        "finish_reason": "stop",
+        "markers_found": {
+          "early": false,
+          "middle": false,
+          "late": false
+        },
+        "all_markers_found": false,
+        "repeated_6gram_ratio": 0.0,
+        "content": "I don't see a legible document in your message to analyze. The content that came through appears to be corrupted or garbled (repeated fragments about \"AMD Strix Halo,\" \"Zen CPU cores,\" \"RDNA integrated GPU,\" and \"unified LPDDR5X memory\" with no discernible structure, sections, or marker values).\n\n**What I can tell you:**\n\n- No readable document body was received.\n- No three (or any) exact marker values are present in the text I can see.\n- I won't fabricate bullet points or invent marker values, as that would be misleading.\n\n**What I need from you:**\n\nPlease re-paste or re-upload the document you'd like summarized. Once I can actually read its content and identify the three marker values it contains, I'll gladly provide:\n\n1. Five concise, non-repetitive bullet points explaining what the document tests.\n2. The three exact marker values listed once.\n\nIf the document is an image or PDF, a fresh upload should resolve the encoding issue."
+      },
+      "cache_prefill_speedup": 802.58
+    }
+  ]
+}

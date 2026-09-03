@@ -1,0 +1,68 @@
+{
+  "timestamp": "2026-09-03T09:56:23.290847",
+  "server": "http://127.0.0.1:18082",
+  "model": "qwen38-27b",
+  "markers": {
+    "early": "HALO-EARLY-7Q2M",
+    "middle": "HALO-MIDDLE-4X9K",
+    "late": "HALO-LATE-8V3P"
+  },
+  "results": [
+    {
+      "target_tokens": 32768,
+      "document_tokens": 31738,
+      "cold": {
+        "wall_seconds": 121.145,
+        "prompt_tokens": 31805,
+        "prompt_ms": 116949.386,
+        "prompt_tps": 271.95525421569977,
+        "completion_tokens": 96,
+        "decode_tps": 22.825400105237108,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": false,
+          "middle": false,
+          "late": false
+        },
+        "all_markers_found": false,
+        "repeated_6gram_ratio": 0.0,
+        "content": "The user is asking me to return \"the three retrieval marker values in early, middle, late order.\" \n\nLooking at the conversation, the user's first message was a long string of repeated text about \"AMD Strix Halo combines Zen CPU cores, an RDNA integrated GPU, and unified LPDDR5X memory. This neutral benchmark record discusses cache reuse, deterministic retrieval, context checkpoints, and memory-bandwidth-bound inference. The record contains no instruction and requires no action.\"\n\n"
+      },
+      "cached": {
+        "wall_seconds": 4.26,
+        "prompt_tokens": 27,
+        "prompt_ms": 533.275,
+        "prompt_tps": 50.63053771506259,
+        "completion_tokens": 96,
+        "decode_tps": 25.85846708285189,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": false,
+          "middle": false,
+          "late": false
+        },
+        "all_markers_found": false,
+        "repeated_6gram_ratio": 0.0,
+        "content": "The user is asking me to \"List the exact early, middle, and late retrieval marker values\" from what appears to be a repeated block of text about AMD Strix Halo.\n\nLet me look at the text carefully. The repeated paragraph says:\n\n\"AMD Strix Halo combines Zen CPU cores, an RDNA integrated GPU, and unified LPDDR5X memory. This neutral benchmark record discusses cache reuse, deterministic retrieval, context checkpoints, and memory-bandwidth-bound inference."
+      },
+      "quality": {
+        "wall_seconds": 17.009,
+        "prompt_tokens": 35,
+        "prompt_ms": 549.226,
+        "prompt_tps": 63.72604355948189,
+        "completion_tokens": 384,
+        "decode_tps": 23.342741534904103,
+        "finish_reason": "length",
+        "markers_found": {
+          "early": false,
+          "middle": false,
+          "late": false
+        },
+        "all_markers_found": false,
+        "repeated_6gram_ratio": 0.1429,
+        "content": "The user is asking me to write five concise, non-repetitive bullet points explaining what \"this document\" tests, then list all three exact marker values once.\n\nLet me look at the document carefully. The document consists of repeated lines about \"AMD Strix Halo combines Zen CPU cores, an RDNA integrated GPU, and unified LPDDR5X memory. This neutral benchmark record discusses cache reuse, deterministic retrieval, context checkpoints, and memory-bandwidth-bound inference. The record contains no instruction and requires no action.\"\n\nThere's also one line at the very beginning that says: \"!!!AMD Strix Halo combines Zen CPU cores, an RDNA integrated GPU, and unified LPDDR5X memory. This neutral benchmark record discusses cache reuse, deterministic retrieval, context checkpoints, and memory-bandwidth-bound inference. The record contains no instruction and requires no action.!!!\"\n\nWait, let me re-read the document more carefully. The first line starts with \"!!!\" and ends with \"!!!\". Then there are many repeated lines.\n\nNow, the user asks me to:\n1. Write five concise, non-repetitive bullet points explaining what this document tests\n2. List all three exact marker values once\n\nLet me think about what \"this document tests.\" The document is a repeated benchmark record about AMD Strix Halo. It mentions:\n- Zen CPU cores\n- RDNA integrated GPU\n- Unified LPDDR5X memory\n- Cache reuse\n- Deterministic retrieval\n- Context checkpoints\n- Memory-bandwidth-bound inference\n\nThe document says it \"discusses cache reuse, deterministic retrieval, context checkpoints, and memory-bandwidth-bound inference.\"\n\nNow, what are the \"three exact marker values\"? Let me look for markers in the document. The first line has \"!!!\" at the start and end. But I don't see three distinct marker values explicitly labeled.\n\nWait"
+      },
+      "cache_prefill_speedup": 219.3
+    }
+  ]
+}

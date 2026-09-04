@@ -21,6 +21,9 @@ if [ "${1:-}" = "--help" ]; then
     if [ "${MOCK_OLD_ENGINE:-0}" = "1" ]; then
         printf '%s\n' "-cpent, --checkpoint-every-n-tokens N"
     fi
+    if [ "${MOCK_ADAPTIVE:-0}" = "1" ]; then
+        printf '%s\n' "--spec-draft-adaptive enable adaptive draft sizing"
+    fi
     exit 0
 fi
 
@@ -36,6 +39,7 @@ strict=""
 no_cache_prompt=""
 cache_prompt=""
 spec_type=""
+adaptive=""
 cms=""
 cpent=""
 
@@ -52,6 +56,7 @@ cache_prompt_count=0
 strict_count=0
 ctx_count=0
 spec_type_count=0
+adaptive_count=0
 cms_count=0
 cpent_count=0
 while [ "$#" -gt 0 ]; do
@@ -116,6 +121,10 @@ while [ "$#" -gt 0 ]; do
             spec_type_count=$((spec_type_count + 1))
             shift
             ;;
+        --spec-draft-adaptive)
+            adaptive_count=$((adaptive_count + 1))
+            shift
+            ;;
         -cms)
             cms_count=$((cms_count + 1))
             cms="$2"
@@ -143,6 +152,7 @@ printf 'no_cache_prompt_count=%s\n' "$no_cache_prompt_count"
 printf 'cache_prompt_count=%s\n' "$cache_prompt_count"
 printf 'strict_count=%s\n' "$strict_count"
 printf 'spec_type_count=%s\n' "$spec_type_count"
+printf 'adaptive_count=%s\n' "$adaptive_count"
 printf 'cms_count=%s\n' "$cms_count"
 printf 'cpent_count=%s\n' "$cpent_count"
 EOF
@@ -312,17 +322,27 @@ cache_multislot_output="$({
 [[ "$cache_multislot_output" == *"Profile:        cache"* ]]
 
 touch "$TMP_DIR/Qwen3.8-27B-DFlash2-Q4_K_M.gguf"
-structured_output="$({
+if structured_stock="$({
     SKIP_ROCM_CHECK=1 \
+    ROCMFPX_BIN_DIR="$TMP_DIR" \
+    MODEL_PATH="$TMP_DIR/model.gguf" \
+    DRAFT_MODEL="$TMP_DIR/Qwen3.8-27B-DFlash2-Q4_K_M.gguf" \
+    "$ROOT_DIR/run_server.sh" --profile structured --slot-save-path "$TMP_DIR/slots" 2>&1
+} )"; then
+    echo "structured on stock engine (no adaptive) should have failed closed"
+    exit 1
+fi
+[[ "$structured_stock" == *"needs a validated DFlash2 engine"* ]]
+
+laurent_output="$({
+    SKIP_ROCM_CHECK=1 \
+    MOCK_ADAPTIVE=1 \
     ROCMFPX_BIN_DIR="$TMP_DIR" \
     MODEL_PATH="$TMP_DIR/model.gguf" \
     DRAFT_MODEL="$TMP_DIR/Qwen3.8-27B-DFlash2-Q4_K_M.gguf" \
     "$ROOT_DIR/run_server.sh" --profile structured --slot-save-path "$TMP_DIR/slots"
 } 2>&1)"
-
-[[ "$structured_output" == *"Profile:        structured"* ]]
-[[ "$structured_output" == *"DFlash2 n_min=3 n_max=7 adaptive"* ]]
-[[ "$structured_output" == *"spec_type_count=1"* ]]
+[[ "$laurent_output" == *"adaptive_count=1"* ]]
 
 if structured_fail="$({
     SKIP_ROCM_CHECK=1 \

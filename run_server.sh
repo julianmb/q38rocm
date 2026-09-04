@@ -330,7 +330,21 @@ if [ "${PROFILE}" = "structured" ]; then
         echo "❌ Engine does not support --spec-type draft-dflash (need LaurentZuijdwijk/llama.cpp or ROCmFPX with DFlash2)." >&2
         exit 1
     fi
-    CMD+=("--spec-type" "draft-dflash" "--spec-draft-n-min" "${DRAFT_N_MIN}" "--spec-draft-n-max" "${DRAFT_N_MAX}" "--spec-draft-p-min" "0.0" "--spec-draft-adaptive")
+    # --spec-draft-adaptive marks a validated DFlash2 engine (Laurent b10685+).
+    # Stock engines advertise draft-dflash but produce degenerate output with
+    # the incoai draft (measured: 6.7% acceptance, hung requests) — fail closed
+    # unless DFLASH_ALLOW_STOCK=1 explicitly opts into unvalidated behavior.
+    if "${LLAMA_SERVER_BIN}" --help 2>&1 | grep -q -- "--spec-draft-adaptive"; then
+        CMD+=("--spec-type" "draft-dflash" "--spec-draft-n-min" "${DRAFT_N_MIN}" "--spec-draft-n-max" "${DRAFT_N_MAX}" "--spec-draft-p-min" "0.0" "--spec-draft-adaptive")
+    elif [ "${DFLASH_ALLOW_STOCK:-0}" = "1" ]; then
+        echo "⚠️  Engine lacks --spec-draft-adaptive; DFlash2 output is UNVALIDATED on this build (measured degenerate on stock v1.7.0)." >&2
+        CMD+=("--spec-type" "draft-dflash" "--spec-draft-n-min" "${DRAFT_N_MIN}" "--spec-draft-n-max" "${DRAFT_N_MAX}" "--spec-draft-p-min" "0.0")
+    else
+        echo "❌ --profile structured needs a validated DFlash2 engine (LaurentZuijdwijk/llama.cpp b10685+, with --spec-draft-adaptive)." >&2
+        echo "   This engine advertises draft-dflash but measured degenerate output (6.7% acceptance, incoai draft)." >&2
+        echo "   Bypass only for testing: DFLASH_ALLOW_STOCK=1 ./run_server.sh --profile structured" >&2
+        exit 1
+    fi
     CMD+=("-md" "${DRAFT_MODEL}" "-ngld" "99" "--device-draft" "${DEVICE}")
 elif [ "${MTP}" = "1" ]; then
     CMD+=("--spec-type" "draft-mtp" "--spec-draft-n-max" "${DRAFT_N}" "--spec-draft-p-min" "${DRAFT_P}")

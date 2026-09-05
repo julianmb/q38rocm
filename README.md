@@ -86,6 +86,8 @@ A common question in the community is whether 8-bit quantization is worthwhile o
 | **ROCmFP8 (8-bit)** | 26.25 GB | **18.96 tok/s** | **<0.003 (Zero-loss)** | Users demanding 100% precision with 2× speedup |
 | **ROCmFP4 (4-bit)** | 13.55 GB | 🔥 **36.04 tok/s** | **~0.04 (99% score)** | **Default recommendation for daily coding & agent workflows** |
 
+> **Measured vs Unsloth Q4_K_M (2026-09-06):** WikiText-2, ctx 512, same binary for both — Unsloth `UD-Q4_K_M` **7.105 ± 0.046**, ROCmFP4_FAST **7.400 ± 0.049** (~+4% PPL for the speed layout; ~2 GB smaller file). Posted publicly in [HF discussion #3](https://huggingface.co/julianmb/Qwen-3.8-27B-ROCmFP4-FAST-GGUF/discussions/3).
+
 ---
 
 ## 🤝 Integration with Upstream ROCmFPX
